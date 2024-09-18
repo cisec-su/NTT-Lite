@@ -1,0 +1,148 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2023.1 (lin64) Build 3865809 Sun May  7 15:04:56 MDT 2023
+| Date         : Tue Sep 17 21:53:41 2024
+| Host         : toluntosun-Ubuntu running 64-bit Ubuntu 23.10
+| Command      : report_control_sets -verbose -file small_ntt_control_sets_placed.rpt
+| Design       : small_ntt
+| Device       : xcu280
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Control Set Information
+
+Table of Contents
+-----------------
+1. Summary
+2. Histogram
+3. Flip-Flop Distribution
+4. Detailed Control Set Information
+
+1. Summary
+----------
+
++----------------------------------------------------------+-------+
+|                          Status                          | Count |
++----------------------------------------------------------+-------+
+| Total control sets                                       |    70 |
+|    Minimum number of control sets                        |    70 |
+|    Addition due to synthesis replication                 |     0 |
+|    Addition due to physical synthesis replication        |     0 |
+| Unused register locations in slices containing registers |    13 |
++----------------------------------------------------------+-------+
+* Control sets can be merged at opt_design using control_set_merge or merge_equivalent_drivers
+** Run report_qor_suggestions for automated merging and remapping suggestions
+
+
+2. Histogram
+------------
+
++--------------------+-------+
+|       Fanout       | Count |
++--------------------+-------+
+| Total control sets |    70 |
+| >= 0 to < 4        |     2 |
+| >= 4 to < 6        |     1 |
+| >= 6 to < 8        |     0 |
+| >= 8 to < 10       |     0 |
+| >= 10 to < 12      |     0 |
+| >= 12 to < 14      |     0 |
+| >= 14 to < 16      |     0 |
+| >= 16              |    67 |
++--------------------+-------+
+* Control sets can be remapped at either synth_design or opt_design
+
+
+3. Flip-Flop Distribution
+-------------------------
+
++--------------+-----------------------+------------------------+-----------------+--------------+
+| Clock Enable | Synchronous Set/Reset | Asynchronous Set/Reset | Total Registers | Total Slices |
++--------------+-----------------------+------------------------+-----------------+--------------+
+| No           | No                    | No                     |             113 |           24 |
+| No           | No                    | Yes                    |            1274 |          172 |
+| No           | Yes                   | No                     |               0 |            0 |
+| Yes          | No                    | No                     |               0 |            0 |
+| Yes          | No                    | Yes                    |               0 |            0 |
+| Yes          | Yes                   | No                     |            2060 |          405 |
++--------------+-----------------------+------------------------+-----------------+--------------+
+
+
+4. Detailed Control Set Information
+-----------------------------------
+
++----------------+--------------------------------------------------+------------------+------------------+----------------+--------------+
+|  Clock Signal  |                   Enable Signal                  | Set/Reset Signal | Slice Load Count | Bel Load Count | Bels / Slice |
++----------------+--------------------------------------------------+------------------+------------------+----------------+--------------+
+|  clk_IBUF_BUFG | shreg/DELAY_BLOCK[9].shift_array_reg[10][0]_0[0] | rst_IBUF_inst/O  |                1 |              2 |         2.00 |
+|  clk_IBUF_BUFG | shreg/E[0]                                       | rst_IBUF_inst/O  |                3 |              3 |         1.00 |
+|  clk_IBUF_BUFG | shreg/state_reg[2][0]                            | rst_IBUF_inst/O  |                2 |              5 |         2.50 |
+|  clk_IBUF_BUFG | genblk3[0].q_reg0                                | rst_IBUF_inst/O  |                7 |             16 |         2.29 |
+|  clk_IBUF_BUFG | ctr0[4]_i_1_n_0                                  | rst_IBUF_inst/O  |                5 |             18 |         3.60 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_7[0]                           | rst_IBUF_inst/O  |               24 |             32 |         1.33 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_8[0]                           | rst_IBUF_inst/O  |               28 |             32 |         1.14 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_6[0]                           | rst_IBUF_inst/O  |               25 |             32 |         1.28 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_5[0]                           | rst_IBUF_inst/O  |               24 |             32 |         1.33 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_4[0]                           | rst_IBUF_inst/O  |               25 |             32 |         1.28 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_3[0]                           | rst_IBUF_inst/O  |               24 |             32 |         1.33 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_2[0]                           | rst_IBUF_inst/O  |               23 |             32 |         1.39 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_14[0]                          | rst_IBUF_inst/O  |               23 |             32 |         1.39 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_13[0]                          | rst_IBUF_inst/O  |               23 |             32 |         1.39 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_12[0]                          | rst_IBUF_inst/O  |               23 |             32 |         1.39 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_11[0]                          | rst_IBUF_inst/O  |               23 |             32 |         1.39 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_1[0]                           | rst_IBUF_inst/O  |               25 |             32 |         1.28 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_0[0]                           | rst_IBUF_inst/O  |               23 |             32 |         1.39 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_10[0]                          | rst_IBUF_inst/O  |               28 |             32 |         1.14 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0][0]                             | rst_IBUF_inst/O  |               25 |             32 |         1.28 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_4[0]                           | rst_IBUF_inst/O  |               22 |             32 |         1.45 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[2]_1[0]                           | rst_IBUF_inst/O  |               24 |             32 |         1.33 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[2]_0[0]                           | rst_IBUF_inst/O  |               21 |             32 |         1.52 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[2][0]                             | rst_IBUF_inst/O  |               26 |             32 |         1.23 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_9[0]                           | rst_IBUF_inst/O  |               25 |             32 |         1.28 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_8[0]                           | rst_IBUF_inst/O  |               26 |             32 |         1.23 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_7[0]                           | rst_IBUF_inst/O  |               28 |             32 |         1.14 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_6[0]                           | rst_IBUF_inst/O  |               28 |             32 |         1.14 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_5[0]                           | rst_IBUF_inst/O  |               24 |             32 |         1.33 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[2]_2[0]                           | rst_IBUF_inst/O  |               26 |             32 |         1.23 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_3[0]                           | rst_IBUF_inst/O  |               22 |             32 |         1.45 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_2[0]                           | rst_IBUF_inst/O  |               21 |             32 |         1.52 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_10[0]                          | rst_IBUF_inst/O  |               25 |             32 |         1.28 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_1[0]                           | rst_IBUF_inst/O  |               25 |             32 |         1.28 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1]_0[0]                           | rst_IBUF_inst/O  |               25 |             32 |         1.28 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[1][0]                             | rst_IBUF_inst/O  |               26 |             32 |         1.23 |
+|  clk_IBUF_BUFG | shreg/ctr1_reg[0]_9[0]                           | rst_IBUF_inst/O  |               24 |             32 |         1.33 |
+|  clk_IBUF_BUFG | p_163_out                                        | rst_IBUF_inst/O  |               15 |             32 |         2.13 |
+|  clk_IBUF_BUFG | genblk3[1].q_reg0                                | rst_IBUF_inst/O  |               11 |             32 |         2.91 |
+|  clk_IBUF_BUFG | p_108_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_110_out                                        | rst_IBUF_inst/O  |               18 |             32 |         1.78 |
+|  clk_IBUF_BUFG | p_112_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_114_out                                        | rst_IBUF_inst/O  |               18 |             32 |         1.78 |
+|  clk_IBUF_BUFG | p_116_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_118_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_120_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_122_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_124_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_126_out                                        | rst_IBUF_inst/O  |               17 |             32 |         1.88 |
+|  clk_IBUF_BUFG | p_128_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_130_out                                        | rst_IBUF_inst/O  |               17 |             32 |         1.88 |
+|  clk_IBUF_BUFG | p_132_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_134_out                                        | rst_IBUF_inst/O  |               17 |             32 |         1.88 |
+|  clk_IBUF_BUFG | p_136_out                                        | rst_IBUF_inst/O  |               19 |             32 |         1.68 |
+|  clk_IBUF_BUFG | p_138_out                                        | rst_IBUF_inst/O  |               18 |             32 |         1.78 |
+|  clk_IBUF_BUFG | p_140_out                                        | rst_IBUF_inst/O  |               19 |             32 |         1.68 |
+|  clk_IBUF_BUFG | p_142_out                                        | rst_IBUF_inst/O  |               18 |             32 |         1.78 |
+|  clk_IBUF_BUFG | p_144_out                                        | rst_IBUF_inst/O  |               19 |             32 |         1.68 |
+|  clk_IBUF_BUFG | p_146_out                                        | rst_IBUF_inst/O  |               19 |             32 |         1.68 |
+|  clk_IBUF_BUFG | p_148_out                                        | rst_IBUF_inst/O  |               19 |             32 |         1.68 |
+|  clk_IBUF_BUFG | p_150_out                                        | rst_IBUF_inst/O  |               19 |             32 |         1.68 |
+|  clk_IBUF_BUFG | p_152_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_154_out                                        | rst_IBUF_inst/O  |               14 |             32 |         2.29 |
+|  clk_IBUF_BUFG | p_156_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_158_out                                        | rst_IBUF_inst/O  |               14 |             32 |         2.29 |
+|  clk_IBUF_BUFG | p_160_out                                        | rst_IBUF_inst/O  |               16 |             32 |         2.00 |
+|  clk_IBUF_BUFG | p_162_out                                        | rst_IBUF_inst/O  |               14 |             32 |         2.29 |
+|  clk_IBUF_BUFG | p_164_out                                        | rst_IBUF_inst/O  |               14 |             32 |         2.29 |
+|  clk_IBUF_BUFG |                                                  |                  |               24 |            226 |         9.42 |
+|  clk_IBUF_BUFG |                                                  | rst_IBUF_inst/O  |              172 |           1274 |         7.41 |
++----------------+--------------------------------------------------+------------------+------------------+----------------+--------------+
+
+

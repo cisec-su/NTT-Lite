@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="small_ntt_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="small_ntt_tb" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="1,515.083 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,624.184 ns"></ZoomEndTime>
+      <Cursor1Time time="1,606.000 ns"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="162"></NameColumnWidth>
+      <ValueColumnWidth column_width="146"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="39" />
+   <wave_markers>
+      <marker label="" time="689865" />
+   </wave_markers>
+   <wvobject type="logic" fp_name="/small_ntt_tb/clk">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/small_ntt_tb/rst">
+      <obj_property name="ElementShortName">rst</obj_property>
+      <obj_property name="ObjectShortName">rst</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/q">
+      <obj_property name="ElementShortName">q[0:0][63:0]</obj_property>
+      <obj_property name="ObjectShortName">q[0:0][63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/psi">
+      <obj_property name="ElementShortName">psi[0:14][63:0]</obj_property>
+      <obj_property name="ObjectShortName">psi[0:14][63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/poly_in">
+      <obj_property name="ElementShortName">poly_in[0:15][63:0]</obj_property>
+      <obj_property name="ObjectShortName">poly_in[0:15][63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/poly_out">
+      <obj_property name="ElementShortName">poly_out[0:15][63:0]</obj_property>
+      <obj_property name="ObjectShortName">poly_out[0:15][63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/cmd">
+      <obj_property name="ElementShortName">cmd[2:0]</obj_property>
+      <obj_property name="ObjectShortName">cmd[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/i_data">
+      <obj_property name="ElementShortName">i_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">i_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/small_ntt_tb/i_valid">
+      <obj_property name="ElementShortName">i_valid</obj_property>
+      <obj_property name="ObjectShortName">i_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/o_data">
+      <obj_property name="ElementShortName">o_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">o_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/small_ntt_tb/o_valid">
+      <obj_property name="ElementShortName">o_valid</obj_property>
+      <obj_property name="ObjectShortName">o_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/i">
+      <obj_property name="ElementShortName">i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">i[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/j">
+      <obj_property name="ElementShortName">j[31:0]</obj_property>
+      <obj_property name="ObjectShortName">j[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/HP">
+      <obj_property name="ElementShortName">HP[31:0]</obj_property>
+      <obj_property name="ObjectShortName">HP[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/FP">
+      <obj_property name="ElementShortName">FP[31:0]</obj_property>
+      <obj_property name="ObjectShortName">FP[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/B">
+      <obj_property name="ElementShortName">B[31:0]</obj_property>
+      <obj_property name="ObjectShortName">B[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/W">
+      <obj_property name="ElementShortName">W[31:0]</obj_property>
+      <obj_property name="ObjectShortName">W[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/N">
+      <obj_property name="ElementShortName">N[31:0]</obj_property>
+      <obj_property name="ObjectShortName">N[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/L">
+      <obj_property name="ElementShortName">L[31:0]</obj_property>
+      <obj_property name="ObjectShortName">L[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/cmd">
+      <obj_property name="ElementShortName">cmd[2:0]</obj_property>
+      <obj_property name="ObjectShortName">cmd[2:0]</obj_property>
+      <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/poly">
+      <obj_property name="ElementShortName">poly[0:15][63:0]</obj_property>
+      <obj_property name="ObjectShortName">poly[0:15][63:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/psi">
+      <obj_property name="ElementShortName">psi[0:14][63:0]</obj_property>
+      <obj_property name="ObjectShortName">psi[0:14][63:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/q">
+      <obj_property name="ElementShortName">q[63:0]</obj_property>
+      <obj_property name="ObjectShortName">q[63:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/ctr0">
+      <obj_property name="ElementShortName">ctr0[4:0]</obj_property>
+      <obj_property name="ObjectShortName">ctr0[4:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/ctr1">
+      <obj_property name="ElementShortName">ctr1[4:0]</obj_property>
+      <obj_property name="ObjectShortName">ctr1[4:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/ctrS">
+      <obj_property name="ElementShortName">ctrS[1:0]</obj_property>
+      <obj_property name="ObjectShortName">ctrS[1:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFA500</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/state">
+      <obj_property name="ElementShortName">state[2:0]</obj_property>
+      <obj_property name="ObjectShortName">state[2:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FF0000</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/poly_ida">
+      <obj_property name="ElementShortName">poly_ida[3:0]</obj_property>
+      <obj_property name="ObjectShortName">poly_ida[3:0]</obj_property>
+      <obj_property name="CustomSignalColor">#00FF00</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/poly_idb">
+      <obj_property name="ElementShortName">poly_idb[3:0]</obj_property>
+      <obj_property name="ObjectShortName">poly_idb[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/psi_idx">
+      <obj_property name="ElementShortName">psi_idx[3:0]</obj_property>
+      <obj_property name="ObjectShortName">psi_idx[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/small_ntt_tb/small_ntt_inst/upoly">
+      <obj_property name="ElementShortName">upoly</obj_property>
+      <obj_property name="ObjectShortName">upoly</obj_property>
+      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/small_ntt_tb/small_ntt_inst/ctr1_inc">
+      <obj_property name="ElementShortName">ctr1_inc</obj_property>
+      <obj_property name="ObjectShortName">ctr1_inc</obj_property>
+      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/small_ntt_tb/small_ntt_inst/sr_i">
+      <obj_property name="ElementShortName">sr_i</obj_property>
+      <obj_property name="ObjectShortName">sr_i</obj_property>
+      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/small_ntt_tb/small_ntt_inst/sr_o">
+      <obj_property name="ElementShortName">sr_o</obj_property>
+      <obj_property name="ObjectShortName">sr_o</obj_property>
+      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/A_i">
+      <obj_property name="ElementShortName">A_i[63:0]</obj_property>
+      <obj_property name="ObjectShortName">A_i[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/B_i">
+      <obj_property name="ElementShortName">B_i[63:0]</obj_property>
+      <obj_property name="ObjectShortName">B_i[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/psi_i">
+      <obj_property name="ElementShortName">psi_i[63:0]</obj_property>
+      <obj_property name="ObjectShortName">psi_i[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/A_o">
+      <obj_property name="ElementShortName">A_o[63:0]</obj_property>
+      <obj_property name="ObjectShortName">A_o[63:0]</obj_property>
+      <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/B_o">
+      <obj_property name="ElementShortName">B_o[63:0]</obj_property>
+      <obj_property name="ObjectShortName">B_o[63:0]</obj_property>
+      <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+</wave_config>

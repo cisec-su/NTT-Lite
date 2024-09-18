@@ -1,0 +1,14 @@
+#-----------------------------------------------------------
+# Vivado v2023.1 (64-bit)
+# SW Build 3865809 on Sun May  7 15:04:56 MDT 2023
+# IP Build 3864474 on Sun May  7 20:36:21 MDT 2023
+# SharedData Build 3865790 on Sun May 07 13:33:03 MDT 2023
+# Start of session at: Tue Sep 17 21:50:42 2024
+# Process ID: 215897
+# Current directory: /home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/vivado/encrypton_lightweight_ntt.runs/synth_1
+# Command line: vivado -log small_ntt.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source small_ntt.tcl
+# Log file: /home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/vivado/encrypton_lightweight_ntt.runs/synth_1/small_ntt.vds
+# Journal file: /home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/vivado/encrypton_lightweight_ntt.runs/synth_1/vivado.jou
+# Running On: toluntosun-Ubuntu, OS: Linux, CPU Frequency: 4658.077 MHz, CPU Physical cores: 16, Host memory: 66555 MB
+#-----------------------------------------------------------
+source small_ntt.tcl -notrace

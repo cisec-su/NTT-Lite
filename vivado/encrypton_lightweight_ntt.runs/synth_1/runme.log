@@ -1,0 +1,530 @@
+
+*** Running vivado
+    with args -log small_ntt.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source small_ntt.tcl
+
+
+****** Vivado v2023.1 (64-bit)
+  **** SW Build 3865809 on Sun May  7 15:04:56 MDT 2023
+  **** IP Build 3864474 on Sun May  7 20:36:21 MDT 2023
+  **** SharedData Build 3865790 on Sun May 07 13:33:03 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source small_ntt.tcl -notrace
+Command: read_checkpoint -auto_incremental -incremental /home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/vivado/encrypton_lightweight_ntt.srcs/utils_1/imports/synth_1/small_ntt.dcp
+INFO: [Vivado 12-5825] Read reference checkpoint from /home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/vivado/encrypton_lightweight_ntt.srcs/utils_1/imports/synth_1/small_ntt.dcp for incremental synthesis
+INFO: [Vivado 12-7989] Please ensure there are no constraint changes
+Command: synth_design -top small_ntt -part xcu280-fsvh2892-2L-e
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xcu280'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xcu280'
+INFO: [Designutils 20-5440] No compile time benefit to using incremental synthesis; A full resynthesis will be run
+INFO: [Designutils 20-4379] Flow is switching to default flow due to incremental criteria not met. If you would like to alter this behaviour and have the flow terminate instead, please set the following parameter config_implementation {autoIncr.Synth.RejectBehavior Terminate}
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 4 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 215930
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:02 ; elapsed = 00:00:03 . Memory (MB): peak = 2487.824 ; gain = 383.738 ; free physical = 34807 ; free virtual = 50827
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'small_ntt' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:1]
+WARNING: [Synth 8-324] index 15 out of range [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:90]
+WARNING: [Synth 8-324] index 15 out of range [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:92]
+WARNING: [Synth 8-324] index 15 out of range [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:90]
+WARNING: [Synth 8-324] index 15 out of range [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:92]
+INFO: [Synth 8-6157] synthesizing module 'butterfly' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/butterfly_parametric_wlm.v:12]
+INFO: [Synth 8-6157] synthesizing module 'shiftreg' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+	Parameter SHIFT bound to: 11 - type: integer 
+	Parameter DATA bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'shiftreg' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+INFO: [Synth 8-6157] synthesizing module 'shiftreg__parameterized0' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+	Parameter SHIFT bound to: 1 - type: integer 
+	Parameter DATA bound to: 64 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'shiftreg__parameterized0' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+INFO: [Synth 8-6157] synthesizing module 'shiftreg__parameterized1' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+	Parameter SHIFT bound to: 10 - type: integer 
+	Parameter DATA bound to: 64 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'shiftreg__parameterized1' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+INFO: [Synth 8-6157] synthesizing module 'shiftreg__parameterized2' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+	Parameter SHIFT bound to: 1 - type: integer 
+	Parameter DATA bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'shiftreg__parameterized2' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+INFO: [Synth 8-6157] synthesizing module 'shiftreg__parameterized3' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+	Parameter SHIFT bound to: 10 - type: integer 
+	Parameter DATA bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'shiftreg__parameterized3' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+INFO: [Synth 8-6157] synthesizing module 'parametric_modadd' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_modadd.v:4]
+INFO: [Synth 8-6155] done synthesizing module 'parametric_modadd' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_modadd.v:4]
+INFO: [Synth 8-6157] synthesizing module 'parametric_modsub' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_modsub.v:4]
+INFO: [Synth 8-6155] done synthesizing module 'parametric_modsub' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_modsub.v:4]
+INFO: [Synth 8-6157] synthesizing module 'parametric_modmul' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_modmul.v:4]
+INFO: [Synth 8-6157] synthesizing module 'parametric_intmul' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_intmul.v:24]
+INFO: [Synth 8-6155] done synthesizing module 'parametric_intmul' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_intmul.v:24]
+INFO: [Synth 8-6157] synthesizing module 'parametric_modred' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_modred.v:2]
+INFO: [Synth 8-6157] synthesizing module 'parametric_wordred' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_wordred.v:4]
+	Parameter I_SIZE bound to: 111 - type: integer 
+	Parameter O_SIZE bound to: 112 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'parametric_wordred' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_wordred.v:4]
+INFO: [Synth 8-6157] synthesizing module 'parametric_wordred__parameterized0' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_wordred.v:4]
+	Parameter I_SIZE bound to: 95 - type: integer 
+	Parameter O_SIZE bound to: 96 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'parametric_wordred__parameterized0' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_wordred.v:4]
+INFO: [Synth 8-6157] synthesizing module 'parametric_wordred__parameterized1' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_wordred.v:4]
+	Parameter I_SIZE bound to: 79 - type: integer 
+	Parameter O_SIZE bound to: 80 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'parametric_wordred__parameterized1' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_wordred.v:4]
+INFO: [Synth 8-6157] synthesizing module 'parametric_wordred__parameterized2' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_wordred.v:4]
+	Parameter I_SIZE bound to: 63 - type: integer 
+	Parameter O_SIZE bound to: 64 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'parametric_wordred__parameterized2' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_wordred.v:4]
+INFO: [Synth 8-6155] done synthesizing module 'parametric_modred' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_modred.v:2]
+INFO: [Synth 8-6157] synthesizing module 'shiftreg__parameterized4' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+	Parameter SHIFT bound to: 9 - type: integer 
+	Parameter DATA bound to: 64 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'shiftreg__parameterized4' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/shiftreg.v:4]
+INFO: [Synth 8-6155] done synthesizing module 'parametric_modmul' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/parametric_modmul.v:4]
+INFO: [Synth 8-6155] done synthesizing module 'butterfly' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/butterfly_parametric_wlm.v:12]
+WARNING: [Synth 8-7071] port 'MUL' of module 'butterfly' is unconnected for instance 'btfu' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:161]
+WARNING: [Synth 8-7071] port 'M64' of module 'butterfly' is unconnected for instance 'btfu' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:161]
+WARNING: [Synth 8-7071] port 'ADD' of module 'butterfly' is unconnected for instance 'btfu' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:161]
+WARNING: [Synth 8-7071] port 'SUB' of module 'butterfly' is unconnected for instance 'btfu' [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:161]
+WARNING: [Synth 8-7023] instance 'btfu' of module 'butterfly' has 14 connections declared, but only 10 given [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:161]
+INFO: [Synth 8-155] case statement is not full and has no default [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:204]
+INFO: [Synth 8-6155] done synthesizing module 'small_ntt' (0#1) [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/small_ntt.v:1]
+WARNING: [Synth 8-6014] Unused sequential element w6r1_reg was removed.  [/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/src/bu/butterfly_parametric_wlm.v:109]
+WARNING: [Synth 8-7129] Port q[16] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[15] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[14] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[13] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[12] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[11] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[10] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[9] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[8] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[7] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[6] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[5] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[4] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[3] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[2] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[1] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[0] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[16] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[15] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[14] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[13] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[12] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[11] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[10] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[9] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[8] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[7] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[6] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[5] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[4] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[3] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[2] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[1] in module parametric_modsub is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[16] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[15] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[14] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[13] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[12] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[11] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[10] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[9] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[8] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[7] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[6] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[5] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[4] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[3] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[2] in module parametric_modadd is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[1] in module parametric_modadd is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:03 ; elapsed = 00:00:04 . Memory (MB): peak = 2564.762 ; gain = 460.676 ; free physical = 34699 ; free virtual = 50721
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2582.574 ; gain = 478.488 ; free physical = 34702 ; free virtual = 50723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xcu280-fsvh2892-2L-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2599.484 ; gain = 495.398 ; free physical = 34702 ; free virtual = 50723
+INFO: [Device 21-403] Loading part xcu280-fsvh2892-2L-e
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:04 ; elapsed = 00:00:05 . Memory (MB): peak = 2599.484 ; gain = 495.398 ; free physical = 34687 ; free virtual = 50709
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   6 Input  128 Bit       Adders := 1     
+	   4 Input  112 Bit       Adders := 1     
+	   4 Input   96 Bit       Adders := 1     
+	   4 Input   80 Bit       Adders := 1     
+	   3 Input   66 Bit       Adders := 1     
+	   2 Input   65 Bit       Adders := 1     
+	   3 Input   65 Bit       Adders := 2     
+	   2 Input   64 Bit       Adders := 1     
+	   4 Input   64 Bit       Adders := 1     
+	   2 Input    5 Bit       Adders := 2     
+	   2 Input    4 Bit       Adders := 1     
+	   3 Input    4 Bit       Adders := 1     
+	   2 Input    2 Bit       Adders := 1     
++---Registers : 
+	              112 Bit    Registers := 1     
+	              111 Bit    Registers := 1     
+	               96 Bit    Registers := 1     
+	               95 Bit    Registers := 1     
+	               80 Bit    Registers := 1     
+	               79 Bit    Registers := 1     
+	               64 Bit    Registers := 46    
+	               63 Bit    Registers := 1     
+	               47 Bit    Registers := 4     
+	               43 Bit    Registers := 20    
+	               32 Bit    Registers := 64    
+	                5 Bit    Registers := 2     
+	                3 Bit    Registers := 1     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 37    
++---Muxes : 
+	   2 Input   64 Bit        Muxes := 12    
+	   2 Input   32 Bit        Muxes := 32    
+	   8 Input   32 Bit        Muxes := 1     
+	   2 Input    5 Bit        Muxes := 2     
+	   8 Input    3 Bit        Muxes := 1     
+	   4 Input    3 Bit        Muxes := 1     
+	   3 Input    3 Bit        Muxes := 1     
+	   2 Input    2 Bit        Muxes := 1     
+	   5 Input    1 Bit        Muxes := 1     
+	   2 Input    1 Bit        Muxes := 63    
+	   8 Input    1 Bit        Muxes := 11    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 9024 (col length:94)
+BRAMs: 4032 (col length: RAMB18 288 RAMB36 144)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
+DSP Report: Generating DSP p0_10, operation Mode is: A*B.
+DSP Report: operator p0_10 is absorbed into DSP p0_10.
+DSP Report: Generating DSP p1_20, operation Mode is: A*B.
+DSP Report: operator p1_20 is absorbed into DSP p1_20.
+DSP Report: Generating DSP p0_20, operation Mode is: A*B.
+DSP Report: operator p0_20 is absorbed into DSP p0_20.
+DSP Report: Generating DSP p1_00, operation Mode is: A*B.
+DSP Report: operator p1_00 is absorbed into DSP p1_00.
+DSP Report: Generating DSP p2_10, operation Mode is: A*B.
+DSP Report: operator p2_10 is absorbed into DSP p2_10.
+DSP Report: Generating DSP p3_20, operation Mode is: A*B.
+DSP Report: operator p3_20 is absorbed into DSP p3_20.
+DSP Report: Generating DSP p2_00, operation Mode is: A*B.
+DSP Report: operator p2_00 is absorbed into DSP p2_00.
+DSP Report: Generating DSP p3_10, operation Mode is: A*B.
+DSP Report: operator p3_10 is absorbed into DSP p3_10.
+DSP Report: Generating DSP p3_00, operation Mode is: A*B.
+DSP Report: operator p3_00 is absorbed into DSP p3_00.
+DSP Report: Generating DSP p0_00, operation Mode is: A*B.
+DSP Report: operator p0_00 is absorbed into DSP p0_00.
+DSP Report: Generating DSP p1_10, operation Mode is: A*B.
+DSP Report: operator p1_10 is absorbed into DSP p1_10.
+DSP Report: Generating DSP p2_20, operation Mode is: A*B.
+DSP Report: operator p2_20 is absorbed into DSP p2_20.
+DSP Report: Generating DSP step1/p0_10, operation Mode is: A*B.
+DSP Report: operator step1/p0_10 is absorbed into DSP step1/p0_10.
+DSP Report: Generating DSP step1/p0_00, operation Mode is: A*B.
+DSP Report: operator step1/p0_00 is absorbed into DSP step1/p0_00.
+DSP Report: Generating DSP step2/p0_10, operation Mode is: A*B.
+DSP Report: operator step2/p0_10 is absorbed into DSP step2/p0_10.
+DSP Report: Generating DSP step2/p0_00, operation Mode is: A*B.
+DSP Report: operator step2/p0_00 is absorbed into DSP step2/p0_00.
+DSP Report: Generating DSP step3/p0_10, operation Mode is: A*B.
+DSP Report: operator step3/p0_10 is absorbed into DSP step3/p0_10.
+DSP Report: Generating DSP step3/p0_00, operation Mode is: A*B.
+DSP Report: operator step3/p0_00 is absorbed into DSP step3/p0_00.
+DSP Report: Generating DSP step4/p0_10, operation Mode is: A*B.
+DSP Report: operator step4/p0_10 is absorbed into DSP step4/p0_10.
+DSP Report: Generating DSP step4/p0_00, operation Mode is: A*B.
+DSP Report: operator step4/p0_00 is absorbed into DSP step4/p0_00.
+WARNING: [Synth 8-7129] Port q[16] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[15] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[14] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[13] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[12] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[11] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[10] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[9] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[8] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[7] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[6] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[5] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[4] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[3] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[2] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[1] in module parametric_modred is either unconnected or has no load
+WARNING: [Synth 8-7129] Port q[0] in module parametric_modred is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:16 ; elapsed = 00:00:17 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33422 ; free virtual = 49449
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+DSP: Preliminary Mapping Report (see note below. The ' indicates corresponding REG is set)
++-------------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name        | DSP Mapping | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++-------------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|parametric_intmul  | A*B         | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 17     | 12     | -      | -      | 29     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 17     | 12     | -      | -      | 29     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 13     | 12     | -      | -      | 25     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 26     | 13     | -      | -      | 39     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 26     | 13     | -      | -      | 39     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_intmul  | A*B         | 17     | 12     | -      | -      | 29     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_wordred | A*B         | 21     | 17     | -      | -      | 38     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_wordred | A*B         | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_wordred | A*B         | 21     | 17     | -      | -      | 38     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_wordred | A*B         | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_wordred | A*B         | 21     | 17     | -      | -      | 38     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_wordred | A*B         | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_wordred | A*B         | 21     | 17     | -      | -      | 38     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|parametric_wordred | A*B         | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 0    | 
++-------------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+Note: The table above is a preliminary report that shows the DSPs inferred at the current stage of the synthesis flow. Some DSP may be reimplemented as non DSP primitives later in the synthesis flow. Multiple instantiated DSPs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:16 ; elapsed = 00:00:18 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33422 ; free virtual = 49449
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:17 ; elapsed = 00:00:19 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33407 ; free virtual = 49434
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:19 ; elapsed = 00:00:21 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33430 ; free virtual = 49457
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:19 ; elapsed = 00:00:21 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33430 ; free virtual = 49457
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:20 ; elapsed = 00:00:21 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33432 ; free virtual = 49459
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:20 ; elapsed = 00:00:21 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33432 ; free virtual = 49458
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:20 ; elapsed = 00:00:21 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33432 ; free virtual = 49458
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:20 ; elapsed = 00:00:21 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33432 ; free virtual = 49458
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Static Shift Register Report:
++------------+--------------------------------------------------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+|Module Name | RTL Name                                         | Length | Width | Reset Signal | Pull out first Reg | Pull out last Reg | SRL16E | SRLC32E | 
++------------+--------------------------------------------------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+|small_ntt   | btfu/sre01/DELAY_BLOCK[8].shift_array_reg[9][63] | 5      | 47    | YES          | NO                 | YES               | 47     | 0       | 
+|small_ntt   | btfu/sre01/DELAY_BLOCK[8].shift_array_reg[9][0]  | 10     | 1     | YES          | NO                 | YES               | 1      | 0       | 
+|small_ntt   | btfu/sre10/DELAY_BLOCK[8].shift_array_reg[9][63] | 10     | 64    | YES          | NO                 | YES               | 64     | 0       | 
+|small_ntt   | shreg/DELAY_BLOCK[9].shift_array_reg[10][0]      | 11     | 1     | YES          | NO                 | YES               | 1      | 0       | 
++------------+--------------------------------------------------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+DSP Final Report (the ' indicates corresponding REG is set)
++-------------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name        | DSP Mapping | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++-------------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|parametric_intmul  | (A*B)'      | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 17     | 12     | -      | -      | 29     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 17     | 12     | -      | -      | 29     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 13     | 12     | -      | -      | 25     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 26     | 13     | -      | -      | 39     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 26     | 13     | -      | -      | 39     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_intmul  | (A*B)'      | 17     | 12     | -      | -      | 29     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_wordred | (A*B)'      | 21     | 17     | -      | -      | 38     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_wordred | (A*B)'      | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_wordred | (A*B)'      | 21     | 17     | -      | -      | 38     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_wordred | (A*B)'      | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_wordred | (A*B)'      | 21     | 17     | -      | -      | 38     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_wordred | (A*B)'      | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_wordred | (A*B)'      | 21     | 17     | -      | -      | 38     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|parametric_wordred | (A*B)'      | 26     | 17     | -      | -      | 43     | 0    | 0    | -    | -    | -     | 0    | 1    | 
++-------------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+----------------+------+
+|      |Cell            |Count |
++------+----------------+------+
+|1     |BUFG            |     1|
+|2     |CARRY8          |   124|
+|3     |DSP_ALU         |    20|
+|4     |DSP_A_B_DATA    |    20|
+|5     |DSP_C_DATA      |    20|
+|6     |DSP_MULTIPLIER  |    20|
+|7     |DSP_M_DATA      |    20|
+|8     |DSP_OUTPUT      |    20|
+|9     |DSP_PREADD      |    20|
+|10    |DSP_PREADD_DATA |    20|
+|11    |LUT1            |    81|
+|12    |LUT2            |   586|
+|13    |LUT3            |  1551|
+|14    |LUT4            |    92|
+|15    |LUT5            |   383|
+|16    |LUT6            |  1142|
+|17    |MUXF7           |   258|
+|18    |MUXF8           |    64|
+|19    |SRL16E          |   113|
+|20    |FDCE            |  1274|
+|21    |FDRE            |  2173|
+|22    |IBUF            |    38|
+|23    |OBUF            |    34|
++------+----------------+------+
+
+Report Instance Areas: 
++------+----------------+-----------------------------------+------+
+|      |Instance        |Module                             |Cells |
++------+----------------+-----------------------------------+------+
+|1     |top             |                                   |  8074|
+|2     |  btfu          |butterfly                          |  5280|
+|3     |    ma0         |parametric_modadd                  |   137|
+|4     |    ms0         |parametric_modsub                  |    56|
+|5     |    mm0         |parametric_modmul                  |  2769|
+|6     |      im        |parametric_intmul                  |  1062|
+|7     |        p0_10   |\btfu/mm0/im/p0_10_funnel          |     8|
+|8     |        p1_20   |\btfu/mm0/im/p0_10_funnel__1       |     8|
+|9     |        p0_20   |\btfu/mm0/im/p0_10_funnel__2       |     8|
+|10    |        p1_00   |\btfu/mm0/im/p0_10_funnel__3       |     8|
+|11    |        p2_10   |\btfu/mm0/im/p0_10_funnel__4       |     8|
+|12    |        p3_20   |\btfu/mm0/im/p0_10_funnel__5       |     8|
+|13    |        p2_00   |\btfu/mm0/im/p0_10_funnel__6       |     8|
+|14    |        p3_10   |\btfu/mm0/im/p0_10_funnel__7       |     8|
+|15    |        p3_00   |\btfu/mm0/im/p0_10_funnel__8       |     8|
+|16    |        p0_00   |\btfu/mm0/im/p0_10_funnel__9       |     8|
+|17    |        p1_10   |\btfu/mm0/im/p0_10_funnel__10      |     8|
+|18    |        p2_20   |\btfu/mm0/im/p0_10_funnel__11      |     8|
+|19    |      mr        |parametric_modred                  |  1660|
+|20    |        step1   |parametric_wordred                 |   405|
+|21    |          p0_10 |\btfu/mm0/im/p0_10_funnel__12      |     8|
+|22    |          p0_00 |\btfu/mm0/im/p0_10_funnel__13      |     8|
+|23    |        step2   |parametric_wordred__parameterized0 |   371|
+|24    |          p0_10 |\btfu/mm0/im/p0_10_funnel__14      |     8|
+|25    |          p0_00 |\btfu/mm0/im/p0_10_funnel__15      |     8|
+|26    |        step3   |parametric_wordred__parameterized1 |   337|
+|27    |          p0_10 |\btfu/mm0/im/p0_10_funnel__16      |     8|
+|28    |          p0_00 |\btfu/mm0/im/p0_10_funnel__17      |     8|
+|29    |        step4   |parametric_wordred__parameterized2 |   348|
+|30    |          p0_10 |\btfu/mm0/im/p0_10_funnel__18      |     8|
+|31    |          p0_00 |\btfu/mm0/im/p0_10_funnel__19      |     8|
+|32    |    sre01       |shiftreg__parameterized1           |   380|
+|33    |    sre10       |shiftreg__parameterized1_0         |   786|
+|34    |  shreg         |shiftreg                           |    92|
++------+----------------+-----------------------------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:20 ; elapsed = 00:00:21 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33432 ; free virtual = 49458
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 77 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:20 ; elapsed = 00:00:21 . Memory (MB): peak = 3840.242 ; gain = 1736.156 ; free physical = 33432 ; free virtual = 49458
+Synthesis Optimization Complete : Time (s): cpu = 00:00:20 ; elapsed = 00:00:21 . Memory (MB): peak = 3840.250 ; gain = 1736.156 ; free physical = 33432 ; free virtual = 49458
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.05 . Memory (MB): peak = 3840.250 ; gain = 0.000 ; free physical = 33716 ; free virtual = 49743
+INFO: [Netlist 29-17] Analyzing 505 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3942.863 ; gain = 0.000 ; free physical = 33691 ; free virtual = 49718
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 59 instances were transformed.
+  BUFG => BUFGCE: 1 instance 
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 20 instances
+  IBUF => IBUF (IBUFCTRL, INBUF): 38 instances
+
+Synth Design complete | Checksum: 5eaf7c1b
+INFO: [Common 17-83] Releasing license: Synthesis
+52 Infos, 77 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:24 ; elapsed = 00:00:24 . Memory (MB): peak = 3942.863 ; gain = 1848.684 ; free physical = 33691 ; free virtual = 49718
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 3409.671; main = 3114.453; forked = 351.362
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4818.117; main = 3942.867; forked = 977.871
+INFO: [Common 17-1381] The checkpoint '/home/toluntosun/Desktop/PhD/fpga_acceleration/encrypton_lightweight_ntt/vivado/encrypton_lightweight_ntt.runs/synth_1/small_ntt.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file small_ntt_utilization_synth.rpt -pb small_ntt_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Tue Sep 17 21:51:14 2024...
