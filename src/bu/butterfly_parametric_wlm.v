@@ -9,7 +9,7 @@
 // -- Modular mul       : 6 cc latency
 // (more features will be added later ...)
 
-module butterfly#(parameter MUL_DELAY = 0)(input clk,rst,
+module butterfly#(parameter MUL_DELAY = 1)(input clk,rst,
                  input CT,               // CT (1) or GS (0) structure
                  input MT,               // CT:0+MT:1--> a+b and (a+b)Psi
                  input [63:0] A,B,
@@ -126,7 +126,7 @@ assign SUB = w3r1;
 
 generate
     if(MUL_DELAY > 0) begin
-        shiftreg #(.SHIFT(MUL_DELAY+1),.DATA(64)) sre30(clk,rst,w5,MUL_RES_DELAY);
+        shiftreg #(.SHIFT(MUL_DELAY),.DATA(64)) sre30(clk,rst,w5,MUL_RES_DELAY);
     end
 endgenerate
 

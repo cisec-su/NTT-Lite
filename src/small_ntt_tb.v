@@ -14,15 +14,18 @@ parameter L = 11;
 localparam LOGWB = $clog2(W/B);
 localparam WBMASK = (1 << LOGWB) - 1;
 
+localparam TB_MODE = `MODE_TWM;
+
 reg clk;
 reg rst;
 
 reg [W-1:0] q [0:0];
-reg [W-1:0] psi      [0:N-2];
+reg [W-1:0] psi      [0:N-1];
 reg [W-1:0] poly_in  [0:N-1];
 reg [W-1:0] poly_out [0:N-1];
 
 reg  [2  :0] cmd;
+reg  [1  :0] mode;
 reg  [B-1:0] i_data;
 reg          i_valid;
 wire [B-1:0] o_data;
@@ -34,27 +37,6 @@ integer i, j;
 always #HP clk = ~clk;
 
 
-/*
-
-module small_ntt
-   #(   
-        parameter N    = 16, // fixed for now
-        parameter W    = 64, // word size, fixed for now
-        parameter B    = 32, // bandwidth, must divide W
-        parameter L    = 9   // BU latency
-    )
-    (
-        input              clk,
-        input              rst,
-        input      [2  :0] cmd,
-        input      [B-1:0] i_data,
-        input              i_valid,
-        output reg [B-1:0] o_data,
-        output reg         o_valid,
-        output reg         busy
-    );
-*/
-
 small_ntt #(
     .N(N),
     .W(W),
@@ -64,6 +46,7 @@ small_ntt #(
     .clk(clk),
     .rst(rst),
     .cmd(cmd),
+    .mode(mode),
     .i_data(i_data),
     .i_valid(i_valid),
     .o_data(o_data),
@@ -76,7 +59,11 @@ initial begin
     $readmemh("../../../../../test/q.txt" , q);
     $readmemh("../../../../../test/psi.txt" , psi);
     $readmemh("../../../../../test/poly_in.txt" , poly_in);
-    $readmemh("../../../../../test/poly_out.txt" , poly_out);
+    
+    if (TB_MODE == `MODE_TWM)
+        $readmemh("../../../../../test/mul_out.txt" , poly_out);
+    else if (TB_MODE == `MODE_NTT)
+        $readmemh("../../../../../test/poly_out.txt" , poly_out);
 
     $display("Simulation started.");
 
@@ -89,6 +76,8 @@ initial begin
     #(HP);
     #(1);
 
+    mode = TB_MODE;
+
     cmd = `CMD_LOAD_Q;
     for (i = 0; i < (W/B); i = i + 1) begin
         i_data = q[0] >> (i*B);
@@ -100,7 +89,7 @@ initial begin
     cmd = `CMD_LOAD_TWIDDLE;
     for (i = 0; i < N; i = i + 1) begin
         for (j = 0; j < (W/B); j = j + 1) begin
-            i_data = (i == (N-1)) ? 0 : psi[i] >> (j*B);
+            i_data = psi[i] >> (j*B);
             i_valid = 1'b1;
             #FP;
         end
