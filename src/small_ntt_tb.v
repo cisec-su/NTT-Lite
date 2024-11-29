@@ -14,7 +14,9 @@ parameter L = 11;
 localparam LOGWB = $clog2(W/B);
 localparam WBMASK = (1 << LOGWB) - 1;
 
-localparam TB_MODE = `MODE_TWM;
+localparam TB_MODE = `MODE_NTT;
+
+localparam N_ = (TB_MODE == `MODE_TWM) ? N/2 : N;
 
 reg clk;
 reg rst;
@@ -27,6 +29,7 @@ reg [W-1:0] poly_out [0:N-1];
 reg  [2  :0] cmd;
 reg  [1  :0] mode;
 reg  [B-1:0] i_data;
+reg          i_read;
 reg          i_valid;
 wire [B-1:0] o_data;
 wire         o_valid;
@@ -49,6 +52,7 @@ small_ntt #(
     .mode(mode),
     .i_data(i_data),
     .i_valid(i_valid),
+    .i_read(i_read),
     .o_data(o_data),
     .o_valid(o_valid),
     .busy(busy)
@@ -60,7 +64,7 @@ initial begin
     $readmemh("../../../../../test/psi.txt" , psi);
     $readmemh("../../../../../test/poly_in.txt" , poly_in);
     
-    if (TB_MODE == `MODE_TWM)
+    if (TB_MODE == `MODE_PWM)
         $readmemh("../../../../../test/mul_out.txt" , poly_out);
     else if (TB_MODE == `MODE_NTT)
         $readmemh("../../../../../test/poly_out.txt" , poly_out);
@@ -77,6 +81,7 @@ initial begin
     #(1);
 
     mode = TB_MODE;
+    i_read = 1'b0;
 
     cmd = `CMD_LOAD_Q;
     for (i = 0; i < (W/B); i = i + 1) begin
@@ -97,7 +102,7 @@ initial begin
     i_valid = 1'b0;
 
     cmd = `CMD_LOAD_POLY;
-    for (i = 0; i < N; i = i + 1) begin
+    for (i = 0; i < N_; i = i + 1) begin
         for (j = 0; j < (W/B); j = j + 1) begin
             i_data = poly_in[i] >> (j*B);
             i_valid = 1'b1;
@@ -117,6 +122,7 @@ initial begin
                 j = 1;
             end
             i = i + 1;
+            i_read = 1'b1;
         end
         else if(!busy) begin
             $display("Simulation finished.");
