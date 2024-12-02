@@ -2,32 +2,37 @@
 
 module small_ntt_tb();
 
-`include "small_ntt_cmd.vh"
+`include "small_ntt.vh"
 
 parameter HP = 5;
 parameter FP = (2*HP);
 parameter B = 32;
-parameter W = 64;
+parameter LOGQ = 64;
 parameter N = 16;
 parameter L = 11;
+parameter EN_PWM_OTF = 1;
+parameter EN_NTT_OTF = 1;
+localparam LOGN = $clog2(N);
 
-localparam LOGWB = $clog2(W/B);
+localparam LOGWB = $clog2(LOGQ/B);
 localparam WBMASK = (1 << LOGWB) - 1;
 
 localparam TB_MODE = `MODE_NTT;
+localparam TB_OTF = 1;
 
-localparam N_ = (TB_MODE == `MODE_TWM) ? N/2 : N;
+localparam N_ = (TB_MODE == `MODE_PWM && TB_OTF == 1) ? N/2 : N;
 
 reg clk;
 reg rst;
 
-reg [W-1:0] q [0:0];
-reg [W-1:0] psi      [0:N-1];
-reg [W-1:0] poly_in  [0:N-1];
-reg [W-1:0] poly_out [0:N-1];
+reg [LOGQ-1:0] q [0:0];
+reg [LOGQ-1:0] psi      [0:N-1];
+reg [LOGQ-1:0] poly_in  [0:N-1];
+reg [LOGQ-1:0] poly_out [0:N-1];
 
 reg  [2  :0] cmd;
 reg  [1  :0] mode;
+reg          otf;
 reg  [B-1:0] i_data;
 reg          i_read;
 reg          i_valid;
@@ -41,15 +46,18 @@ always #HP clk = ~clk;
 
 
 small_ntt #(
-    .N(N),
-    .W(W),
+    .LOGN(LOGN),
+    .LOGQ(LOGQ),
     .B(B),
-    .L(L)
+    .L(L),
+    .EN_NTT_OTF(EN_NTT_OTF),
+    .EN_PWM_OTF(EN_PWM_OTF)
 ) small_ntt_inst (
     .clk(clk),
     .rst(rst),
     .cmd(cmd),
     .mode(mode),
+    .otf(otf),
     .i_data(i_data),
     .i_valid(i_valid),
     .i_read(i_read),
@@ -81,29 +89,47 @@ initial begin
     #(1);
 
     mode = TB_MODE;
+    otf = 1'b0;
     i_read = 1'b0;
 
     cmd = `CMD_LOAD_Q;
-    for (i = 0; i < (W/B); i = i + 1) begin
+    for (i = 0; i < (LOGQ/B); i = i + 1) begin
         i_data = q[0] >> (i*B);
         i_valid = 1'b1;
         #FP;
     end
     i_valid = 1'b0;
 
+    if ((TB_MODE == `MODE_NTT) && TB_OTF) begin
+        otf = 1;
+    end
+    else begin
+        otf = 0;    
+    end
     cmd = `CMD_LOAD_TWIDDLE;
     for (i = 0; i < N; i = i + 1) begin
-        for (j = 0; j < (W/B); j = j + 1) begin
+        for (j = 0; j < (LOGQ/B); j = j + 1) begin
             i_data = psi[i] >> (j*B);
             i_valid = 1'b1;
             #FP;
         end
     end
+    if ((TB_MODE == `MODE_NTT) && TB_OTF) begin
+        for (i = 0; i < LOGN; i = i + 1) begin
+            for (j = 0; j < (LOGQ/B); j = j + 1) begin
+                i_data = psi[i] >> (j*B);
+                i_valid = 1'b1;
+                #FP;
+            end
+        end
+    end
+
     i_valid = 1'b0;
+    otf = TB_OTF;
 
     cmd = `CMD_LOAD_POLY;
     for (i = 0; i < N_; i = i + 1) begin
-        for (j = 0; j < (W/B); j = j + 1) begin
+        for (j = 0; j < (LOGQ/B); j = j + 1) begin
             i_data = poly_in[i] >> (j*B);
             i_valid = 1'b1;
             #FP;
