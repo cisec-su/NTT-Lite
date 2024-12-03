@@ -1,6 +1,6 @@
-`include "small_ntt.vh"
+`include "ntt_lite.vh"
 
-module small_ntt
+module ntt_lite
    #(   
         parameter LOGN       = 4,
         parameter LOGQ       = 64, // word size, fixed for now

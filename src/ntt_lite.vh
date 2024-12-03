@@ -1,5 +1,5 @@
-`ifndef SMALL_NTT_VH
-`define SMALL_NTT_VH
+`ifndef NTT_LITE_VH
+`define NTT_LITE_VH
 
 
 `define CMD_LOAD_Q       3'd1

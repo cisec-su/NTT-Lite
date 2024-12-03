@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 
-module small_ntt_tb();
+module ntt_lite_tb();
 
-`include "small_ntt.vh"
+`include "ntt_lite.vh"
 
 parameter HP = 5;
 parameter FP = (2*HP);
@@ -45,14 +45,14 @@ integer i, j;
 always #HP clk = ~clk;
 
 
-small_ntt #(
+ntt_lite #(
     .LOGN(LOGN),
     .LOGQ(LOGQ),
     .B(B),
     .L(L),
     .EN_NTT_OTF(EN_NTT_OTF),
     .EN_PWM_OTF(EN_PWM_OTF)
-) small_ntt_inst (
+) ntt_lite_inst (
     .clk(clk),
     .rst(rst),
     .cmd(cmd),
