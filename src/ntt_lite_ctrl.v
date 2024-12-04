@@ -35,17 +35,13 @@ module ntt_lite_ctrl
     // Bit-fields for ctrl register
     localparam CTRL_CMD_LSB   = 0;
     localparam CTRL_CMD_MSB   = 3;
-    localparam CTRL_CMD_LEN   = CTRL_CMD_MSB - CTRL_CMD_LSB + 1;
     localparam CTRL_LOGN_LSB  = 4;
     localparam CTRL_LOGN_MSB  = 7;
-    localparam CTRL_LOGN_LEN  = CTRL_LOGN_MSB - CTRL_LOGN_LSB + 1;
     localparam CTRL_MODE_LSB  = 8;
     localparam CTRL_MODE_MSB  = 10;
-    localparam CTRL_MODE_LEN  = CTRL_MODE_MSB - CTRL_MODE_LSB + 1;
     localparam CTRL_OTF_BIT   = 11;
     localparam CTRL_LOGQ_LSB  = 12;
     localparam CTRL_LOGQ_MSB  = 13;
-    localparam CTRL_LOGQ_LEN  = CTRL_LOGQ_MSB - CTRL_LOGQ_LSB + 1;
     localparam CTRL_BUSY_BIT  = 30;
     localparam CTRL_DONE_BIT  = 31;
 
@@ -77,10 +73,10 @@ module ntt_lite_ctrl
     // (Write)
     always @(posedge clk) begin
         if (rst) begin
-            logn  <= {CTRL_LOGN_LEN{1'b0}};
-            mode  <= {CTRL_MODE_LEN{1'b0}};
+            logn  <= 4'd0;
+            mode  <= 3'd0;
             otf   <= 1'b0;
-            logq  <= {CTRL_LOGQ_LEN{1'b0}};
+            logq  <= 2'd0;
             din_addr  <= 32'd0;
             dout_addr <= 32'd0;
             stride    <= 32'd0;
