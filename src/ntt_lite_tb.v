@@ -8,7 +8,7 @@ parameter HP = 5;
 parameter FP = (2*HP);
 parameter B = 32;
 parameter LOGQ = 64;
-parameter N = 16;
+parameter N = 128;
 parameter L = 11;
 parameter EN_PWM_OTF = 1;
 parameter EN_NTT_OTF = 1;
@@ -34,11 +34,12 @@ reg  [2  :0] cmd;
 reg  [1  :0] mode;
 reg          otf;
 reg  [B-1:0] i_data;
-reg          i_read;
+reg          o_read;
 reg          i_valid;
 wire [B-1:0] o_data;
 wire         o_valid;
 wire         busy;
+wire         done;
 
 integer i, j;
 
@@ -60,10 +61,11 @@ ntt_lite #(
     .otf(otf),
     .i_data(i_data),
     .i_valid(i_valid),
-    .i_read(i_read),
+    .o_read(o_read),
     .o_data(o_data),
     .o_valid(o_valid),
-    .busy(busy)
+    .busy(busy),
+    .done(done)
 );
 
 initial begin
@@ -90,7 +92,7 @@ initial begin
 
     mode = TB_MODE;
     otf = 1'b0;
-    i_read = 1'b0;
+    o_read = 1'b0;
 
     cmd = `CMD_LOAD_Q;
     for (i = 0; i < (LOGQ/B); i = i + 1) begin
@@ -148,9 +150,9 @@ initial begin
                 j = 1;
             end
             i = i + 1;
-            i_read = 1'b1;
+            o_read = 1'b1;
         end
-        else if(!busy) begin
+        else if(done) begin
             $display("Simulation finished.");
             if (j == 0)
                 $display("(SUCCESS)");

@@ -12,14 +12,17 @@ module ntt_lite
     (
         input              clk,
         input              rst,
-        input      [2  :0] cmd,
-        input      [1  :0] mode,
+        input      [  2:0] cmd,
+        input      [  1:0] mode,
         input              otf,
+        input      [  3:0] logn,
+        input      [  1:0] logq,
         input      [B-1:0] i_data,
-        input              i_read,
         input              i_valid,
         output reg [B-1:0] o_data,
+        input              o_read,
         output reg         o_valid,
+        output reg         done,
         output reg         busy
     );
 
@@ -72,12 +75,13 @@ reg wpoly, upoly_ntt, upoly_mul, wpsi, wpsi_delta, upsi, wq, pwm_idx;
 reg otf_q, otf_set;
 reg ntt_rcv_bu, pwm_rcv_bu, pwm_otf_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu, pwm_otf_feed_bu;
 reg ctr_all_rst;
+reg set_done, clr_done;
 
 // mode register
 reg [1:0] mode_q;
 reg mode_set;
 
-// mode aliases
+// pseudo modes
 wire pwm_otf;
 wire ntt_otf;
 
@@ -256,6 +260,16 @@ always @(posedge clk) begin
 end
 
 
+always @(posedge clk) begin
+    if (rst)
+        done <= 0;
+    else if (set_done)
+        done <= 1;
+    else if (clr_done)
+        done <= 0;
+end
+
+
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -322,10 +336,12 @@ always @(*) begin
     ntt_otf_rcv_bu = 0;
     pwm_rcv_bu = 0;
     ctr_all_rst = 0;
+    set_done = 0;
+    clr_done = 0;
 
     case (state)
         ST_IDLE: begin
-
+            clr_done = 1;
             if (cmd == `CMD_LOAD_Q) begin
                 next_state = ST_Q;
                 if (i_valid) begin
@@ -363,6 +379,7 @@ always @(*) begin
                 if (ctr0 == ((LOGQ/B) - 1)) begin
                     next_state = ST_IDLE;
                     ctr0_rst = 1;
+                    set_done = 1;
                 end
                 else
                     ctr0_inc = 1;
@@ -374,7 +391,13 @@ always @(*) begin
             if (i_valid) begin
                 wpsi = 1;
                 if (ctr0 == (N * (LOGQ/B) - 1)) begin
-                    next_state = (EN_NTT_OTF && otf_q) ? ST_TWIDDLE_OTF : ST_IDLE;
+                    if (EN_NTT_OTF && otf_q) begin
+                        next_state = ST_TWIDDLE_OTF;
+                    end
+                    else begin
+                        next_state = ST_IDLE;
+                        set_done = 1;
+                    end
                     ctr0_rst = 1;
                 end
                 else
@@ -389,6 +412,7 @@ always @(*) begin
                 if (ctr0 == ((LOGN) * (LOGQ/B) - 1)) begin
                     next_state = ST_IDLE;
                     ctr0_rst = 1;
+                    set_done = 1;
                 end
                 else
                     ctr0_inc = 1;
@@ -481,11 +505,12 @@ always @(*) begin
             o_valid = 1;
             o_data = poly[ctr0 >> LOGWB][(ctr0 & WBMASK) * B +: B];
             busy = 1;
-            if (i_read) begin
+            if (o_read) begin
                 if (pwm_otf && (ctr0 == (((N/2) * (LOGQ/B)) - 1))) begin
                     if (ctr1 == (N/2)) begin
                         next_state = ST_IDLE;
                         ctr_all_rst = 1;
+                        set_done = 1;
                     end
                     else begin
                         next_state = ST_PWM_OTF;
@@ -497,6 +522,7 @@ always @(*) begin
                         if (ctr1 == (N - 1)) begin
                             next_state = ST_IDLE;
                             ctr_all_rst = 1;
+                            set_done = 1;
                         end
                         else begin
                             next_state = ST_NTT_OTF;
@@ -506,6 +532,7 @@ always @(*) begin
                     else begin
                         next_state = ST_IDLE;
                         ctr_all_rst = 1;
+                        set_done = 1;
                     end
                 end
                 else
@@ -532,6 +559,7 @@ always @(*) begin
                 if (ctr1 == (N/2)) begin
                     next_state = ST_IDLE;
                     ctr_all_rst = 1;
+                    set_done = 1;
                 end
 
                 pwm_otf_rcv_bu = 1;
@@ -546,6 +574,7 @@ always @(*) begin
                 if (ctr1 == (N - 1)) begin
                     next_state = ST_IDLE;
                     ctr_all_rst = 1;
+                    set_done = 1;
                 end
 
                 ntt_otf_rcv_bu = 1;
@@ -555,7 +584,7 @@ always @(*) begin
     endcase
 
 
-    // common logic for BU input/output below
+    // common logic for background BU input/output below
 
     if (EN_NTT_OTF && ntt_otf_feed_bu) begin
         if (ctr2 <= (N - 2)) begin
