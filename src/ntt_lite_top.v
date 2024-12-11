@@ -1,32 +1,39 @@
-`timescale 1ns/1ps
+module ntt_lite_top
+   #(
+        parameter BASE_ADDR  = 32'h40001000,
+        parameter LOGN       = 4           ,
+        parameter LOGQ       = 64          ,
+        parameter B          = 32          ,  // bandwidth, must divide LOGQ
+        parameter L          = 11          ,  // BU latency
+        parameter EN_NTT_OTF = 1           ,  // enable NTT OTF
+        parameter EN_PWM_OTF = 0              // enable PWM OTF
+    )
+    (
+        input         wb_cyc_i,
+        input         wb_stb_i,
+        input         wb_we_i,
+        input [31:0]  wb_adr_i,
+        input [31:0]  wb_dat_i,
+        input [3:0]   wb_sel_i,
+        output        wb_stall_o,
+        output        wb_ack_o,
+        output reg [31:0] wb_dat_o,
+        output        wb_err_o,
+        input         wb_rst_i,
+        input         wb_clk_i,
 
-module ntt_acc_wb
-                    (
-input         wb_cyc_i,
-input         wb_stb_i,
-input         wb_we_i,
-input [31:0]  wb_adr_i,
-input [31:0]  wb_dat_i,
-input [3:0]   wb_sel_i,
-output        wb_stall_o,
-output        wb_ack_o,
-output reg [31:0] wb_dat_o,
-output        wb_err_o,
-input         wb_rst_i,
-input         wb_clk_i,
-
-
-output reg        DMA_cyc_i,
-output reg         DMA_stb_i,
-output reg         DMA_we_i,
-output reg [31:0]  DMA_adr_i,
-output reg [31:0]  DMA_dat_i,
-output reg [3:0]   DMA_sel_i,
-input          DMA_stall_o,
-input          DMA_ack_o,
-input  [31:0]  DMA_dat_o,
-input          DMA_err_o,
-output reg         DMA_rst_i);
+        output reg        DMA_cyc_i,
+        output reg         DMA_stb_i,
+        output reg         DMA_we_i,
+        output reg [31:0]  DMA_adr_i,
+        output reg [31:0]  DMA_dat_i,
+        output reg [3:0]   DMA_sel_i,
+        input          DMA_stall_o,
+        input          DMA_ack_o,
+        input  [31:0]  DMA_dat_o,
+        input          DMA_err_o,
+        output reg         DMA_rst_i
+    );
 
 
 parameter HP = 5;
@@ -67,12 +74,68 @@ wire busy;
 wire o_valid;
 wire [31:0] o_data;
 
-small_ntt #(
+/*
+module ntt_lite
+   #(   
+        parameter LOGN       = 4,
+        parameter LOGQ       = 64, // word size, fixed for now
+        parameter B          = 32, // bandwidth, must divide LOGQ
+        parameter L          = 11, // BU latency
+        parameter EN_NTT_OTF = 1,  // enable NTT OTF
+        parameter EN_PWM_OTF = 0   // enable PWM OTF
+    )
+    (
+        input                       clk    ,
+        input                       rst    ,
+        input      [           2:0] cmd    ,
+        input      [           1:0] mode   ,
+        input                       otf    ,
+        input      [   LOGLOGN-1:0] logn   ,
+        input      [           1:0] logq   ,
+        input      [         B-1:0] i_data ,
+        input                       i_valid,
+        output reg [         B-1:0] o_data ,
+        input                       o_read ,
+        output reg                  o_valid,
+        output reg [LOGN+LOGWB-1:0] io_word,
+        output reg                  done   ,
+        output reg                  busy   ,
+        output reg                  error
+    );
+*/
+
+ntt_lite #(
+    .LOGN(LOGN),
+    .LOGQ(LOGQ),
+    .B(B),
+    .L(L),
+    .EN_NTT_OTF(EN_NTT_OTF),
+    .EN_PWM_OTF(EN_PWM_OTF)
+) ntt_lite_inst (
+    .clk(clk),
+    .rst(~rst),
+    .cmd(cmd),
+    .mode(mode),
+    .otf(otf),
+    .logn(logn),
+    .logq(logq),
+    .i_data(i_data),
+    .i_valid(i_valid),
+    .o_data(o_data),
+    .o_read(1'b0),
+    .o_valid(o_valid),
+    .io_word(),
+    .done(done),
+    .busy(busy),
+    .error()
+);
+
+ntt_lite #(
     .N(N),
     .W(W),
     .B(B),
     .L(L)
-) small_ntt_inst (
+) ntt_lite_inst (
     .clk(clk),
     .rst(~rst),
     .cmd(cmd),
@@ -83,6 +146,33 @@ small_ntt #(
     .busy(busy),
     .mode(mode)
 );
+
+
+ntt_lite_ctrl #(
+    .BASE_ADDR(BASE_ADDR)
+) ntt_lite_ctrl_inst (
+    .clk(clk),
+    .rst(rst),
+    .addr(wb_adr_i),
+    .wdata(wb_dat_i),
+    .we(wb_we_i),
+    .re(wb_stb_i),
+    .rdata(wb_dat_o),
+
+    .cmd(cmd),
+    .logn(logn),
+    .mode(mode),
+    .otf(otf),
+    .logq(logq),
+    .din_addr(),
+    .dout_addr(),
+    .stride(),
+
+    .busy(busy),
+    .done(done)
+);
+
+
 
 //WB input registers
 always @(posedge clk or negedge rst)

@@ -13,8 +13,6 @@
 //            s:  0 * * * * * * * *
 //            c:  * * * * * * * * 0  
 
-`timescale 1ns / 1ps
-
 module csa_2
 #(
     parameter K = 33, // bit-size

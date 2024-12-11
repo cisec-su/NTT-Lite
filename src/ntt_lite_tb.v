@@ -9,7 +9,7 @@ parameter FP = (2*HP);
 parameter B = 32;
 parameter LOGQ = 64;
 parameter N = 16;
-parameter L = 11;
+//parameter L = 11;
 parameter EN_PWM_OTF = 1;
 parameter EN_NTT_OTF = 1;
 localparam LOGN = $clog2(N);
@@ -35,6 +35,7 @@ reg  [2  :0] cmd;
 reg  [1  :0] mode;
 reg          otf;
 reg  [LOGLOGN-1:0] logn;
+reg  [1:0] logq;
 reg  [B-1:0] i_data;
 reg          o_read;
 reg          i_valid;
@@ -54,7 +55,7 @@ ntt_lite #(
     .LOGN(LOGN),
     .LOGQ(LOGQ),
     .B(B),
-    .L(L),
+   // .L(L),
     .EN_NTT_OTF(EN_NTT_OTF),
     .EN_PWM_OTF(EN_PWM_OTF)
 ) ntt_lite_inst (
@@ -64,6 +65,7 @@ ntt_lite #(
     .mode(mode),
     .otf(otf),
     .logn(logn),
+    .logq(logq),
     .i_data(i_data),
     .i_valid(i_valid),
     .i_ready(i_ready),
@@ -101,6 +103,7 @@ initial begin
     otf = 1'b0;
     o_read = 1'b0;
     logn = LOGN;
+    logq = (LOGQ == 64) ? `LOGQ_64 : `LOGQ_32;
 
     cmd = `CMD_LOAD_Q;
     #FP;
@@ -128,13 +131,6 @@ initial begin
             #FP;
         end
     end
-    // if ((TB_MODE == `MODE_NTT) && TB_OTF) begin
-    //     while (i_ready) begin
-    //             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
-    //             i_valid = 1'b1;
-    //             #FP;
-    //     end
-    // end
 
     i_valid = 1'b0;
     otf = TB_OTF;

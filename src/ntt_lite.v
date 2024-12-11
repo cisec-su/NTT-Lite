@@ -4,8 +4,9 @@ module ntt_lite
    #(   
         parameter LOGN       = 4,
         parameter LOGQ       = 64,
+        parameter W          = 16,
         parameter B          = 32, // bandwidth, must divide LOGQ
-        parameter L          = 11, // BU latency
+        parameter L          = 13, // BU latency
         parameter EN_NTT_OTF = 1,  // enable NTT OTF
         parameter EN_PWM_OTF = 0   // enable PWM OTF
     )
@@ -34,6 +35,8 @@ localparam N       = 1 << LOGN;
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 localparam LOGWB   = $clog2(LOGQ/B);
 localparam WBMASK  = (1 << LOGWB) - 1;
+localparam QW      = $rtoi($ceil(LOGQ / W));
+localparam LOGQW   = $rtoi($ceil($clog2(QW + 1)));
 
 // states, todo: add glitch protection as HW codes
 localparam ST_IDLE         = 4'd0;
@@ -102,6 +105,9 @@ wire [LOGN+LOGWB-1:0] num_words_over2_m1;
 
 reg  logn_set;
 
+reg [1:0] logq_q;
+reg logq_set;
+
 // error register
 reg error_set;
 
@@ -120,7 +126,7 @@ wire [LOGQ-1:0] psi_i;
 wire [LOGQ-1:0] A_o;
 wire [LOGQ-1:0] B_o;
 wire [LOGQ-1:0] M_o;
-
+wire [LOGQW-1:0] qW;
 reg  sr_i;
 wire sr_o;
 
@@ -157,6 +163,15 @@ assign psi_idx  = ((EN_PWM_OTF && pwm_otf_feed_bu) || (ntt_otf_feed_bu && EN_NTT
 assign A_i      = poly[poly_ida];
 assign B_i      = (ntt_otf_feed_bu && EN_NTT_OTF) ? psi_delta[poly_idb] : (EN_PWM_OTF && pwm_otf_feed_bu) ? psi[poly_idb] : poly[poly_idb];
 assign psi_i    = psi[psi_idx];
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////// modulus conf. for butterfly ///////////////////////
+
+assign qW    = (logq_q == `LOGQ_64) ? 3'd4 : 3'd2;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -319,6 +334,15 @@ end
 
 always @(posedge clk) begin
     if (rst)
+        logq_q <= 0;
+    else if (logq_set)
+        logq_q <= logq;
+end
+
+
+
+always @(posedge clk) begin
+    if (rst)
         done <= 0;
     else if (done_set)
         done <= 1;
@@ -340,27 +364,35 @@ end
 /////////////////////////////////////////////////////////////////////////
 
 
-butterfly btfu
+butterfly 
+    #(
+        .LOGQ(LOGQ),
+        .LOGQH(LOGQ-W),
+        .L(L)
+    ) btfu
     (
-        .clk(clk),
-        .rst(rst),
-        .CT(1),
-        .MT(0),
-        .A(A_i),
-        .B(B_i),
+        .clk(clk  ),
+        .A  (A_i  ),
+        .B  (B_i  ),
         .PSI(psi_i),
-        .q(q),
-        .E(A_o),
-        .O(B_o),
-        .MUL(M_o)
+        .q  (q    ),
+        .qW (qW   ),
+        .E  (A_o  ),
+        .O  (B_o  ),
+        .M  (M_o  )
     );
 
 
-shiftreg #(.SHIFT(L), .DATA(1)) shreg
+shiftreg 
+   #(
+        .SHIFT(L),
+        .DATA (1)
+    ) 
+shreg 
     (
-        .clk(clk),
-        .reset(rst),
-        .data_in(sr_i),
+        .clk     (clk ),
+        .rst     (rst ),
+        .data_in (sr_i),
         .data_out(sr_o)
     );
 
@@ -408,11 +440,13 @@ always @(*) begin
     poly_psi_rst = 0;
     io_word = 0;
     i_ready = 0;
+    logq_set = 0;
 
     case (state)
         ST_IDLE: begin
             if (cmd == `CMD_LOAD_Q) begin
                 next_state = ST_Q;
+                logq_set = 1;
                 if (i_valid) begin
                     ctr0_inc = 1;
                     wq = 1;
@@ -677,7 +711,7 @@ always @(*) begin
             ctr2_inc = 1;
             sr_i = 1;
         end
-        if (((ctr2 + 2) >> (ctr3 + 1)) & 1'b1) begin
+        if ((((ctr2 + 2) >> (ctr3 + 1)) & 1'b1) && ctr2 < n_m2) begin
             ctr3_inc = 1;
         end
     end

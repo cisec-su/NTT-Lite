@@ -9,8 +9,6 @@
 // - SIZE_O: bit-size of output (should be specificed by the user as ~ SIZE_I + log_2(DEPTH))
 // - DEPTH: depth of adder tree
 
-`timescale 1ns / 1ps
-
 module csa_tree
 #
 (
