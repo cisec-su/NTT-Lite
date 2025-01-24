@@ -18,9 +18,9 @@ module ntt_lite_ctrl
         output reg         otf,          // (Read/Write)
         output reg [ 1:0]  logq,         // (Read/Write)
         //data address registers
-        output reg [31:0]  din_addr;     // (Write)
-        output reg [31:0]  dout_addr;    // (Write)
-        output reg [31:0]  stride;       // (Read/Write)
+        output reg [31:0]  din_addr,     // (Write)
+        output reg [31:0]  dout_addr,    // (Write)
+        output reg [31:0]  stride,       // (Read/Write)
 
         input              busy,         // Busy status input
         input              done          // Done status input
@@ -35,6 +35,7 @@ module ntt_lite_ctrl
     // Bit-fields for ctrl register
     localparam CTRL_CMD_LSB   = 0;
     localparam CTRL_CMD_MSB   = 3;
+    localparam CTRL_CMD_LEN   = CTRL_CMD_MSB - CTRL_CMD_LSB + 1;
     localparam CTRL_LOGN_LSB  = 4;
     localparam CTRL_LOGN_MSB  = 7;
     localparam CTRL_MODE_LSB  = 8;
@@ -45,6 +46,8 @@ module ntt_lite_ctrl
     localparam CTRL_BUSY_BIT  = 30;
     localparam CTRL_DONE_BIT  = 31;
 
+
+    reg done_q;
 
     // DONE flag (Clear on Read)
     always @(posedge clk) begin

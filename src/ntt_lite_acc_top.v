@@ -1,53 +1,41 @@
-`timescale 1ns/1ps
+module ntt_lite_acc_top
+    #(
+        parameter BASE_ADDR  = 32'h40001000,
+        parameter LOGN       = 4           ,
+        parameter LOGQ       = 64          ,
+        parameter B          = 32          ,  // bandwidth, must divide LOGQ
+        parameter L          = 13             // BU latency
+    )
+    (
+        input           wb_cyc_i,
+        input           wb_stb_i,
+        input           wb_we_i,
+        input [31:0]    wb_adr_i,
+        input [31:0]    wb_dat_i,
+        input [ 3:0]    wb_sel_i,
+        output          wb_stall_o,
+        output          wb_ack_o,
+        output[31:0]    wb_dat_o,
+        output          wb_err_o,
+        input           wb_rst_i,
+        input           wb_clk_i,
 
-module ntt_acc_top
-                    (
-input         wb_cyc_i,
-input         wb_stb_i,
-input         wb_we_i,
-input [31:0]  wb_adr_i,
-input [31:0]  wb_dat_i,
-input [3:0]   wb_sel_i,
-output        wb_stall_o,
-output        wb_ack_o,
-output  [31:0] wb_dat_o,
-output        wb_err_o,
-input         wb_rst_i,
-input         wb_clk_i,
+        output          dma_cyc_i,
+        output          dma_stb_i,
+        output          dma_we_i,
+        output [31:0]   dma_adr_i,
+        output [31:0]   dma_dat_i,
+        output [ 3:0]   dma_sel_i,
+        input           dma_stall_o,
+        input           dma_ack_o,
+        input  [31:0]   dma_dat_o,
+        input           dma_err_o,
+        output          dma_rst_i
+    );
 
-output          dma_cyc_i,
-output          dma_stb_i,
-output          dma_we_i,
-output  [31:0]  dma_adr_i,
-output  [31:0]  dma_dat_i,
-output  [3:0]   dma_sel_i,
-input              dma_stall_o,
-input              dma_ack_o,
-input  [31:0]      dma_dat_o,
-input              dma_err_o,
-output          dma_rst_i);
-
-
-parameter [31:0] CTRL_ADDR =       32'h00040020;
-parameter [31:0] DIN_ADDR =       32'h00040024;
-parameter [31:0] DOUT_ADDR =    32'h00040028;
-parameter [31:0] STRIDE_ADDR =    32'h0004002C;
-
-// Init NTT_LITE & NTT_CTRL
-
-parameter HP = 5;
-parameter FP = (2*HP);
-parameter B = 32;
-parameter LOGQ = 64;
-parameter N = 64;
-parameter LOGN = 6;
-parameter L = 13;
 localparam LOGWB   = $clog2(LOGQ/B);
 
 wire clk, rst;
-assign clk = wb_clk_i;
-assign rst = wb_rst_i;
-
 //WB & CTRL
 wire [31:0] ctrl_addr;
 wire [31:0] ctrl_wdata;
@@ -87,6 +75,7 @@ wire ctrl_busy;
 wire [31:0] ctrl_din_addr;
 wire [31:0] ctrl_dout_addr;
 
+
 ntt_lite #(
     .LOGN(LOGN),
     .LOGQ(LOGQ),
@@ -116,8 +105,9 @@ ntt_lite #(
     .error()
 );
 
+
 ntt_lite_ctrl #(
-    .BASE_ADDR(32'h00040020)
+    .BASE_ADDR(BASE_ADDR)
 ) ntt_lite_ctrl(
     .clk(clk),
     .rst(rst),
@@ -142,10 +132,11 @@ ntt_lite_ctrl #(
     .stride()
 );
 
-ntt_acc_dma ntt_acc_dma_inst 
+
+ntt_lite_acc_dma ntt_lite_acc_dma_inst 
 (
     .clk         (clk        ),
-    .rst       (rst      ),
+    .rst         (rst      ),
     // dma <-> fsm
     .addr        (mem_addr),//
     .re          (mem_re),//
@@ -170,16 +161,17 @@ ntt_acc_dma ntt_acc_dma_inst
 );
 
 
-ntt_acc_wb ntt_acc_wb_inst (
-    .clk        (clk        ),
-    .rst      (rst      ),
+ntt_lite_acc_wb ntt_lite_acc_wb_inst (
     // wb <-> ctrl
     .addr       (ctrl_addr  ),//
     .wdata      (ctrl_wdata ),//
     .we         (ctrl_we    ),//
     .re         (ctrl_re    ),//
     .rdata      (ctrl_rdata ),//
+    .clk        (clk        ),
+    .rst        (rst        ),
     // wishbone connections
+    .wb_clk_i   (wb_clk_i   ),//
     .wb_cyc_i   (wb_cyc_i   ),//
     .wb_stb_i   (wb_stb_i   ),//
     .wb_we_i    (wb_we_i    ),//
@@ -193,7 +185,8 @@ ntt_acc_wb ntt_acc_wb_inst (
     .wb_rst_i   (wb_rst_i   )//
 );
 
-ntt_acc_fsm ntt_acc_fsm (
+
+ntt_lite_acc_fsm ntt_lite_acc_fsm_inst (
     .clk       (clk),
     .rst       (rst) ,
     // dma <-> fsm
