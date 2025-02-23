@@ -1,55 +1,54 @@
-`timescale 1ns/1ps
+module ntt_lite_acc_fsm
+   #(
+        parameter B = 32,
+        parameter LOGQ = 64,
+        parameter LOGN = 6
+    )
+    (
+        input                      clk,
+        input                      rst,
+ 
+        output reg [31:0]          mem_addr,
+        output reg                 mem_re,
+        output reg                 mem_we,
+        input      [31:0]          mem_i_data,
+        input                      mem_i_valid,
+        input                      mem_i_ready,
+        input                      mem_o_ready,
+        output reg [31:0]          mem_o_data,
+         
+        output reg [B-1:0]         fsm_i_data,
+        input                      fsm_i_ready,
+        output reg                 fsm_i_valid,
+        input      [B-1:0]         fsm_o_data,
+        output reg                 fsm_o_read,
+        input                      fsm_o_valid,
+        input      [LOGN+LOGWB-1:0]fsm_io_word,
+        
+        input      [31:0]          ctrl_din_addr,
+        input      [31:0]          ctrl_dout_addr,
+        
+        input      [3:0]           ctrl_cmd,
+        input      [LOGLOGN-1:0]   ctrl_logn,
+        input      [1:0]           ctrl_logq
+    );
 
-module ntt_acc_fsm(
-        input clk,
-        input rst,
 
-        output reg [31:0] mem_addr,
-        output reg mem_re,
-        output reg mem_we,
-        input [31:0] mem_i_data,
-        input mem_i_valid,
-        input mem_i_ready,
-        input mem_o_ready,
-        output reg [31:0] mem_o_data,
-        
-        output reg [B-1:0] fsm_i_data,
-        input fsm_i_ready,
-        output reg fsm_i_valid,
-        input [B-1:0] fsm_o_data,
-        output reg fsm_o_read,
-        input fsm_o_valid,
-        input [LOGN+LOGWB-1:0] fsm_io_word,
-        
-        input [31:0] ctrl_din_addr,
-        input [31:0] ctrl_dout_addr,
-        
-        input [3:0] ctrl_cmd,
-        input [LOGLOGN-1:0] ctrl_logn,
-        input [1:0] ctrl_logq
-        
-        );
-parameter HP = 5;
-parameter FP = (2*HP);
-parameter B = 32;
-parameter LOGQ = 64;
-parameter N = 64;
-parameter LOGN = 6;
-parameter L = 11;
 localparam LOGWB   = $clog2(LOGQ/B);
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
+localparam [31:0] ST_IDLE = 0;
+localparam [31:0] ST_GET = 1;
+localparam [31:0] ST_BUSY = 2;
+localparam [31:0] ST_PUT = 3;
+localparam [31:0] ST_GET0 = 4;
+localparam [31:0] ST_GET2 = 5;
 
-parameter [31:0] ST_IDLE = 0;
-parameter [31:0] ST_GET = 1;
-parameter [31:0] ST_BUSY = 2;
-parameter [31:0] ST_PUT = 3;
-parameter [31:0] ST_GET0 = 4;
-parameter [31:0] ST_GET2 = 5;
 
 reg [31:0] cnt;
 reg cnt_up, cnt_rst;
 reg [31:0] LIMIT;
 reg [31:0] cstate;
+
 always @(posedge clk or posedge rst)
 begin
     if(rst)
@@ -158,7 +157,7 @@ begin
             mem_addr = ctrl_dout_addr + (cnt << 2);
             mem_we = fsm_o_valid;
             fsm_o_read = mem_o_ready;
-            cnt_up = 1;
+            cnt_up = mem_o_ready;
             if(cnt == (LIMIT-1))
                 cnt_rst = 1;
         end

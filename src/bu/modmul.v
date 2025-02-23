@@ -30,7 +30,9 @@ mac_std #(
         .DSP_B_U(MUL_OP),
         .USE_CSA(1     ),
         .FF_CSA (1     ),
-        .FF_IN  (1     ),
+        .FF_IN_A(1     ),
+        .FF_IN_B(1     ),
+        .FF_IN_E(1     ),
         .FF_OUT (1     ),
         .FF_MUL (1     )
     )

@@ -1,0 +1,82 @@
+module ntt_lite_acc_dma
+    (
+        input              clk         ,
+        input              rst         ,
+
+        input      [31:0]  addr        ,
+        input              re          ,
+        input              we          ,
+        output reg [31:0]  i_data      ,
+        output reg         i_valid     ,
+        output reg         i_ready     ,
+        output reg         o_ready     ,
+        input      [31:0]  o_data      ,
+        // dma connections
+        output reg         dma_cyc_i   ,
+        output reg         dma_stb_i   ,
+        output reg         dma_we_i    ,
+        output reg [31:0]  dma_adr_i   ,
+        output reg [31:0]  dma_dat_i   ,
+        output reg [ 3:0]  dma_sel_i   ,
+        input              dma_stall_o ,
+        input              dma_ack_o   ,
+        input      [31:0]  dma_dat_o   ,
+        input              dma_err_o   ,
+        output reg         dma_rst_i   
+    );
+
+
+
+always @ (*)
+begin
+    dma_cyc_i = 0;
+    dma_stb_i = 0;
+    dma_we_i = 0;
+    dma_adr_i = 0;
+    dma_dat_i = 0;
+    dma_sel_i = 0; 
+    
+    dma_rst_i = rst;
+    
+    i_data = dma_dat_o;
+    
+    i_ready = ~dma_stall_o;
+    o_ready = ~dma_stall_o;
+    
+    if(re)
+    begin
+        dma_cyc_i = 1;
+        dma_stb_i = 1;
+        dma_we_i = 0;
+        dma_adr_i = addr;
+        dma_dat_i = 0;
+        dma_sel_i = 4'hf; 
+    end
+    else if(we)
+    begin
+        dma_cyc_i = 1;
+        dma_stb_i = 1;
+        dma_we_i = 1;
+        dma_adr_i = addr;
+        dma_dat_i = o_data;
+        dma_sel_i = 4'hf; 
+    end
+end
+/*
+always @ (posedge clk)
+begin
+    if(rst)
+        i_valid <= 0;
+    else
+        i_valid <= re & ~dma_stall_o;
+        
+end
+*/
+always @ (*)
+begin
+        i_valid = re & ~dma_stall_o;
+        
+end
+  
+
+endmodule
