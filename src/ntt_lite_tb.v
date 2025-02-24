@@ -18,7 +18,7 @@ localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 localparam LOGQB = $clog2(LOGQ/B);
 localparam QBMASK = (1 << LOGQB) - 1;
 
-localparam TB_MODE = `MODE_NTT;
+localparam TB_MODE = `MODE_PWM;
 localparam TB_OTF = 0;
 
 localparam N_ = (TB_MODE == `MODE_PWM && TB_OTF == 1) ? N/2 : N;

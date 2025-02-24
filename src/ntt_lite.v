@@ -32,16 +32,20 @@ module ntt_lite
         output reg                  error
     );
 
-// some input checks
+///////////////////// input checks //////////////////////////////////////
 
 if (LOGQ != B) begin
     LOGQ_MUST_BE_EQUAL_TO_B();
 end
 
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////// local parameters //////////////////////////////////
+
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
-
-
-
 localparam N       = 1 << LOGN;
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 localparam LOGWB   = $clog2(LOGQ/B);
@@ -49,7 +53,6 @@ localparam WBMASK  = (1 << LOGWB) - 1;
 
 // states, todo: add glitch protection as HW codes
 localparam ST_IDLE         = 4'd0;
-localparam ST_Q            = 4'd1;
 localparam ST_TWIDDLE      = 4'd2;
 localparam ST_POLY_IN      = 4'd3;
 localparam ST_NTT0         = 4'd4;
@@ -60,13 +63,14 @@ localparam ST_PWM1         = 4'd8;
 localparam ST_NTT_OTF      = 4'd10;
 localparam ST_TWIDDLE_OTF  = 4'd11;
 
+/////////////////////////////////////////////////////////////////////////
+
+
+
 
 ///////////////////// signal declarations ///////////////////////////////
 
-
 // data registers
-// reg [LOGQ-1:0] poly [0:N-1];
-reg [LOGQ-1:0] psi  [0:N-1];
 reg [LOGQ-1:0] psi_delta [0:LOGN-1];
 
 // control registers
@@ -122,10 +126,6 @@ reg error_set;
 wire ntt_otf;
 
 // buttefly inputs
-// wire [LOGN-1:0] poly_ida;
-wire [LOGN-1:0] poly_idb;
-// wire [LOGN-1:0] psi_idx;
-
 wire [LOGQ-1:0] A_i;
 wire [LOGQ-1:0] B_i;
 wire [LOGQ-1:0] psi_i;
@@ -154,8 +154,6 @@ wire [LOGQ-1:0] twiddle_ram_din;
 wire [LOGN-1:0] twiddle_ram_raddr;
 wire [LOGQ-1:0] twiddle_ram_dout;
 
-
-
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -182,9 +180,8 @@ assign num_words_over2_m1 = num_words_over2 - 1;
 
 ///////////////////// BU inputs /////////////////////////////////////////
 
-assign poly_idb = ctr3;
 assign A_i      = coeff_ram_p0_dout;
-assign B_i      = (ntt_otf_feed_bu && EN_NTT_OTF) ? psi_delta[poly_idb] : coeff_ram_p1_dout;
+assign B_i      = (ntt_otf_feed_bu && EN_NTT_OTF) ? psi_delta[ctr3] : coeff_ram_p1_dout;
 assign psi_i    = twiddle_ram_dout;
 
 /////////////////////////////////////////////////////////////////////////

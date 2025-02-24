@@ -26,7 +26,6 @@ localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 localparam LOGQH   = LOGQ - 1; // we fix LOGQH as we use Barrett
 
 
-reg  [LOGQH-1:0] q_int;
 wire [LOGQH-1:0] qH;
 wire [LOGQ -1:0] A_shift;
 wire [LOGQ -1:0] MM;
