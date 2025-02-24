@@ -7,26 +7,28 @@ module ntt_lite_tb();
 parameter HP = 5;
 parameter FP = (2*HP);
 parameter B = 32;
-parameter LOGQ = 64;
+parameter LOGQ = 32;
 parameter N = 16;
 //parameter L = 11;
 parameter EN_PWM_OTF = 1;
 parameter EN_NTT_OTF = 1;
 localparam LOGN = $clog2(N);
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
+localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 
 localparam LOGQB = $clog2(LOGQ/B);
 localparam QBMASK = (1 << LOGQB) - 1;
 
 localparam TB_MODE = `MODE_NTT;
-localparam TB_OTF = 1;
+localparam TB_OTF = 0;
 
 localparam N_ = (TB_MODE == `MODE_PWM && TB_OTF == 1) ? N/2 : N;
+
 
 reg clk;
 reg rst;
 
-reg [LOGQ-1:0] q [0:0];
+reg [LOGQ  :0] q [0:1]; // higher address is for mu
 reg [LOGQ-1:0] psi      [0:N-1];
 reg [LOGQ-1:0] poly_in  [0:N-1];
 reg [LOGQ-1:0] poly_out [0:N-1];
@@ -35,7 +37,7 @@ reg  [2  :0] cmd;
 reg  [1  :0] mode;
 reg          otf;
 reg  [LOGLOGN-1:0] logn;
-reg  [1:0] logq;
+reg  [LOGLOGQ-1:0] logq;
 reg  [B-1:0] i_data;
 reg          o_read;
 reg          i_valid;
@@ -66,6 +68,8 @@ ntt_lite #(
     .otf(otf),
     .logn(logn),
     .logq(logq),
+    .q(q[0]),
+    .mu(q[1]),
     .i_data(i_data),
     .i_valid(i_valid),
     .i_ready(i_ready),
@@ -103,9 +107,9 @@ initial begin
     otf = 1'b0;
     o_read = 1'b0;
     logn = LOGN;
-    logq = (LOGQ == 64) ? `LOGQ_64 : `LOGQ_32;
+    logq = 12;
 
-    cmd = `CMD_LOAD_Q;
+/*    cmd = `CMD_LOAD_Q;
     #FP;
     while (!done) begin
         if (i_ready) begin
@@ -114,7 +118,7 @@ initial begin
             #FP;
         end
     end
-    i_valid = 1'b0;
+    i_valid = 1'b0;*/
 
     if ((TB_MODE == `MODE_NTT) && TB_OTF) begin
         otf = 1;

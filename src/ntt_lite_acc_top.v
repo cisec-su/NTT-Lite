@@ -2,7 +2,7 @@ module ntt_lite_acc_top
     #(
         parameter BASE_ADDR  = 32'h40001000,
         parameter LOGN       = 4           ,
-        parameter LOGQ       = 64          ,
+        parameter LOGQ       = 32          ,
         parameter B          = 32          ,  // bandwidth, must divide LOGQ
         parameter L          = 13             // BU latency
     )

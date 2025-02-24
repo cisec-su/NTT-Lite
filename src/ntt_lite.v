@@ -3,10 +3,10 @@
 module ntt_lite
    #(   
         parameter LOGN       = 4,
-        parameter LOGQ       = 64,
+        parameter LOGQ       = 32,
         parameter W          = 16,
         parameter B          = 32, // bandwidth, must divide LOGQ
-        parameter L          = 13, // BU latency
+        parameter L          = 11, // BU latency
         parameter EN_NTT_OTF = 1,  // enable NTT OTF
         parameter EN_PWM_OTF = 0   // enable PWM OTF
     )
@@ -17,7 +17,9 @@ module ntt_lite
         input      [           1:0] mode   ,
         input                       otf    ,
         input      [   LOGLOGN-1:0] logn   ,
-        input      [           1:0] logq   ,
+        input      [   LOGLOGQ-1:0] logq   ,
+        input      [      LOGQ-1:0] q      ,
+        input      [      LOGQ  :0] mu     ,
         input      [         B-1:0] i_data ,
         output reg                  i_ready,
         input                       i_valid,
@@ -31,12 +33,20 @@ module ntt_lite
         output reg                  error
     );
 
+// some input checks
+
+if (LOGQ != B) begin
+    LOGQ_MUST_BE_EQUAL_TO_B();
+end
+
+localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
+
+
+
 localparam N       = 1 << LOGN;
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 localparam LOGWB   = $clog2(LOGQ/B);
 localparam WBMASK  = (1 << LOGWB) - 1;
-localparam QW      = $rtoi($ceil(LOGQ / W));
-localparam LOGQW   = $rtoi($ceil($clog2(QW + 1)));
 
 // states, todo: add glitch protection as HW codes
 localparam ST_IDLE         = 4'd0;
@@ -57,9 +67,8 @@ localparam ST_TWIDDLE_OTF  = 4'd11;
 
 
 // data registers
-reg [LOGQ-1:0] poly [0:N-1];
+// reg [LOGQ-1:0] poly [0:N-1];
 reg [LOGQ-1:0] psi  [0:N-1];
-reg [LOGQ-1:0] q;
 reg [LOGQ-1:0] psi_delta [0:LOGN-1];
 
 // control registers
@@ -77,6 +86,7 @@ reg ctr0_inc, ctr0_rst;
 reg ctr1_inc, ctr1_rst;
 reg ctr2_inc, ctr2_rst;
 reg ctr3_inc, ctr3_rst;
+reg [LOGN+LOGWB-1:0] ctr0_d;
 reg [LOGN-1:0] ctr2_d;
 reg ctr2_d_set;
 reg wpoly, upoly_ntt, upoly_intt, upoly_mul, wpsi, wpsi_delta, upsi, wq, pwm_idx;
@@ -85,6 +95,7 @@ reg otf_q, otf_set;
 reg ntt_rcv_bu, pwm_rcv_bu, pwm_otf_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu, pwm_otf_feed_bu;
 reg ctr_all_rst;
 reg done_set;
+reg o_valid_int;
 
 // mode register
 reg [1:0] mode_q;
@@ -106,9 +117,6 @@ wire [LOGN+LOGWB-1:0] num_words_over2_m1;
 
 reg  logn_set;
 
-reg [1:0] logq_q;
-reg logq_set;
-
 // error register
 reg error_set;
 
@@ -117,9 +125,9 @@ wire pwm_otf;
 wire ntt_otf;
 
 // buttefly inputs
-wire [LOGN-1:0] poly_ida;
+// wire [LOGN-1:0] poly_ida;
 wire [LOGN-1:0] poly_idb;
-wire [LOGN-1:0] psi_idx;
+// wire [LOGN-1:0] psi_idx;
 
 wire [LOGQ-1:0] A_i;
 wire [LOGQ-1:0] B_i;
@@ -127,9 +135,28 @@ wire [LOGQ-1:0] psi_i;
 wire [LOGQ-1:0] A_o;
 wire [LOGQ-1:0] B_o;
 wire [LOGQ-1:0] M_o;
-wire [LOGQW-1:0] qW;
+
 reg  sr_i;
 wire sr_o;
+
+
+// bram signals
+wire coeff_ram_p0_wen;
+wire [LOGN-1:0] coeff_ram_p0_waddr;
+wire [LOGQ-1:0] coeff_ram_p0_din;
+wire [LOGN-1:0] coeff_ram_p0_raddr;
+wire [LOGQ-1:0] coeff_ram_p0_dout;
+wire coeff_ram_p1_wen;
+wire [LOGN-1:0] coeff_ram_p1_waddr;
+wire [LOGQ-1:0] coeff_ram_p1_din;
+wire [LOGN-1:0] coeff_ram_p1_raddr;
+wire [LOGQ-1:0] coeff_ram_p1_dout;
+wire twiddle_ram_wen;
+wire [LOGN-1:0] twiddle_ram_waddr;
+wire [LOGQ-1:0] twiddle_ram_din;
+wire [LOGN-1:0] twiddle_ram_raddr;
+wire [LOGQ-1:0] twiddle_ram_dout;
+
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -156,25 +183,14 @@ assign num_words_over2_m1 = num_words_over2 - 1;
 
 
 
-///////////////////// BU address generation /////////////////////////////
+///////////////////// BU inputs /////////////////////////////////////////
 
-assign maskS    = (1 << ctr2) - 1 ; // can be computed sequentially // not parametric
-assign maskIS    = (1 << (logn_m1 - ctr2)) - 1; // can be computed sequentially 
-assign poly_ida = (mode_q == `MODE_INTT) ? (ctr0 << 1) : ctr0;
-assign poly_idb = (ntt_otf_feed_bu && EN_NTT_OTF) ? ctr3 : (EN_PWM_OTF && pwm_otf_feed_bu) ? (ctr2 + n_over2) : (pwm_idx) ? ctr0 : (mode_q == `MODE_INTT) ? ((ctr0 << 1) + 1) :  (ctr0 + n_over2);
-assign psi_idx  = ((EN_PWM_OTF && pwm_otf_feed_bu) || (ntt_otf_feed_bu && EN_NTT_OTF)) ? ctr2 : (pwm_idx) ? ctr0 : (mode_q == `MODE_INTT) ? ((~maskIS << 1) +(ctr0 & maskIS)) : (maskS + (ctr0 & maskS)); 
-assign A_i      = poly[poly_ida];
-assign B_i      = (ntt_otf_feed_bu && EN_NTT_OTF) ? psi_delta[poly_idb] : (EN_PWM_OTF && pwm_otf_feed_bu) ? psi[poly_idb] : poly[poly_idb];
-assign psi_i    = psi[psi_idx];
-
-/////////////////////////////////////////////////////////////////////////
-
-
-
-
-///////////////////// modulus conf. for butterfly ///////////////////////
-
-assign qW    = (logq_q == `LOGQ_64) ? 3'd4 : 3'd2;
+// assign poly_ida = (mode_q == `MODE_INTT) ? (ctr0 << 1) : ctr0;
+assign poly_idb = (ntt_otf_feed_bu && EN_NTT_OTF) ? ctr3 : (EN_PWM_OTF && pwm_otf_feed_bu) ? (ctr2 + n_over2) : 0;//(pwm_idx) ? ctr0 : (mode_q == `MODE_INTT) ? ((ctr0 << 1) + 1) :  (ctr0 + n_over2);
+// assign psi_idx  = ((EN_PWM_OTF && pwm_otf_feed_bu) || (ntt_otf_feed_bu && EN_NTT_OTF)) ? ctr2 : (pwm_idx) ? ctr0 : (mode_q == `MODE_INTT) ? ((~maskIS << 1) +(ctr0 & maskIS)) : (maskS + (ctr0 & maskS)); 
+assign A_i      = coeff_ram_p0_dout;//poly[poly_ida];
+assign B_i      = (ntt_otf_feed_bu && EN_NTT_OTF) ? psi_delta[poly_idb] : (EN_PWM_OTF && pwm_otf_feed_bu) ? psi[poly_idb] : coeff_ram_p1_dout;//poly[poly_idb];
+assign psi_i    = twiddle_ram_dout;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -191,23 +207,62 @@ assign ntt_otf = (EN_NTT_OTF) ? ((mode_q == `MODE_NTT)||(mode_q == `MODE_INTT)) 
 
 
 
+///////////////////// bram signals //////////////////////////////////////
+
+assign coeff_ram_p0_wen   =  wpoly | upoly_mul | upoly_ntt;
+assign coeff_ram_p0_waddr = (wpoly     ) ?   ctr1       : 
+                            (upoly_mul ) ?   ctr1       : 
+                            (upoly_ntt ) ?  (ctr1 << 1) : 
+                          /*(upoly_intt) ?*/ ctr1 /*   : 0*/;
+assign coeff_ram_p0_din   = (wpoly                   ) ?   i_data : 
+                            (upoly_mul               ) ?   M_o    : 
+                          /*(upoly_ntt | upoly_intt  ) ?*/ A_o  /*: 0*/;
+assign coeff_ram_p0_raddr = (mode_q == `MODE_INTT) ? (ctr0 << 1)  : 
+                                                      ctr0        ;
+
+assign coeff_ram_p1_wen   =  upoly_ntt | upoly_intt;
+assign coeff_ram_p1_waddr = (upoly_ntt ) ?  (ctr1 << 1) + 1   : 
+                          /*(upoly_intt) ?*/ ctr1 + n_over2 /*: 0*/;
+assign coeff_ram_p1_din   =  B_o;
+assign coeff_ram_p1_raddr = (pwm_idx             ) ? ctr0              : 
+                            (mode_q == `MODE_INTT) ? ((ctr0 << 1) + 1) :  
+                                                     (ctr0 + n_over2)  ;
+// todo: check pwm_idx, use `MODE_PWM if posslbe
+
+assign maskS    = (1 << ctr2) - 1 ;
+assign maskIS   = (1 << (logn_m1 - ctr2)) - 1;
+
+assign twiddle_ram_wen   =  wpsi | upsi;
+assign twiddle_ram_waddr = (wpsi) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
+assign twiddle_ram_din   = (wpsi) ? i_data : /*(upsi) ?*/ M_o/* : 0*/;
+assign twiddle_ram_raddr = ((EN_PWM_OTF && pwm_otf_feed_bu) || 
+                            (EN_NTT_OTF && ntt_otf_feed_bu)   ) ?                    ctr2            : 
+                           (pwm_idx                           ) ?                    ctr0            : 
+                           (mode_q == `MODE_INTT              ) ? ((~maskIS << 1) + (ctr0 & maskIS)) : 
+                                                                  (  maskS        + (ctr0 & maskS )) ; 
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
 ///////////////////// Sequential Logic //////////////////////////////////
 
 
-for(genvar i = 0; i < N ;i = i + 1) begin: TWIDDLE_LOAD_GEN
-    for(genvar j = 0; j < (LOGQ/B); j = j + 1) begin
-        always @(posedge clk) begin
-            if (rst) // todo add reset
-                psi[i][j*B +: B] <= 0;
-            else if (poly_psi_rst)
-                psi[i][j*B +: B] <= 0;
-            else if (wpsi && (ctr0 == (i*(LOGQ/B) + j)))
-                psi[i][j*B +: B] <= i_data;
-            else if (upsi && (ctr1 == i))
-                psi[i][j*B +: B] <= M_o >> (j*B);
-        end
-    end
-end
+// for(genvar i = 0; i < N ;i = i + 1) begin: TWIDDLE_LOAD_GEN
+//     for(genvar j = 0; j < (LOGQ/B); j = j + 1) begin
+//         always @(posedge clk) begin
+//              if (rst) // todo add reset
+//                  psi[i][j*B +: B] <= 0;
+//              else if (poly_psi_rst)
+//                  psi[i][j*B +: B] <= 0;
+//             else if (wpsi && (ctr0 == (i*(LOGQ/B) + j)))
+//                 psi[i][j*B +: B] <= i_data;
+//             else if (upsi && (ctr1 == i))
+//                 psi[i][j*B +: B] <= M_o >> (j*B);
+//         end
+//     end
+// end
 
 
 if (EN_NTT_OTF) begin
@@ -222,39 +277,6 @@ if (EN_NTT_OTF) begin
                     psi_delta[i][j*B +: B] <= i_data;
             end
         end
-    end
-end
-
-for(genvar i = 0; i < N ;i = i + 1) begin: POLY_GEN
-    for(genvar j = 0; j < (LOGQ/B); j = j + 1) begin
-        always @(posedge clk) begin
-            if (rst)
-                poly[i][j*B +: B] <= 0;
-            else if (poly_psi_rst)
-                poly[i][j*B +: B] <= 0;
-            else if (upoly_mul && (ctr1 == i))
-                poly[i][j*B +: B] <= M_o >> (j*B);
-            else if (upoly_ntt && ((ctr1 << 1) == i))
-                poly[i][j*B +: B] <= A_o >> (j*B);
-            else if (upoly_ntt && (((ctr1 << 1) + 1) == i))
-                poly[i][j*B +: B] <= B_o >> (j*B);
-            else if (upoly_intt && (ctr1 == i))
-                poly[i][j*B +: B] <= A_o >> (j*B);
-            else if (upoly_intt && ((ctr1 + n_over2) == i) )
-                poly[i][j*B +: B] <= B_o >> (j*B);
-            else if (wpoly && ctr1 == (i*(LOGQ/B) + j))
-                poly[i][j*B +: B] <= i_data;
-        end
-    end
-end
-
-
-for(genvar j = 0; j < (LOGQ/B); j = j + 1) begin
-    always @(posedge clk) begin
-        if (rst)
-            q[j*B +: B] <= 0;
-        else if (wq && ctr0 == j)
-            q[j*B +: B] <= i_data;
     end
 end
 
@@ -299,10 +321,16 @@ if (EN_NTT_OTF) begin
     end
 end
 
+
+always @(posedge clk) begin
+    ctr0_d <= ctr0;
+end
+
+
 always @(posedge clk) begin
     if (rst)
         ctr2_d <= 0;
-    else if (ctr2_d_set)
+    else if (ctr2_d_set) //todo: check if needed
         ctr2_d <= ctr2;
 end
 
@@ -339,14 +367,6 @@ always @(posedge clk) begin
 end
 
 
-always @(posedge clk) begin
-    if (rst)
-        logq_q <= 0;
-    else if (logq_set)
-        logq_q <= logq;
-end
-
-
 
 always @(posedge clk) begin
     if (rst)
@@ -368,41 +388,101 @@ always @(posedge clk) begin
 end
 
 
+always @(posedge clk) begin
+    if (rst)
+        o_valid <= 0;
+    else
+        o_valid <= o_valid_int;
+end
+
+
+
+
+////////////////////////// coefficient ram //////////////////////////////
+
+
+ntt_lite_coeff_ram #(
+    .LOGQ(LOGQ),
+    .LOGN(LOGN)
+) coeff_ram_inst (
+    .clk     (clk               ),
+
+    .p0_wen  (coeff_ram_p0_wen  ),
+    .p0_waddr(coeff_ram_p0_waddr),
+    .p0_din  (coeff_ram_p0_din  ),
+    .p0_raddr(coeff_ram_p0_raddr),
+    .p0_dout (coeff_ram_p0_dout ),
+
+    .p1_wen  (coeff_ram_p1_wen  ),
+    .p1_waddr(coeff_ram_p1_waddr),
+    .p1_din  (coeff_ram_p1_din  ),
+    .p1_raddr(coeff_ram_p1_raddr),
+    .p1_dout (coeff_ram_p1_dout )
+);
+
 /////////////////////////////////////////////////////////////////////////
 
 
-butterfly 
-    #(
-        .LOGQ(LOGQ),
-        .LOGQH(LOGQ-W),
-        .L(L)
-    ) btfu
-    (
-        .clk(clk  ),
-        .mode(mode_q),
-        .A  (A_i  ),
-        .B  (B_i  ),
-        .PSI(psi_i),
-        .q  (q    ),
-        .qW (qW   ),
-        .E  (A_o  ),
-        .O  (B_o  ),
-        .M  (M_o  )
-    );
 
 
-shiftreg 
-   #(
-        .SHIFT(L),
-        .DATA (1)
-    ) 
-shreg 
-    (
-        .clk     (clk ),
-        .rst     (rst ),
-        .data_in (sr_i),
-        .data_out(sr_o)
-    );
+////////////////////////// twiddle ram //////////////////////////////////
+
+
+ntt_lite_twiddle_ram #(
+    .LOGQ(LOGQ),
+    .LOGN(LOGN)
+) twiddle_ram_inst (
+    .clk  (clk              ),
+
+    .wen  (twiddle_ram_wen  ),
+    .waddr(twiddle_ram_waddr),
+    .din  (twiddle_ram_din  ),
+    .raddr(twiddle_ram_raddr),
+    .dout (twiddle_ram_dout )
+);
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+////////////////////////// pipelined bu /////////////////////////////////
+
+butterfly #(
+    .LOGQ(LOGQ ),
+    .L   (L    )
+) btfu (
+    .clk (clk   ),
+    .mode(mode_q),
+    .A   (A_i   ),
+    .B   (B_i   ),
+    .PSI (psi_i ),
+    .Q   (q     ),
+    .MU  (mu    ),
+    .logq(logq  ),
+    .E   (A_o   ),
+    .O   (B_o   ),
+    .M   (M_o   )
+);
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+////////////////////////// shift register ///////////////////////////////
+
+shiftreg #(
+    .SHIFT(L + 1),
+    .DATA (    1)
+) shreg (
+    .clk     (clk ),
+    .rst     (rst ),
+    .data_in (sr_i),
+    .data_out(sr_o)
+);
+
+/////////////////////////////////////////////////////////////////////////
 
 
 
@@ -433,7 +513,7 @@ always @(*) begin
     sr_i = 0;
     busy = 0;
     o_data = {B{1'b0}};
-    o_valid = 0;
+    o_valid_int = 0;
     mode_set = 0;
     otf_set = 0;
     pwm_idx = 0;
@@ -449,19 +529,10 @@ always @(*) begin
     poly_psi_rst = 0;
     io_word = 0;
     i_ready = 0;
-    logq_set = 0;
 
     case (state)
         ST_IDLE: begin
-            if (cmd == `CMD_LOAD_Q) begin
-                next_state = ST_Q;
-                logq_set = 1;
-                if (i_valid) begin
-                    ctr0_inc = 1;
-                    wq = 1;
-                end
-            end
-            else if (cmd == `CMD_LOAD_TWIDDLE) begin
+            if (cmd == `CMD_LOAD_TWIDDLE) begin
                 if (logn > LOGN) begin
                     error_set = 1;
                     next_state = ST_IDLE;
@@ -489,22 +560,6 @@ always @(*) begin
                 ctr_all_rst = 0;
                 poly_psi_rst = 1;
                 done_set = 1;
-            end
-
-        end
-        ST_Q: begin
-
-            io_word = ctr0;
-            i_ready = 1;
-            if (i_valid) begin
-                wq = 1;
-                if (ctr0 == ((LOGQ/B) - 1)) begin
-                    next_state = ST_IDLE;
-                    ctr0_rst = 1;
-                    done_set = 1;
-                end
-                else
-                    ctr0_inc = 1;
             end
 
         end
@@ -631,9 +686,10 @@ always @(*) begin
         
         ST_POLY_OUT: begin
 
-            io_word = ctr0;
-            o_valid = 1;
-            o_data = poly[ctr0 >> LOGWB][(ctr0 & WBMASK) * B +: B];
+            pwm_idx = 1;
+            io_word = ctr0_d;
+            o_valid_int = 1;
+            o_data = coeff_ram_p1_dout;
             busy = 1;
             if (o_read) begin
                 if (pwm_otf && (ctr0 == num_words_over2_m1)) begin
