@@ -10,7 +10,6 @@ parameter B = 32;
 parameter LOGQ = 32;
 parameter N = 16;
 //parameter L = 11;
-parameter EN_PWM_OTF = 1;
 parameter EN_NTT_OTF = 1;
 localparam LOGN = $clog2(N);
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
@@ -58,8 +57,7 @@ ntt_lite #(
     .LOGQ(LOGQ),
     .B(B),
    // .L(L),
-    .EN_NTT_OTF(EN_NTT_OTF),
-    .EN_PWM_OTF(EN_PWM_OTF)
+    .EN_NTT_OTF(EN_NTT_OTF)
 ) ntt_lite_inst (
     .clk(clk),
     .rst(rst),
