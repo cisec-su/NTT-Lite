@@ -93,21 +93,16 @@ reg [LOGN-1:0] ctr2_d;
 reg ctr2_d_set;
 reg wpoly, upoly_ntt, upoly_intt, upoly_mul, wpsi, wpsi_delta, upsi, wq, pwm_idx;
 reg poly_psi_rst;
-reg otf_q, otf_set;
 reg ntt_rcv_bu, pwm_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu;
 reg ctr_all_rst;
 reg done_set;
 reg o_valid_int;
 
-// mode register
-reg [1:0] mode_q;
-reg mode_set;
 
 // logn register
 wire [LOGN  :0] n;
 wire [LOGN-1:0] n_m1;
 wire [LOGN-1:0] n_m2;
-reg  [LOGLOGN-1:0] logn_q;
 wire [LOGLOGN-1:0] logn_m1;
 wire [LOGN   -1:0] n_over2;
 wire [LOGN   -2:0] n_over4;
@@ -117,7 +112,6 @@ wire [LOGN+LOGWB-1:0] num_words_m1;
 wire [LOGN+LOGWB-1:0] num_words_over2;
 wire [LOGN+LOGWB-1:0] num_words_over2_m1;
 
-reg  logn_set;
 
 // error register
 reg error_set;
@@ -161,14 +155,14 @@ wire [LOGQ-1:0] twiddle_ram_dout;
 
 ///////////////////// Comb. Logic for N/LOGN/LOGLOGN ////////////////////
 
-assign n = 1 << logn_q;
+assign n = 1 << logn;
 assign n_m1 = n - 1;
 assign n_m2 = n - 2;
-assign logn_m1 = logn_q - 1;
+assign logn_m1 = logn - 1;
 assign n_over2 = 1 << logn_m1;
 assign n_over4 = n_over2 >> 1;
 assign logn_m1_shft_m1 = n_over2 - 1;
-assign num_words = ((LOGQ/B) << logn_q);
+assign num_words = ((LOGQ/B) << logn);
 assign num_words_m1 = num_words - 1;
 assign num_words_over2 = num_words >> 1;
 assign num_words_over2_m1 = num_words_over2 - 1;
@@ -191,7 +185,7 @@ assign psi_i    = twiddle_ram_dout;
 
 ///////////////////// Pseudo Modes //////////////////////////////////////
 
-assign ntt_otf = (EN_NTT_OTF) ? ((mode_q == `MODE_NTT)||(mode_q == `MODE_INTT)) && (otf_q) : 0;
+assign ntt_otf = (EN_NTT_OTF) ? ((mode == `MODE_NTT)||(mode == `MODE_INTT)) && (otf) : 0;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -208,7 +202,7 @@ assign coeff_ram_p0_waddr = (wpoly     ) ?   ctr1       :
 assign coeff_ram_p0_din   = (wpoly                   ) ?   i_data : 
                             (upoly_mul               ) ?   M_o    : 
                           /*(upoly_ntt | upoly_intt  ) ?*/ A_o  /*: 0*/;
-assign coeff_ram_p0_raddr = (mode_q == `MODE_INTT) ? (ctr0 << 1)  : 
+assign coeff_ram_p0_raddr = (mode == `MODE_INTT) ? (ctr0 << 1)  : 
                                                       ctr0        ;
 
 assign coeff_ram_p1_wen   =  upoly_ntt | upoly_intt;
@@ -216,7 +210,7 @@ assign coeff_ram_p1_waddr = (upoly_ntt ) ?  (ctr1 << 1) + 1   :
                           /*(upoly_intt) ?*/ ctr1 + n_over2 /*: 0*/;
 assign coeff_ram_p1_din   =  B_o;
 assign coeff_ram_p1_raddr = (pwm_idx             ) ? ctr0              : 
-                            (mode_q == `MODE_INTT) ? ((ctr0 << 1) + 1) :  
+                            (mode == `MODE_INTT) ? ((ctr0 << 1) + 1) :  
                                                      (ctr0 + n_over2)  ;
 // todo: check pwm_idx, use `MODE_PWM if posslbe
 
@@ -228,7 +222,7 @@ assign twiddle_ram_waddr = (wpsi) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
 assign twiddle_ram_din   = (wpsi) ? i_data : /*(upsi) ?*/ M_o/* : 0*/;
 assign twiddle_ram_raddr = (EN_NTT_OTF && ntt_otf_feed_bu) ?                    ctr2            : 
                            (pwm_idx                      ) ?                    ctr0            : 
-                           (mode_q == `MODE_INTT         ) ? ((~maskIS << 1) + (ctr0 & maskIS)) : 
+                           (mode == `MODE_INTT         ) ? ((~maskIS << 1) + (ctr0 & maskIS)) : 
                                                              (  maskS        + (ctr0 & maskS )) ; 
 
 /////////////////////////////////////////////////////////////////////////
@@ -319,31 +313,6 @@ end
 
 always @(posedge clk) begin
     if (rst)
-        mode_q <= 0;
-    else if (mode_set)
-        mode_q <= mode;
-end
-
-
-always @(posedge clk) begin
-    if (rst)
-        otf_q <= 0;
-    else if (otf_set)
-        otf_q <= otf;
-end
-
-
-always @(posedge clk) begin
-    if (rst)
-        logn_q <= 0;
-    else if (logn_set)
-        logn_q <= logn;
-end
-
-
-
-always @(posedge clk) begin
-    if (rst)
         done <= 0;
     else if (done_set)
         done <= 1;
@@ -427,7 +396,7 @@ butterfly #(
     .L   (L    )
 ) btfu (
     .clk (clk   ),
-    .mode(mode_q),
+    .mode(mode),
     .A   (A_i   ),
     .B   (B_i   ),
     .PSI (psi_i ),
@@ -488,8 +457,6 @@ always @(*) begin
     busy = 0;
     o_data = {B{1'b0}};
     o_valid_int = 0;
-    mode_set = 0;
-    otf_set = 0;
     pwm_idx = 0;
     ntt_rcv_bu = 0;
     ntt_otf_feed_bu = 0;
@@ -511,8 +478,6 @@ always @(*) begin
                 end
                 else begin
                     next_state = ST_TWIDDLE;
-                    otf_set = 1;
-                    logn_set = 1;
                 end
             end
             else if (cmd == `CMD_LOAD_POLY) begin
@@ -522,9 +487,6 @@ always @(*) begin
                 end
                 else begin
                     next_state = ST_POLY_IN;
-                    mode_set = 1;
-                    otf_set = 1;
-                    logn_set = 1;
                 end
             end
             else if (cmd == `CMD_RST) begin
@@ -542,7 +504,7 @@ always @(*) begin
             if (i_valid) begin
                 wpsi = 1;
                 if (ctr0 == num_words_m1) begin
-                    if (EN_NTT_OTF && otf_q) begin
+                    if (EN_NTT_OTF && otf) begin
                         next_state = ST_TWIDDLE_OTF;
                     end
                     else begin
@@ -579,7 +541,7 @@ always @(*) begin
             if (i_valid) begin
                 wpoly = 1;
                 if (ctr1 == num_words_m1) begin
-                    next_state = ((mode_q == `MODE_NTT)||(mode_q == `MODE_INTT)) ? ST_NTT0 : (mode_q == `MODE_PWM) ? ST_PWM0 : ST_IDLE;
+                    next_state = ((mode == `MODE_NTT)||(mode == `MODE_INTT)) ? ST_NTT0 : (mode == `MODE_PWM) ? ST_PWM0 : ST_IDLE;
                     ctr1_rst = 1;
                 end
                 else
@@ -592,7 +554,7 @@ always @(*) begin
             pwm_idx = 1;
             busy = 1;
             sr_i = 1;
-            if (((otf_q == 1) && (ctr0 == logn_m1_shft_m1)) || (ctr0 == n_m1)) begin
+            if (((otf == 1) && (ctr0 == logn_m1_shft_m1)) || (ctr0 == n_m1)) begin
                 ctr0_rst = 1;
                 next_state = ST_PWM1;
                 ctr2_rst = 1;
@@ -606,7 +568,7 @@ always @(*) begin
         ST_PWM1: begin
 
             busy = 1;
-            if (((otf_q == 1) && (ctr1 == logn_m1_shft_m1)) || (ctr1 == n_m1)) begin
+            if (((otf == 1) && (ctr1 == logn_m1_shft_m1)) || (ctr1 == n_m1)) begin
                 next_state = ST_POLY_OUT;
             end
 
@@ -642,7 +604,7 @@ always @(*) begin
                     next_state = ST_POLY_OUT;
             end
 
-            if (otf_q == 1 && (ctr2_d == logn_m1))begin
+            if (otf == 1 && (ctr2_d == logn_m1))begin
                 ntt_otf_feed_bu = 1;
             end
             ntt_rcv_bu = 1;
