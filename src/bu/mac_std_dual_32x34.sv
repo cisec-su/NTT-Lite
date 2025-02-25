@@ -1,0 +1,274 @@
+`include "mac_std_dual_32x34.svh"
+
+module mac_std_dual_32x34
+   #(  
+        parameter mode_e_t MODE_E  = DIS_E ,
+        parameter          FF_IN_A = 1     ,
+        parameter          FF_IN_B = 1     ,
+        parameter          FF_IN_E = 0     ,
+        parameter          FF_MUL  = 1     ,
+        parameter          FF_OUT  = 1
+    )
+    (
+        input               clk     ,
+        input   mode_mul_t  mode_mul,
+        input   [LOGA-1:0]  A       ,
+        input   [LOGB-1:0]  B       ,
+        input   [LOGE-1:0]  E       ,
+        output  [LOGC-1:0]  C
+    );
+
+///////////////////////////// parameters ////////////////////////////////
+
+localparam mac_std_dual_32x34_params_t params = {MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT};
+localparam LOGA = mac_std_dual_32x34_loga(params);
+localparam LOGB = mac_std_dual_32x34_logb(params);
+localparam LOGE = mac_std_dual_32x34_loge(params);
+localparam LOGA0 = mac_std_dual_32x34_loga0(params);
+localparam LOGB0 = mac_std_dual_32x34_logb0(params);
+localparam LOGE0 = mac_std_dual_32x34_loge0(params);
+localparam LOGD  = mac_std_dual_32x34_logd(params);
+localparam LOGD0 = mac_std_dual_32x34_logd0(params);
+localparam LOGC = mac_std_dual_32x34_logc(params);
+localparam LOGC0 = mac_std_dual_32x34_logc0(params);
+localparam LAT  = mac_std_dual_32x34_lat(params);
+localparam DSP_A_U = LOGA0;
+localparam DSP_B_U = LOGB0;
+localparam DSP_M_U = DSP_A_U + DSP_B_U;
+
+localparam N_A = ((LOGA - 1) / DSP_A_U) + 1;
+localparam N_B = ((LOGB - 1) / DSP_B_U) + 1;
+localparam N_D = N_A + N_B - 1;
+
+integer i;
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////////// signals ///////////////////////////////////
+
+wire [DSP_A_U-1:0] A_i   [0:N_A-1];
+reg  [DSP_A_U-1:0] A_i_q [0:N_A-1];
+wire [DSP_A_U-1:0] A_i_mx[0:N_A-1];
+
+wire [DSP_B_U-1:0] B_i   [0:N_B-1];
+reg  [DSP_B_U-1:0] B_i_q [0:N_B-1];
+wire [DSP_B_U-1:0] B_i_mx[0:N_B-1];
+
+
+generate
+    if (MODE_E != 0) begin : E_int
+        localparam E_len = 2;
+        wire [LOGE-1:0] mx [0:E_len-1];
+        reg  [LOGE-1:0] q  [0:E_len-1];
+    end
+endgenerate
+
+(* use_dsp = "yes" *) wire [DSP_M_U-1:0] P [0:N_A-1][0:N_B-1];
+reg  [DSP_M_U-1:0] P_q [0:N_A-1][0:N_B-1];
+wire [DSP_M_U-1:0] P_mx[0:N_A-1][0:N_B-1];
+
+reg  [LOGD-1:0] D [0:N_D-1];
+for (genvar i = 0; i < N_D; i = i + 1) begin
+    initial D[i] = 0;
+end
+
+(* use_dsp = "no" *) reg  [LOGC-1:0] S;
+reg  [LOGC-1:0] S_q;
+
+reg [LOGD0+1:0] T;
+
+generate
+    reg  [LOGC-1:0] S_int;
+endgenerate
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////////// partitioning //////////////////////////////
+
+for (genvar i = 0; i < N_A; i = i + 1) begin
+    if (i == (N_A - 1)) begin
+        assign A_i[i] = A[LOGA - 1 : DSP_A_U*i];
+    end
+    else begin
+        assign A_i[i] = A[DSP_A_U*i +: DSP_A_U];
+    end
+end
+
+for (genvar i = 0; i < N_B; i = i + 1) begin
+    if (i == (N_B - 1)) begin
+        assign B_i[i] = B[LOGB - 1 : DSP_B_U*i];
+    end
+    else begin
+        assign B_i[i] = B[DSP_B_U*i +: DSP_B_U];
+    end
+end
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////////// pipeline steps ////////////////////////////
+
+for (genvar i = 0; i < N_A; i = i + 1) begin
+    assign A_i_mx[i] = (FF_IN_A) ? A_i_q[i] : A_i[i];
+end
+
+for (genvar i = 0; i < N_B; i = i + 1) begin
+    assign B_i_mx[i] = (FF_IN_B) ? B_i_q[i] : B_i[i];
+end
+
+if (MODE_E != 0) begin
+    assign E_int.mx[0] = (FF_IN_E) ? E_int.q[0] : E;
+end
+
+for (genvar i = 0; i < N_A; i = i + 1) begin
+    for (genvar j = 0; j < N_B; j = j + 1) begin
+        assign P_mx[i][j] = (FF_MUL) ? P_q[i][j] : P[i][j];
+    end
+end
+
+if (MODE_E != 0) begin
+    assign E_int.mx[1]   = (FF_MUL) ? E_int.q[1] : E_int.mx[0];
+end
+
+assign C = (FF_OUT) ? S_q : S;
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////////// multiplication ////////////////////////////
+
+for (genvar i = 0; i < N_A; i = i + 1) begin
+    for (genvar j = 0; j < N_B; j = j + 1) begin
+        assign P[i][j] = A_i_mx[i] * B_i_mx[j];
+    end
+end
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////////// diagonal assignments //////////////////////
+
+for (genvar i = 0; i < N_A; i = i + 1) begin
+    for (genvar j = 0; j < N_B; j = j + 1) begin
+        always @(*) begin
+            if (((i*DSP_A_U) + (j*DSP_B_U) + DSP_M_U) <= (LOGA+LOGB)) begin
+                D[(i-j+N_D) % N_D][(i*DSP_A_U) + (j*DSP_B_U) +: DSP_M_U] = P_mx[i][j];
+            end
+            else begin
+                D[(i-j+N_D) % N_D][LOGA + LOGB - 1 : (i*DSP_A_U) + (j*DSP_B_U)] = P_mx[i][j];
+            end
+        end
+
+    end
+end
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////////// summation /////////////////////////////////
+
+always @(*) begin
+    S_int = 0;
+    T = P_mx[1][0] + ((mode_mul == MUL_DOUBLE) ? (P_mx[0][1] << (DSP_B_U - DSP_A_U)) : P_mx[0][1]);
+    case (mode_mul)
+        MUL_DOUBLE:
+        begin
+            S_int = (T << (DSP_A_U)) + D[0];
+        end
+        MUL_DUAL:
+        begin
+            S_int[LOGC0-1:    0] = P_mx[0][0];
+            S_int[LOGC -1:LOGC0] = P_mx[1][1];
+        end
+        MUL_POLY:
+        begin
+            S_int[LOGC0-1:    0] = P_mx[0][0] + P_mx[1][1];
+            S_int[LOGC -1:LOGC0] = T;
+        end
+    endcase
+end
+
+generate
+    if (MODE_E == 0) begin
+        always @(*) begin
+            S = S_int;
+        end
+    end
+    else if (MODE_E == 2) begin
+        always @(*) begin
+            S[LOGC0  :    0] = S_int[LOGC0-1:    0] - ((mode_mul == MUL_DOUBLE) ? E_int.mx[1][LOGC0-1:0]                : E_int.mx[1][LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
+            S[LOGC -1:LOGC0] = S_int[LOGC -1:LOGC0] - ((mode_mul == MUL_DOUBLE) ? E_int.mx[1][LOGE -1:LOGC0] + S[LOGC0] : E_int.mx[1][LOGE -1:LOGE0]);
+        end
+    end
+endgenerate
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////////// sequential logic //////////////////////////
+
+generate
+    if (FF_IN_A) begin
+        for (genvar i = 0; i < N_A; i = i + 1) begin
+            always @(posedge clk) begin
+                A_i_q[i] <= A_i[i];
+            end
+        end
+    end
+    if (FF_IN_B) begin
+        for (genvar i = 0; i < N_B; i = i + 1) begin
+            always @(posedge clk) begin
+                B_i_q[i] <= B_i[i];
+            end
+        end
+    end
+    if (FF_IN_E) begin
+        if (MODE_E != 0) begin
+            always @(posedge clk) begin
+                E_int.q[0] <= E;
+            end
+        end
+    end
+
+    if (FF_MUL) begin
+        for (genvar i = 0; i < N_A; i = i + 1) begin
+            for (genvar j = 0; j < N_B; j = j + 1) begin
+                always @(posedge clk) begin
+                    P_q[i][j] <= P[i][j];
+                end
+            end
+        end
+        if (MODE_E != 0) begin
+            always @(posedge clk) begin
+                E_int.q[1] <= E_int.mx[0];
+            end
+        end
+    end
+
+    if (FF_OUT) begin
+        always @(posedge clk) begin
+            S_q <= S;
+        end
+    end
+endgenerate
+
+/////////////////////////////////////////////////////////////////////////
+
+
+endmodule
