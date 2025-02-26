@@ -3,211 +3,222 @@
    <wave_state>
    </wave_state>
    <db_ref_list>
-      <db_ref path="small_ntt_tb_behav.wdb" id="1">
+      <db_ref path="ntt_lite_tb_behav.wdb" id="1">
          <top_modules>
+            <top_module name="\$unit_barrett_sv_1648560815 " />
             <top_module name="glbl" />
-            <top_module name="small_ntt_tb" />
+            <top_module name="ntt_lite_tb" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1,515.083 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,624.184 ns"></ZoomEndTime>
-      <Cursor1Time time="1,606.000 ns"></Cursor1Time>
+      <ZoomStartTime time="326.666 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,134.667 ns"></ZoomEndTime>
+      <Cursor1Time time="1,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="162"></NameColumnWidth>
-      <ValueColumnWidth column_width="146"></ValueColumnWidth>
+      <ValueColumnWidth column_width="134"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="39" />
+   <WVObjectSize size="19" />
    <wave_markers>
       <marker label="" time="689865" />
    </wave_markers>
-   <wvobject type="logic" fp_name="/small_ntt_tb/clk">
-      <obj_property name="ElementShortName">clk</obj_property>
-      <obj_property name="ObjectShortName">clk</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0">
+      <obj_property name="ElementShortName">ctr0[3:0]</obj_property>
+      <obj_property name="ObjectShortName">ctr0[3:0]</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/small_ntt_tb/rst">
-      <obj_property name="ElementShortName">rst</obj_property>
-      <obj_property name="ObjectShortName">rst</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/state">
+      <obj_property name="ElementShortName">state[3:0]</obj_property>
+      <obj_property name="ObjectShortName">state[3:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/q">
-      <obj_property name="ElementShortName">q[0:0][63:0]</obj_property>
-      <obj_property name="ObjectShortName">q[0:0][63:0]</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/A_i">
+      <obj_property name="ElementShortName">A_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">A_i[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/psi">
-      <obj_property name="ElementShortName">psi[0:14][63:0]</obj_property>
-      <obj_property name="ObjectShortName">psi[0:14][63:0]</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/B_i">
+      <obj_property name="ElementShortName">B_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">B_i[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/poly_in">
-      <obj_property name="ElementShortName">poly_in[0:15][63:0]</obj_property>
-      <obj_property name="ObjectShortName">poly_in[0:15][63:0]</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/psi_i">
+      <obj_property name="ElementShortName">psi_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">psi_i[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/poly_out">
-      <obj_property name="ElementShortName">poly_out[0:15][63:0]</obj_property>
-      <obj_property name="ObjectShortName">poly_out[0:15][63:0]</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/A_o">
+      <obj_property name="ElementShortName">A_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">A_o[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/cmd">
-      <obj_property name="ElementShortName">cmd[2:0]</obj_property>
-      <obj_property name="ObjectShortName">cmd[2:0]</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/B_o">
+      <obj_property name="ElementShortName">B_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">B_o[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/i_data">
-      <obj_property name="ElementShortName">i_data[31:0]</obj_property>
-      <obj_property name="ObjectShortName">i_data[31:0]</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm0/A">
+      <obj_property name="ElementShortName">A[31:0]</obj_property>
+      <obj_property name="ObjectShortName">A[31:0]</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/small_ntt_tb/i_valid">
-      <obj_property name="ElementShortName">i_valid</obj_property>
-      <obj_property name="ObjectShortName">i_valid</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/o_data">
-      <obj_property name="ElementShortName">o_data[31:0]</obj_property>
-      <obj_property name="ObjectShortName">o_data[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/small_ntt_tb/o_valid">
-      <obj_property name="ElementShortName">o_valid</obj_property>
-      <obj_property name="ObjectShortName">o_valid</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/i">
-      <obj_property name="ElementShortName">i[31:0]</obj_property>
-      <obj_property name="ObjectShortName">i[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/j">
-      <obj_property name="ElementShortName">j[31:0]</obj_property>
-      <obj_property name="ObjectShortName">j[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/HP">
-      <obj_property name="ElementShortName">HP[31:0]</obj_property>
-      <obj_property name="ObjectShortName">HP[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/FP">
-      <obj_property name="ElementShortName">FP[31:0]</obj_property>
-      <obj_property name="ObjectShortName">FP[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/B">
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm0/B">
       <obj_property name="ElementShortName">B[31:0]</obj_property>
       <obj_property name="ObjectShortName">B[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/W">
-      <obj_property name="ElementShortName">W[31:0]</obj_property>
-      <obj_property name="ObjectShortName">W[31:0]</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm0/C">
+      <obj_property name="ElementShortName">C[31:0]</obj_property>
+      <obj_property name="ObjectShortName">C[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/N">
-      <obj_property name="ElementShortName">N[31:0]</obj_property>
-      <obj_property name="ObjectShortName">N[31:0]</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/A">
+      <obj_property name="ElementShortName">A[31:0]</obj_property>
+      <obj_property name="ObjectShortName">A[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/L">
-      <obj_property name="ElementShortName">L[31:0]</obj_property>
-      <obj_property name="ObjectShortName">L[31:0]</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/B">
+      <obj_property name="ElementShortName">B[31:0]</obj_property>
+      <obj_property name="ObjectShortName">B[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/cmd">
-      <obj_property name="ElementShortName">cmd[2:0]</obj_property>
-      <obj_property name="ObjectShortName">cmd[2:0]</obj_property>
-      <obj_property name="CustomSignalColor">#00FFFF</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/C">
+      <obj_property name="ElementShortName">C[31:0]</obj_property>
+      <obj_property name="ObjectShortName">C[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/poly">
-      <obj_property name="ElementShortName">poly[0:15][63:0]</obj_property>
-      <obj_property name="ObjectShortName">poly[0:15][63:0]</obj_property>
-      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/qH">
+      <obj_property name="ElementShortName">qH[31:0]</obj_property>
+      <obj_property name="ObjectShortName">qH[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/psi">
-      <obj_property name="ElementShortName">psi[0:14][63:0]</obj_property>
-      <obj_property name="ObjectShortName">psi[0:14][63:0]</obj_property>
-      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/A">
+      <obj_property name="ElementShortName">A[31:0]</obj_property>
+      <obj_property name="ObjectShortName">A[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/q">
-      <obj_property name="ElementShortName">q[63:0]</obj_property>
-      <obj_property name="ObjectShortName">q[63:0]</obj_property>
-      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/B">
+      <obj_property name="ElementShortName">B[31:0]</obj_property>
+      <obj_property name="ObjectShortName">B[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/ctr0">
-      <obj_property name="ElementShortName">ctr0[4:0]</obj_property>
-      <obj_property name="ObjectShortName">ctr0[4:0]</obj_property>
-      <obj_property name="CustomSignalColor">#FFD700</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/C">
+      <obj_property name="ElementShortName">C[31:0]</obj_property>
+      <obj_property name="ObjectShortName">C[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/ctr1">
-      <obj_property name="ElementShortName">ctr1[4:0]</obj_property>
-      <obj_property name="ObjectShortName">ctr1[4:0]</obj_property>
-      <obj_property name="CustomSignalColor">#FFD700</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   <wvobject type="group" fp_name="group773">
+      <obj_property name="label">modadd</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/clk">
+         <obj_property name="ElementShortName">clk</obj_property>
+         <obj_property name="ObjectShortName">clk</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/A">
+         <obj_property name="ElementShortName">A[31:0]</obj_property>
+         <obj_property name="ObjectShortName">A[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/B">
+         <obj_property name="ElementShortName">B[31:0]</obj_property>
+         <obj_property name="ObjectShortName">B[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/qH">
+         <obj_property name="ElementShortName">qH[31:0]</obj_property>
+         <obj_property name="ObjectShortName">qH[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/dual">
+         <obj_property name="ElementShortName">dual</obj_property>
+         <obj_property name="ObjectShortName">dual</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/C">
+         <obj_property name="ElementShortName">C[31:0]</obj_property>
+         <obj_property name="ObjectShortName">C[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/A_q">
+         <obj_property name="ElementShortName">A_q[31:0]</obj_property>
+         <obj_property name="ObjectShortName">A_q[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/A_mx">
+         <obj_property name="ElementShortName">A_mx[31:0]</obj_property>
+         <obj_property name="ObjectShortName">A_mx[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/B_q">
+         <obj_property name="ElementShortName">B_q[31:0]</obj_property>
+         <obj_property name="ObjectShortName">B_q[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/B_mx">
+         <obj_property name="ElementShortName">B_mx[31:0]</obj_property>
+         <obj_property name="ObjectShortName">B_mx[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/qH_q">
+         <obj_property name="ElementShortName">qH_q[31:0]</obj_property>
+         <obj_property name="ObjectShortName">qH_q[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/qH_mx">
+         <obj_property name="ElementShortName">qH_mx[31:0]</obj_property>
+         <obj_property name="ObjectShortName">qH_mx[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/R0">
+         <obj_property name="ElementShortName">R0[16:0]</obj_property>
+         <obj_property name="ObjectShortName">R0[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/R0_q">
+         <obj_property name="ElementShortName">R0_q[16:0]</obj_property>
+         <obj_property name="ObjectShortName">R0_q[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/R0_mx">
+         <obj_property name="ElementShortName">R0_mx[16:0]</obj_property>
+         <obj_property name="ObjectShortName">R0_mx[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/R1">
+         <obj_property name="ElementShortName">R1[16:0]</obj_property>
+         <obj_property name="ObjectShortName">R1[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/R1_q">
+         <obj_property name="ElementShortName">R1_q[16:0]</obj_property>
+         <obj_property name="ObjectShortName">R1_q[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/R1_mx">
+         <obj_property name="ElementShortName">R1_mx[16:0]</obj_property>
+         <obj_property name="ObjectShortName">R1_mx[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/Rq0">
+         <obj_property name="ElementShortName">Rq0[16:0]</obj_property>
+         <obj_property name="ObjectShortName">Rq0[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/Rq0_q">
+         <obj_property name="ElementShortName">Rq0_q[16:0]</obj_property>
+         <obj_property name="ObjectShortName">Rq0_q[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/Rq0_mx">
+         <obj_property name="ElementShortName">Rq0_mx[16:0]</obj_property>
+         <obj_property name="ObjectShortName">Rq0_mx[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/Rq1">
+         <obj_property name="ElementShortName">Rq1[16:0]</obj_property>
+         <obj_property name="ObjectShortName">Rq1[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/Rq1_q">
+         <obj_property name="ElementShortName">Rq1_q[16:0]</obj_property>
+         <obj_property name="ObjectShortName">Rq1_q[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/Rq1_mx">
+         <obj_property name="ElementShortName">Rq1_mx[16:0]</obj_property>
+         <obj_property name="ObjectShortName">Rq1_mx[16:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/S">
+         <obj_property name="ElementShortName">S[31:0]</obj_property>
+         <obj_property name="ObjectShortName">S[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/S_q">
+         <obj_property name="ElementShortName">S_q[31:0]</obj_property>
+         <obj_property name="ObjectShortName">S_q[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/S0">
+         <obj_property name="ElementShortName">S0[15:0]</obj_property>
+         <obj_property name="ObjectShortName">S0[15:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/S1">
+         <obj_property name="ElementShortName">S1[15:0]</obj_property>
+         <obj_property name="ObjectShortName">S1[15:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/q">
+         <obj_property name="ElementShortName">q[32:0]</obj_property>
+         <obj_property name="ObjectShortName">q[32:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ma/\DUAL.q ">
+         <obj_property name="ElementShortName">\DUAL.q [16:0]</obj_property>
+         <obj_property name="ObjectShortName">\DUAL.q [16:0]</obj_property>
+      </wvobject>
    </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/ctrS">
-      <obj_property name="ElementShortName">ctrS[1:0]</obj_property>
-      <obj_property name="ObjectShortName">ctrS[1:0]</obj_property>
-      <obj_property name="CustomSignalColor">#FFA500</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/state">
-      <obj_property name="ElementShortName">state[2:0]</obj_property>
-      <obj_property name="ObjectShortName">state[2:0]</obj_property>
-      <obj_property name="CustomSignalColor">#FF0000</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/poly_ida">
-      <obj_property name="ElementShortName">poly_ida[3:0]</obj_property>
-      <obj_property name="ObjectShortName">poly_ida[3:0]</obj_property>
-      <obj_property name="CustomSignalColor">#00FF00</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/poly_idb">
-      <obj_property name="ElementShortName">poly_idb[3:0]</obj_property>
-      <obj_property name="ObjectShortName">poly_idb[3:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/psi_idx">
-      <obj_property name="ElementShortName">psi_idx[3:0]</obj_property>
-      <obj_property name="ObjectShortName">psi_idx[3:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/small_ntt_tb/small_ntt_inst/upoly">
-      <obj_property name="ElementShortName">upoly</obj_property>
-      <obj_property name="ObjectShortName">upoly</obj_property>
-      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/small_ntt_tb/small_ntt_inst/ctr1_inc">
-      <obj_property name="ElementShortName">ctr1_inc</obj_property>
-      <obj_property name="ObjectShortName">ctr1_inc</obj_property>
-      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/small_ntt_tb/small_ntt_inst/sr_i">
-      <obj_property name="ElementShortName">sr_i</obj_property>
-      <obj_property name="ObjectShortName">sr_i</obj_property>
-      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/small_ntt_tb/small_ntt_inst/sr_o">
-      <obj_property name="ElementShortName">sr_o</obj_property>
-      <obj_property name="ObjectShortName">sr_o</obj_property>
-      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/A_i">
-      <obj_property name="ElementShortName">A_i[63:0]</obj_property>
-      <obj_property name="ObjectShortName">A_i[63:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/B_i">
-      <obj_property name="ElementShortName">B_i[63:0]</obj_property>
-      <obj_property name="ObjectShortName">B_i[63:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/psi_i">
-      <obj_property name="ElementShortName">psi_i[63:0]</obj_property>
-      <obj_property name="ObjectShortName">psi_i[63:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/A_o">
-      <obj_property name="ElementShortName">A_o[63:0]</obj_property>
-      <obj_property name="ObjectShortName">A_o[63:0]</obj_property>
-      <obj_property name="CustomSignalColor">#00FFFF</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/small_ntt_tb/small_ntt_inst/B_o">
-      <obj_property name="ElementShortName">B_o[63:0]</obj_property>
-      <obj_property name="ObjectShortName">B_o[63:0]</obj_property>
-      <obj_property name="CustomSignalColor">#00FFFF</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/B">
+      <obj_property name="ElementShortName">B[31:0]</obj_property>
+      <obj_property name="ObjectShortName">B[31:0]</obj_property>
    </wvobject>
 </wave_config>

@@ -15,8 +15,8 @@ typedef enum int {
 
 typedef enum logic [1:0] {
     MUL_SINGLE = 2'b00,
-    MUL_DUAL   = 2'b01,
-    MUL_POLY   = 2'b10
+    MUL_DUAL   = 2'b10,
+    MUL_POLY   = 2'b11
 } mode_mul_t;
 
 

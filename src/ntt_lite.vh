@@ -11,10 +11,14 @@
 `define CMD_RFU2         3'd7
 
 
-`define MODE_NTT         2'd0
-`define MODE_INTT        2'd2
-`define MODE_PWM         2'd3
-`define MODE_RFU1        2'd4
+`define OP_NTT         2'd0
+`define OP_RFU1        2'd1
+`define OP_INTT        2'd2
+`define OP_PWM         2'd3
 
+
+`define MODE_SINGLE       2'd0
+`define MODE_DUAL         2'd2
+`define MODE_POLY         2'd3
 
 `endif

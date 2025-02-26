@@ -13,13 +13,13 @@ module ntt_lite
         input                       clk    ,
         input                       rst    ,
         input      [           2:0] cmd    ,
-        input      [           1:0] mode   ,
+        input      [           1:0] op     ,
         input                       otf    ,
         input      [   LOGLOGN-1:0] logn   ,
         input      [   LOGLOGQ-1:0] logq   ,
         input      [      LOGQ-1:0] q      ,
         input      [      LOGQ+1:0] mu     ,
-        input                       dual   ,
+        input      [           1:0] mode   ,
         input      [         B-1:0] i_data ,
         output reg                  i_ready,
         input                       i_valid,
@@ -31,7 +31,7 @@ module ntt_lite
         output reg                  done   ,
         output reg                  busy   ,
         output reg                  error
-    );
+   );
 
 ///////////////////// input checks //////////////////////////////////////
 
@@ -185,7 +185,7 @@ assign psi_i    = twiddle_ram_dout;
 
 ///////////////////// Pseudo Modes //////////////////////////////////////
 
-assign ntt_otf = (EN_NTT_OTF) ? ((mode == `MODE_NTT)||(mode == `MODE_INTT)) && (otf) : 0;
+assign ntt_otf = (EN_NTT_OTF) ? ((op == `OP_NTT)||(op == `OP_INTT)) && (otf) : 0;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -202,7 +202,7 @@ assign coeff_ram_p0_waddr = (wpoly     ) ?   ctr1       :
 assign coeff_ram_p0_din   = (wpoly                   ) ?   i_data : 
                             (upoly_mul               ) ?   M_o    : 
                           /*(upoly_ntt | upoly_intt  ) ?*/ A_o  /*: 0*/;
-assign coeff_ram_p0_raddr = (mode == `MODE_INTT) ? (ctr0 << 1)  : 
+assign coeff_ram_p0_raddr = (op == `OP_INTT) ? (ctr0 << 1)  : 
                                                     ctr0        ;
 
 assign coeff_ram_p1_wen   =  upoly_ntt | upoly_intt;
@@ -210,9 +210,9 @@ assign coeff_ram_p1_waddr = (upoly_ntt ) ?  (ctr1 << 1) + 1   :
                           /*(upoly_intt) ?*/ ctr1 + n_over2 /*: 0*/;
 assign coeff_ram_p1_din   =  B_o;
 assign coeff_ram_p1_raddr = (pwm_idx             ) ?  ctr0             : 
-                            (mode == `MODE_INTT  ) ? ((ctr0 << 1) + 1) :  
+                            (op == `OP_INTT      ) ? ((ctr0 << 1) + 1) :  
                                                      (ctr0 + n_over2)  ;
-// todo: check pwm_idx, use `MODE_PWM if posslbe
+// todo: check pwm_idx, use `OP_PWM if posslbe
 
 assign maskS    = (1 << ctr2) - 1 ;
 assign maskIS   = (1 << (logn_m1 - ctr2)) - 1;
@@ -222,7 +222,7 @@ assign twiddle_ram_waddr = (wpsi) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
 assign twiddle_ram_din   = (wpsi) ? i_data : /*(upsi) ?*/ M_o/* : 0*/;
 assign twiddle_ram_raddr = (EN_NTT_OTF && ntt_otf_feed_bu) ?                    ctr2            : 
                            (pwm_idx                      ) ?                    ctr0            : 
-                           (mode == `MODE_INTT         ) ? ((~maskIS << 1) + (ctr0 & maskIS)) : 
+                           (op == `OP_INTT               ) ? ((~maskIS << 1) + (ctr0 & maskIS)) : 
                                                              (  maskS        + (ctr0 & maskS )) ; 
 
 /////////////////////////////////////////////////////////////////////////
@@ -388,21 +388,21 @@ ntt_lite_twiddle_ram #(
 ////////////////////////// pipelined bu /////////////////////////////////
 
 butterfly #(
-    .LOGQ(LOGQ ),
-    .L   (L    )
+    .LOGQ(LOGQ),
+    .L   (L   )
 ) btfu (
-    .clk (clk   ),
-    .mode(mode  ),
-    .dual(dual  ),
-    .A   (A_i   ),
-    .B   (B_i   ),
-    .PSI (psi_i ),
-    .Q   (q     ),
-    .MU  (mu    ),
-    .logq(logq  ),
-    .E   (A_o   ),
-    .O   (B_o   ),
-    .M   (M_o   )
+    .clk (clk  ),
+    .op  (op   ),
+    .mode(mode ),
+    .A   (A_i  ),
+    .B   (B_i  ),
+    .PSI (psi_i),
+    .Q   (q    ),
+    .MU  (mu   ),
+    .logq(logq ),
+    .E   (A_o  ),
+    .O   (B_o  ),
+    .M   (M_o  )
 );
 
 /////////////////////////////////////////////////////////////////////////
@@ -536,7 +536,7 @@ always @(*) begin
             if (i_valid) begin
                 wpoly = 1;
                 if (ctr1 == num_words_m1) begin
-                    next_state = ((mode == `MODE_NTT)||(mode == `MODE_INTT)) ? ST_NTT0 : (mode == `MODE_PWM) ? ST_PWM0 : ST_IDLE;
+                    next_state = ((op == `OP_NTT)||(op == `OP_INTT)) ? ST_NTT0 : (op == `OP_PWM) ? ST_PWM0 : ST_IDLE;
                     ctr1_rst = 1;
                 end
                 else
@@ -681,8 +681,8 @@ always @(*) begin
             end
             else
                 ctr1_inc = 1;
-            upoly_ntt = (mode == `MODE_NTT);
-            upoly_intt = (mode == `MODE_INTT);
+            upoly_ntt = (op == `OP_NTT);
+            upoly_intt = (op == `OP_INTT);
         end
     end
     else if (pwm_rcv_bu) begin

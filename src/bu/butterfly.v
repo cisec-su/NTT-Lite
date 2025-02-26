@@ -1,4 +1,5 @@
 `include "ntt_lite.vh"
+
 module butterfly
    #(
         parameter LOGQ   = 32,
@@ -8,27 +9,24 @@ module butterfly
     (
         input                clk ,
 
+        input  [        1:0] op  ,
         input  [        1:0] mode,
-        input                dual,
         input  [LOGQ   -1:0] A   ,
         input  [LOGQ   -1:0] B   ,
         input  [LOGQ   -1:0] PSI ,
         input  [LOGQ   -1:0] Q   ,
         input  [LOGQ   +1:0] MU  ,
         input  [LOGLOGQ-1:0] logq,
-
         output [LOGQ   -1:0] E   ,
         output [LOGQ   -1:0] O   ,
-        output [LOGQ   -1:0] M
-    );
+        output [LOGQ   -1:0] M);
 
 
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
-
+localparam LOGQ0   = LOGQ >> 1;
 
 wire [LOGQ -1:0] A_shift;
 wire [LOGQ -1:0] MM;
-
 wire [LOGQ -1:0] MM_in_A;
 wire [LOGQ -1:0] MM_in_B;
 wire [LOGQ -1:0] MM_out_C;
@@ -40,19 +38,23 @@ wire [LOGQ -1:0] sub_in_B;
 wire [LOGQ -1:0] sub_out_C;
 wire [LOGQ -1:0] shift_in;
 wire [LOGQ -1:0] shift_out;
+wire [      1:0] mode_mul;
+wire             dual;
 
 
-assign MM_in_A     = (mode == `MODE_INTT) ? sub_out_C : B;
-assign MM_in_B     = PSI;
-assign add_in_A    = (mode == `MODE_INTT) ? A : shift_out;
-assign add_in_B    = (mode == `MODE_INTT) ? B : MM_out_C;
-assign sub_in_A    = (mode == `MODE_INTT) ? A : shift_out;
-assign sub_in_B    = (mode == `MODE_INTT) ? B : MM_out_C;
-assign E           = (mode == `MODE_INTT) ? shift_out : add_out_C;
-assign O           = (mode == `MODE_INTT) ? MM_out_C : sub_out_C;
-assign shift_in    = (mode == `MODE_INTT) ? add_out_C : A;
+assign MM_in_A     = (op == `OP_INTT) ? sub_out_C : B;
+assign MM_in_B     = ((op == `OP_NTT || op == `OP_INTT) && dual) ? {PSI[LOGQ0-1:0], PSI[LOGQ0-1:0]} : PSI;
+assign add_in_A    = (op == `OP_INTT) ? A : shift_out;
+assign add_in_B    = (op == `OP_INTT) ? B : MM_out_C;
+assign sub_in_A    = (op == `OP_INTT) ? A : shift_out;
+assign sub_in_B    = (op == `OP_INTT) ? B : MM_out_C;
+assign E           = (op == `OP_INTT) ? shift_out : add_out_C;
+assign O           = (op == `OP_INTT) ? MM_out_C : sub_out_C;
+assign shift_in    = (op == `OP_INTT) ? add_out_C : A;
 assign M           = MM_out_C;
-
+// MODE_POLY is undefined for (I)NTT
+assign mode_mul  = (op == `OP_PWM) ? mode : (mode == `MODE_POLY && (op == `OP_INTT || op == `OP_NTT)) ? `MODE_DUAL : mode;
+assign dual      = mode == `MODE_DUAL || mode == `MODE_POLY;
 
 shiftreg #(
     .SHIFT(L   ),
@@ -69,14 +71,14 @@ modmul #(
     .LOGQ   (LOGQ  ),
     .MUL_OP (MUL_OP)
 ) mm0 (
-    .clk (clk      ),
-    .dual(dual     ),
-    .Q   (Q        ),
-    .MU  (MU       ),
-    .logq(logq     ),
-    .A   (MM_in_A  ),
-    .B   (MM_in_B  ),
-    .C   (MM_out_C )
+    .clk (clk     ),
+    .mode(mode_mul),
+    .Q   (Q       ),
+    .MU  (MU      ),
+    .logq(logq    ),
+    .A   (MM_in_A ),
+    .B   (MM_in_B ),
+    .C   (MM_out_C)
 );
 
 

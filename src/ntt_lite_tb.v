@@ -18,10 +18,10 @@ localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 localparam LOGQB = $clog2(LOGQ/B);
 localparam QBMASK = (1 << LOGQB) - 1;
 
-localparam TB_MODE = `MODE_NTT;
+localparam TB_OP = `OP_NTT;
 localparam TB_OTF = 0;
 
-localparam N_ = (TB_MODE == `MODE_PWM && TB_OTF == 1) ? N/2 : N;
+localparam N_ = (TB_OP == `OP_PWM && TB_OTF == 1) ? N/2 : N;
 
 
 reg clk;
@@ -33,9 +33,10 @@ reg [LOGQ-1:0] poly_in  [0:N-1];
 reg [LOGQ-1:0] poly_out [0:N-1];
 
 reg  [2  :0] cmd;
-reg  [1  :0] mode;
+reg  [1  :0] op;
 reg          otf;
 reg          dual;
+reg  [1  :0] mode;
 reg  [LOGLOGN-1:0] logn;
 reg  [LOGLOGQ-1:0] logq;
 reg  [B-1:0] i_data;
@@ -51,7 +52,8 @@ wire [LOGN+LOGQB-1:0] io_word;
 
 always #HP clk = ~clk;
 
-integer flag;
+integer flag, flag1;
+
 
 ntt_lite #(
     .LOGN(LOGN),
@@ -63,11 +65,11 @@ ntt_lite #(
     .clk(clk),
     .rst(rst),
     .cmd(cmd),
-    .mode(mode),
+    .op(op),
     .otf(otf),
     .logn(logn),
     .logq(logq),
-    .dual(dual),
+    .mode(mode),
     .q(q[0]),
     .mu(q[1]),
     .i_data(i_data),
@@ -85,12 +87,12 @@ initial begin
 
     $readmemh("../../../../../test/q.txt" , q);
     $readmemh("../../../../../test/psi.txt" , psi);
-    $readmemh("../../../../../test/poly_in.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_single.txt" , poly_in);
     
-    if (TB_MODE == `MODE_PWM)
+    if (TB_OP == `OP_PWM)
         $readmemh("../../../../../test/mul_out.txt" , poly_out);
-    else if (TB_MODE == `MODE_NTT)
-        $readmemh("../../../../../test/poly_out.txt" , poly_out);
+    else if (TB_OP == `OP_NTT)
+        $readmemh("../../../../../test/poly_out_single_ntt.txt" , poly_out);
 
     $display("Simulation started.");
 
@@ -103,24 +105,14 @@ initial begin
     #(HP);
     #(1);
 
-    mode = TB_MODE;
+    op = TB_OP;
     otf = 1'b0;
     o_read = 1'b0;
     logn = LOGN;
     logq = 12;
-    dual = 1'b0;
-/*    cmd = `CMD_LOAD_Q;
-    #FP;
-    while (!done) begin
-        if (i_ready) begin
-            i_data = q[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
-            i_valid = 1'b1;
-            #FP;
-        end
-    end
-    i_valid = 1'b0;*/
+    mode = `MODE_SINGLE;
 
-    if ((TB_MODE == `MODE_NTT) && TB_OTF) begin
+    if ((TB_OP == `OP_NTT) && TB_OTF) begin
         otf = 1;
     end
     else begin
@@ -142,6 +134,7 @@ initial begin
     cmd = `CMD_LOAD_POLY;
     #FP;
     flag = 0;
+    flag1 = 0;
 
     while(!done) begin
         if (i_ready) begin
@@ -167,9 +160,62 @@ initial begin
     o_read = 1'b0;
     i_valid = 1'b0;
 
+    if (flag == 0)
+        $display("(SUCCESS SINGLE NTT)");
+    else begin
+        $display("(FAIL SINGLE NTT)");
+        flag1 = 1;
+    end
+
+
+    $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
+    if (TB_OP == `OP_PWM)
+        $readmemh("../../../../../test/mul_out.txt" , poly_out);
+    else if (TB_OP == `OP_NTT)
+        $readmemh("../../../../../test/poly_out_dual_ntt.txt" , poly_out);
+    #FP;
+    #FP;
+
+    mode = `MODE_DUAL;
+    flag = 0;
+
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+
     $display("Simulation finished.");
     if (flag == 0)
-        $display("(SUCCESS)");
+        $display("(SUCCESS DUAL NTT)");
+    else begin
+        $display("(FAIL DUAL NTT)");
+        flag1 = 1;
+    end
+
+    
+    if (flag1 == 0)
+        $display("(ALL SUCCESS)");
     else
         $display("(FAIL)");
     $finish;
