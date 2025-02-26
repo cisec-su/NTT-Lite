@@ -3,7 +3,7 @@
 
 
 typedef struct packed {
-    int MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT;
+    int LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT;
 } mac_std_dual_32x34_params_t;
 
 
@@ -31,7 +31,7 @@ endfunction
 
 
 function int mac_std_dual_32x34_logb0(input mac_std_dual_32x34_params_t params);
-    mac_std_dual_32x34_logb0 = 17;
+    mac_std_dual_32x34_logb0 = params.LOGB >> 1;
 endfunction
 
 
@@ -42,11 +42,6 @@ endfunction
 
 function int mac_std_dual_32x34_loga(input mac_std_dual_32x34_params_t params);
     mac_std_dual_32x34_loga = mac_std_dual_32x34_loga0(params) << 1;
-endfunction
-
-
-function int mac_std_dual_32x34_logb(input mac_std_dual_32x34_params_t params);
-    mac_std_dual_32x34_logb = mac_std_dual_32x34_logb0(params) << 1;
 endfunction
 
 

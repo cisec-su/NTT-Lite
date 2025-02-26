@@ -2,6 +2,7 @@
 
 module mac_std_dual_32x34
    #(  
+        parameter          LOGB    = 34    ,
         parameter mode_e_t MODE_E  = DIS_E ,
         parameter          FF_IN_A = 1     ,
         parameter          FF_IN_B = 1     ,
@@ -18,11 +19,26 @@ module mac_std_dual_32x34
         output  [LOGC-1:0]  C
     );
 
+///////////////////////////// input check ///////////////////////////////
+
+generate
+    if (LOGB > 34) begin
+        LOGB_CANT_BE_GREATER_THAN_34();
+    end
+    else if (LOGB % 2) begin
+        LOGB_MUST_BE_EVEN();
+    end
+endgenerate
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
 ///////////////////////////// parameters ////////////////////////////////
 
-localparam mac_std_dual_32x34_params_t params = {MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT};
+localparam mac_std_dual_32x34_params_t params = {LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT};
 localparam LOGA = mac_std_dual_32x34_loga(params);
-localparam LOGB = mac_std_dual_32x34_logb(params);
+// localparam LOGB = mac_std_dual_32x34_logb(params);
 localparam LOGE = mac_std_dual_32x34_loge(params);
 localparam LOGA0 = mac_std_dual_32x34_loga0(params);
 localparam LOGB0 = mac_std_dual_32x34_logb0(params);

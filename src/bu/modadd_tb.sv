@@ -96,6 +96,8 @@ initial begin
             qH = 0;                
         end
 
+        #0.01
+
         if (i >= modadd_inst.LAT) begin
             if (C_ != C_mx) begin
                 $display("FAILED (%d)! Expected C = %x, Got C = %x\n", i - modadd_inst.LAT, C_mx, C_);
@@ -134,6 +136,8 @@ initial begin
                 B = 0;    
                 qH = 0;                
             end
+
+            #0.01
 
             if (i >= modadd_inst.LAT) begin
                 if (C_[LOGQ0-1:0] != C_mx[LOGQ0-1:0]) begin

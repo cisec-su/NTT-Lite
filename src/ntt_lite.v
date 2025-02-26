@@ -6,7 +6,7 @@ module ntt_lite
         parameter LOGQ       = 32,
         parameter W          = 16,
         parameter B          = 32, // bandwidth, must divide LOGQ
-        parameter L          = 11, // BU latency
+        parameter L          = 8, // BU latency
         parameter EN_NTT_OTF = 1
     )
     (
@@ -18,7 +18,8 @@ module ntt_lite
         input      [   LOGLOGN-1:0] logn   ,
         input      [   LOGLOGQ-1:0] logq   ,
         input      [      LOGQ-1:0] q      ,
-        input      [      LOGQ  :0] mu     ,
+        input      [      LOGQ+1:0] mu     ,
+        input                       dual   ,
         input      [         B-1:0] i_data ,
         output reg                  i_ready,
         input                       i_valid,
@@ -92,7 +93,6 @@ reg [LOGN+LOGWB-1:0] ctr0_d;
 reg [LOGN-1:0] ctr2_d;
 reg ctr2_d_set;
 reg wpoly, upoly_ntt, upoly_intt, upoly_mul, wpsi, wpsi_delta, upsi, wq, pwm_idx;
-reg poly_psi_rst;
 reg ntt_rcv_bu, pwm_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu;
 reg ctr_all_rst;
 reg done_set;
@@ -203,14 +203,14 @@ assign coeff_ram_p0_din   = (wpoly                   ) ?   i_data :
                             (upoly_mul               ) ?   M_o    : 
                           /*(upoly_ntt | upoly_intt  ) ?*/ A_o  /*: 0*/;
 assign coeff_ram_p0_raddr = (mode == `MODE_INTT) ? (ctr0 << 1)  : 
-                                                      ctr0        ;
+                                                    ctr0        ;
 
 assign coeff_ram_p1_wen   =  upoly_ntt | upoly_intt;
 assign coeff_ram_p1_waddr = (upoly_ntt ) ?  (ctr1 << 1) + 1   : 
                           /*(upoly_intt) ?*/ ctr1 + n_over2 /*: 0*/;
 assign coeff_ram_p1_din   =  B_o;
-assign coeff_ram_p1_raddr = (pwm_idx             ) ? ctr0              : 
-                            (mode == `MODE_INTT) ? ((ctr0 << 1) + 1) :  
+assign coeff_ram_p1_raddr = (pwm_idx             ) ?  ctr0             : 
+                            (mode == `MODE_INTT  ) ? ((ctr0 << 1) + 1) :  
                                                      (ctr0 + n_over2)  ;
 // todo: check pwm_idx, use `MODE_PWM if posslbe
 
@@ -237,11 +237,7 @@ if (EN_NTT_OTF) begin
     for(genvar i = 0; i < LOGN ;i = i + 1) begin: TWIDDLE_LOAD_GEN
         for(genvar j = 0; j < (LOGQ/B); j = j + 1) begin
             always @(posedge clk) begin
-                if (rst) // todo add reset
-                    psi_delta[i][j*B +: B] <= 0;
-                else if (poly_psi_rst)
-                    psi_delta[i][j*B +: B] <= 0;
-                else if (wpsi_delta && (ctr0 == (i*(LOGQ/B) + j)))
+                if (wpsi_delta && (ctr0 == (i*(LOGQ/B) + j)))
                     psi_delta[i][j*B +: B] <= i_data;
             end
         end
@@ -396,7 +392,8 @@ butterfly #(
     .L   (L    )
 ) btfu (
     .clk (clk   ),
-    .mode(mode),
+    .mode(mode  ),
+    .dual(dual  ),
     .A   (A_i   ),
     .B   (B_i   ),
     .PSI (psi_i ),
@@ -465,7 +462,6 @@ always @(*) begin
     ctr_all_rst = 0;
     done_set = 0;
     error_set = 0;
-    poly_psi_rst = 0;
     io_word = 0;
     i_ready = 0;
 
@@ -492,7 +488,6 @@ always @(*) begin
             else if (cmd == `CMD_RST) begin
                 next_state = ST_IDLE;
                 ctr_all_rst = 0;
-                poly_psi_rst = 1;
                 done_set = 1;
             end
 

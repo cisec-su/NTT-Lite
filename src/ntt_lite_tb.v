@@ -18,7 +18,7 @@ localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 localparam LOGQB = $clog2(LOGQ/B);
 localparam QBMASK = (1 << LOGQB) - 1;
 
-localparam TB_MODE = `MODE_PWM;
+localparam TB_MODE = `MODE_NTT;
 localparam TB_OTF = 0;
 
 localparam N_ = (TB_MODE == `MODE_PWM && TB_OTF == 1) ? N/2 : N;
@@ -27,7 +27,7 @@ localparam N_ = (TB_MODE == `MODE_PWM && TB_OTF == 1) ? N/2 : N;
 reg clk;
 reg rst;
 
-reg [LOGQ  :0] q [0:1]; // higher address is for mu
+reg [LOGQ+1:0] q [0:1]; // higher address is for mu
 reg [LOGQ-1:0] psi      [0:N-1];
 reg [LOGQ-1:0] poly_in  [0:N-1];
 reg [LOGQ-1:0] poly_out [0:N-1];
@@ -35,6 +35,7 @@ reg [LOGQ-1:0] poly_out [0:N-1];
 reg  [2  :0] cmd;
 reg  [1  :0] mode;
 reg          otf;
+reg          dual;
 reg  [LOGLOGN-1:0] logn;
 reg  [LOGLOGQ-1:0] logq;
 reg  [B-1:0] i_data;
@@ -66,6 +67,7 @@ ntt_lite #(
     .otf(otf),
     .logn(logn),
     .logq(logq),
+    .dual(dual),
     .q(q[0]),
     .mu(q[1]),
     .i_data(i_data),
@@ -106,7 +108,7 @@ initial begin
     o_read = 1'b0;
     logn = LOGN;
     logq = 12;
-
+    dual = 1'b0;
 /*    cmd = `CMD_LOAD_Q;
     #FP;
     while (!done) begin

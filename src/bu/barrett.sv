@@ -4,33 +4,43 @@ module barrett
    #(
         parameter  LOGQ     = 32,
         parameter  LOGQH    = 15,
-        parameter  DSP_A_U  = 16,
-        parameter  DSP_B_U  = 16,
         parameter  PIPE_Q   = 1 ,
         parameter  CORRECT  = 1 ,
         parameter  FF_IN    = 1 ,
         parameter  FF_SHF   = 1 ,
         parameter  FF_MUL   = 1 ,
-        parameter  USE_CSA  = 1 ,
-        parameter  FF_CSA   = 1 ,
         parameter  FF_NEG   = 0 ,
         parameter  FF_CORR  = 0 ,
         parameter  FF_OUT   = 1
     )
     (
         input                clk ,
+        input                dual,
         input  [LOGC   -1:0] C   ,
         output [LOGT   -1:0] T   ,
         input  [LOGLOGQ-1:0] B   ,   // 2^{B-1} < q < 2^B
-        input  [LOGQ     :0] MU  ,
+        input  [LOGQ   +1:0] MU  ,
         input  [LOGQH  -1:0] qH
     );
 
+///////////////////////////// input check ///////////////////////////////
+
+generate
+    if (LOGQ > 32) begin
+        LOGQ_CANT_BE_GREATER_THAN_32();
+    end
+endgenerate
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
 ///////////////////////////// parameters ////////////////////////////////
 
-localparam barrett_params_t params = {LOGQ, LOGQH, CORRECT, FF_IN, FF_SHF, FF_MUL, USE_CSA, FF_CSA, FF_NEG, FF_CORR, FF_OUT};
-localparam mac_std_params_t mac_0_params = barrett_mac_0_params(params);
-localparam mac_std_params_t mac_1_params = barrett_mac_1_params(params);
+localparam barrett_params_t params = {LOGQ, LOGQH, CORRECT, FF_IN, FF_SHF, FF_MUL, FF_NEG, FF_CORR, FF_OUT};
+localparam mac_std_dual_32x34_params_t mac_0_params = barrett_mac_0_params(params);
+localparam mac_std_dual_32x34_params_t mac_1_params = barrett_mac_1_params(params);
 
 localparam LOGT  = (CORRECT) ? LOGQ : LOGQ + 2;
 localparam LOGC  = 2*LOGQ;
@@ -63,7 +73,7 @@ endgenerate
 
 generate
     if (FF_IN && PIPE_Q) begin : MU_GEN
-        reg  [LOGQ:0] mu_q;
+        reg  [LOGQ+1:0] mu_q;
     end
 endgenerate
 
@@ -82,19 +92,19 @@ endgenerate
 wire [LOGC -1:0] C_mx;
 wire [LOGQH-1:0] qH_mx   [0:1];
 wire [LOGLOGQ:0] B_mx [0:1];
-wire [LOGQ   :0] mu_mx;
+wire [LOGQ +1:0] mu_mx;
 
 wire [LOGQ -1:0] CH;
-wire [LOGQ +1:0] CL;
+wire [LOGQ +3:0] CL;
 generate
     if (CL_D) begin : CL_GEN
-        reg [LOGQ+1:0] CL_q [0:CL_D-1];
+        reg [LOGQ+3:0] CL_q [0:CL_D-1];
     end
 endgenerate
-wire [LOGQ +1:0] CL_mx;
+wire [LOGQ +3:0] CL_mx;
 
 wire [LOGT0-1:0] T0;
-wire [LOGQ   :0] T0H;
+wire [LOGQ +1:0] T0H;
 
 wire [LOGT1-1:0] T1;
 wire [LOGT1-1:0] T1N;
@@ -129,6 +139,16 @@ if (FF_OUT) begin : OUT_GEN
     reg  [LOGQ-1:0] T4_q;
 end
 
+mode_mul_t mode_mul;
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+/////////////////////////// shifting  and negation //////////////////////
+
+assign mode_mul = (dual) ? MUL_DUAL : MUL_DOUBLE;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -239,28 +259,22 @@ endgenerate
 
 /////////////////////////// mac 0 ///////////////////////////////////////
 
-mac_std
+mac_std_dual_32x34
     #(
-        .LOGA    (mac_0_params.LOGA   ),
-        .LOGB    (mac_0_params.LOGB   ),
-        .DSP_A_U (DSP_A_U             ),
-        .DSP_B_U (DSP_B_U + 1         ),
         .MODE_E  (mac_0_params.MODE_E ),
-        .LOGE    (mac_0_params.LOGE   ),
         .FF_IN_A (mac_0_params.FF_IN_A),
         .FF_IN_B (mac_0_params.FF_IN_B),
         .FF_IN_E (mac_0_params.FF_IN_E),
         .FF_MUL  (mac_0_params.FF_MUL ),
-        .FF_OUT  (mac_0_params.FF_OUT ),
-        .USE_CSA (mac_0_params.USE_CSA),
-        .FF_CSA  (mac_0_params.FF_CSA )
+        .FF_OUT  (mac_0_params.FF_OUT )
     )
 mac_std_inst_0
     (
-        .clk(clk       ),
-        .A  (CH        ),
-        .B  (mu_mx     ),
-        .C  (T0        )
+        .clk     (clk      ),
+        .mode_mul(mode_mul ),
+        .A       (CH       ),
+        .B       (mu_mx    ),
+        .C       (T0       )
     );
 
 /////////////////////////////////////////////////////////////////////////
@@ -272,29 +286,23 @@ mac_std_inst_0
 
 assign q = (LOGQ > LOGQH) ? {qH_mx[0], {(W - 1){1'b0}}, 1'b1} : qH_mx[0];
 
-mac_std
+mac_std_dual_32x34
 #(
-    .LOGA    (mac_1_params.LOGA   ),
-    .LOGB    (mac_1_params.LOGB   ),
-    .DSP_A_U (DSP_A_U             ),
-    .DSP_B_U (DSP_B_U + 1         ),
     .MODE_E  (mac_1_params.MODE_E ),
-    .LOGE    (mac_1_params.LOGE   ),
     .FF_IN_A (mac_1_params.FF_IN_A),
     .FF_IN_B (mac_1_params.FF_IN_B),
     .FF_IN_E (mac_1_params.FF_IN_E),
     .FF_MUL  (mac_1_params.FF_MUL ),
-    .FF_OUT  (mac_1_params.FF_OUT ),
-    .USE_CSA (mac_1_params.USE_CSA),
-    .FF_CSA  (mac_1_params.FF_CSA )
+    .FF_OUT  (mac_1_params.FF_OUT )
 )
 mac_std_inst_1
     (
-        .clk(clk     ),
-        .A  (q       ),
-        .B  (T0H     ),
-        .E  (CL_mx   ),
-        .C  (T1      )
+        .clk     (clk     ),
+        .mode_mul(mode_mul),
+        .A       (q       ),
+        .B       (T0H     ),
+        .E       (CL_mx   ),
+        .C       (T1      )
     );
 
 /////////////////////////////////////////////////////////////////////////
