@@ -14,7 +14,7 @@ typedef enum int {
 
 
 typedef enum logic [1:0] {
-    MUL_DOUBLE = 2'b00,
+    MUL_SINGLE = 2'b00,
     MUL_DUAL   = 2'b01,
     MUL_POLY   = 2'b10
 } mode_mul_t;
@@ -69,7 +69,7 @@ function int mac_std_dual_32x34_logc0(input mac_std_dual_32x34_params_t params);
             mac_std_dual_32x34_logc0 = mac_std_dual_32x34_loge0(params) + 1;
         end
         else begin
-            mac_std_dual_32x34_logc0 = mac_std_dual_32x34_logd0(params) + 2;
+            mac_std_dual_32x34_logc0 = mac_std_dual_32x34_logd0(params) + 1;
         end
     end
 endfunction

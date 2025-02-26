@@ -26,14 +26,14 @@ endgenerate
 /////////////////////////////////////////////////////////////////////////
 
 
-localparam K     = 2*LOGQ;
+localparam K     = 2*(LOGQ/* + 1*/);
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 
 
 wire [K-1:0] C_;
 wire dual;
 
-assign dual = (mode == MUL_DOUBLE) ? 1'b0 : 1'b1;
+assign dual = (mode == MUL_SINGLE) ? 1'b0 : 1'b1;
 
 mac_std_dual_32x34 #(
     .LOGB   (LOGQ  ),

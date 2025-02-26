@@ -92,7 +92,7 @@ initial begin
     @(posedge clk);
     @(posedge clk);
 
-    mode_mul = MUL_DOUBLE;
+    mode_mul = MUL_SINGLE;
 
     for (i = 0; i < TEST_NUM + mac_std_dual_32x34_inst.LAT; i = i + 1) begin
         #0.1

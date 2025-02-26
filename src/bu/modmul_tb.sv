@@ -12,7 +12,7 @@ parameter TEST_NUM_OUTER   = 10;
 parameter L                = 8;
 parameter LOGQ_INIT        = 12;
 
-
+localparam LOGQ0   = LOGQ >> 1;
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 
 integer i    = 0;
@@ -77,12 +77,12 @@ initial begin
     @(posedge clk);
     @(posedge clk);
 
-    mode = MUL_DOUBLE;
+    mode = MUL_SINGLE;
 
     logq = LOGQ_INIT;
 
     while (logq <= LOGQ) begin
-        for (j = 0; j < TEST_NUM + L; j = j + 1) begin
+        for (j = 0; j < TEST_NUM_OUTER; j = j + 1) begin
             #0.1
             Q  = ({$urandom(2*j ),$urandom(2*j  + 1)} % ((1 << logq) - 1)) | (1 << (logq - 1));
             MU = (1 << ({{(LOGQ+1){1'b0}},logq} << 1)) / {{(LOGQ+1){1'b0}},Q};
@@ -120,99 +120,100 @@ initial begin
 
     logq = LOGQ_INIT;
 
-    // @(posedge clk);
-    // @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
 
-    // mode = MUL_DUAL;
+    mode = MUL_DUAL;
 
-    // for (i = 0; i < TEST_NUM + L; i = i + 1) begin
-    //     #0.1
+    while (logq <= (LOGQ >> 1)) begin
+        for (j = 0; j < TEST_NUM_OUTER; j = j + 1) begin
+            #0.1
+            Q  = ({$urandom(2*j ),$urandom(2*j  + 1)} % ((1 << logq) - 1)) | (1 << (logq - 1));
+            MU = (1 << ({{(LOGQ+1){1'b0}},logq} << 1)) / {{(LOGQ+1){1'b0}},Q};
+            for (i = 0; i < TEST_NUM + L; i = i + 1) begin
+                #0.1
 
-    //     if (i < TEST_NUM) begin
-    //         A[LOGQ0-1:    0] = {$urandom(4*i    ),$urandom(4*i + 1)} % ((1 << LOGQ0) - 1);
-    //         A[LOGQ -1:LOGQ0] = {$urandom(4*i + 2),$urandom(4*i + 3)} % ((1 << LOGQ0) - 1);
-    //         B[LOGQ0-1:    0] = {$urandom(4*A    ),$urandom(4*A + 1)} % ((1 << LOGQ0) - 1);
-    //         B[LOGQ -1:LOGQ0] = {$urandom(4*A + 2),$urandom(4*A + 3)} % ((1 << LOGQ0) - 1);
-    //         C[LOGQ0-1:    0] = A[LOGQ0-1:    0] * B[LOGQ0-1:    0];
-    //         C[LOGQ -1:LOGQ0] = A[LOGQ -1:LOGQ0] * B[LOGQ -1:LOGQ0];
-    //         if (MODE_E == SUB_E) begin
-    //             E[LOGE0-1:    0] = {$urandom(4*B    ),$urandom(4*B + 1)} % ((1 << LOGE0) - 1);
-    //             E[LOGE -1:LOGE0] = {$urandom(4*B + 2),$urandom(4*B + 3)} % ((1 << LOGE0) - 1);
-    //             C[LOGQ0-1:    0] = C[LOGQ0-1:    0] - E[LOGE0-1:    0];
-    //             C[LOGQ -1:LOGQ0] = C[LOGQ -1:LOGQ0] - E[LOGE -1:LOGE0];
-    //             $display("[Test %d] A = %x, B = %x, C = %x, E = %x, A0 = %x, A1 = %x, B0 = %x, B1 = %x, C0 = %x, C1 = %x, E0 = %x, E1 = %x",
-    //                      i, A, B, C, E, A[LOGQ0-1:0], A[LOGQ-1:LOGQ0], B[LOGQ0-1:0], B[LOGQ-1:LOGQ0], C[LOGQ0-1:0], C[LOGQ-1:LOGQ0], E[LOGE0-1:0], E[LOGE-1:LOGE0]);
-    //         end
-    //         else
-    //         begin
-    //             E = 0;
-    //             $display("[Test %d] A = %x, B = %x, C = %x, A0 = %x, A1 = %x, B0 = %x, B1 = %x, C0 = %x, C1 = %x",
-    //             i, A, B, C, A[LOGQ0-1:0], A[LOGQ-1:LOGQ0], B[LOGQ0-1:0], B[LOGQ-1:LOGQ0], C[LOGQ0-1:0], C[LOGQ-1:LOGQ0]);
-    //    end
-    //     end
-    //     else begin
-    //         A = 0;
-    //         B = 0;
-    //         C = 0;
-    //         E = 0;
-    //     end
+                if (i < TEST_NUM) begin
+                    A[LOGQ0-1:    0] = {$urandom(2*i    )} % Q;
+                    A[LOGQ -1:LOGQ0] = {$urandom(2*i + 1)} % Q;
+                    B[LOGQ0-1:    0] = {$urandom(2*A    )} % Q;
+                    B[LOGQ -1:LOGQ0] = {$urandom(2*A + 1)} % Q;
+                    C[LOGQ0-1:    0] = A[LOGQ0-1:    0] * B[LOGQ0-1:    0]  % Q;
+                    C[LOGQ -1:LOGQ0] = A[LOGQ -1:LOGQ0] * B[LOGQ -1:LOGQ0]  % Q;
 
-    //     #0.1
+                    $display("[Test DUAL %d-%d-%d] A = %x, B = %x, C = %x, Q = %x, MU = %x, , A0 = %x, A1 = %x, B0 = %x, B1 = %x, C0 = %x, C1 = %x",
+                              logq, j, i, A, B, C, Q, MU, A[LOGQ0-1:0], A[LOGQ-1:LOGQ0], B[LOGQ0-1:0], B[LOGQ-1:LOGQ0], C[LOGQ0-1:0], C[LOGQ-1:LOGQ0]);
+                end
+                else begin
+                    A = 0;
+                    B = 0;    
+                    C = 0;                
+                end
 
-    //     if (i >= L) begin
-    //         if (C_ != C_mx) begin
-    //             $display("FAILED (%d)! Expected C = %x, Got C = %x, C0 = %x, C1 = %x\n",
-    //                      i - L, C_mx, C_, C[LOGQ0-1:0], C[LOGQ-1:LOGQ0]);
-    //             f += 1;
-    //             $stop;
-    //         end
-    //     end
+                #0.1
 
-    //     @(posedge clk);
-    // end
+                if (i >= L) begin
+                    if (C_ != C_mx) begin
+                        $display("FAILED DUAL (%d-%d-%d)! Expected C = %x, Got C = %x\n", logq, j, i - L, C_mx, C_);
+                        f += 1;
+                        $stop;
+                    end
+                end
+
+                @(posedge clk);
+            end
+        end
+        logq = logq + 1;
+    end
 
 
-    // if (MODE_E != SUB_E) begin
+    logq = LOGQ_INIT;
 
-    //     @(posedge clk);
-    //     @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
 
-    //     mode = MUL_POLY;
+    mode = MUL_POLY;
 
-    //     for (i = 0; i < TEST_NUM + L; i = i + 1) begin
-    //         #0
+    while (logq <= (LOGQ >> 1)) begin
+        for (j = 0; j < TEST_NUM_OUTER; j = j + 1) begin
+            #0.1
+            Q  = ({$urandom(2*j ),$urandom(2*j  + 1)} % ((1 << logq) - 1)) | (1 << (logq - 1));
+            MU = (1 << ({{(LOGQ+1){1'b0}},logq} << 1)) / {{(LOGQ+1){1'b0}},Q};
+            for (i = 0; i < TEST_NUM + L; i = i + 1) begin
+                #0.1
 
-    //         if (i < TEST_NUM) begin
-    //             A[LOGQ0-1:    0] = {$urandom(4*i    ),$urandom(4*i + 1)} % ((1 << LOGQ0) - 1);
-    //             A[LOGQ -1:LOGQ0] = {$urandom(4*i + 2),$urandom(4*i + 3)} % ((1 << LOGQ0) - 1);
-    //             B[LOGQ0-1:    0] = {$urandom(4*A    ),$urandom(4*A + 1)} % ((1 << LOGQ0) - 1);
-    //             B[LOGQ -1:LOGQ0] = {$urandom(4*A + 2),$urandom(4*A + 3)} % ((1 << LOGQ0) - 1);
-    //             C[LOGQ0-1:    0] = A[LOGQ0-1:    0] * B[LOGQ0-1:    0] + A[LOGQ -1:LOGQ0] * B[LOGQ -1:LOGQ0];
-    //             C[LOGQ -1:LOGQ0] = A[LOGQ -1:LOGQ0] * B[LOGQ0-1:    0] + A[LOGQ0-1:    0] * B[LOGQ -1:LOGQ0];
-    //             $display("[Test %d] A = %x, B = %x, C = %x, A0 = %x, A1 = %x, B0 = %x, B1 = %x, C0 = %x, C1 = %x",
-    //                     i, A, B, C, A[LOGQ0-1:0], A[LOGQ-1:LOGQ0], B[LOGQ0-1:0], B[LOGQ-1:LOGQ0], C[LOGQ0-1:0], C[LOGQ-1:LOGQ0]);
-    //         end
-    //         else begin
-    //             A = 0;
-    //             B = 0;    
-    //             C = 0;                
-    //         end
+                if (i < TEST_NUM) begin
+                    A[LOGQ0-1:    0] = {$urandom(2*i    )} % Q;
+                    A[LOGQ -1:LOGQ0] = {$urandom(2*i + 1)} % Q;
+                    B[LOGQ0-1:    0] = {$urandom(2*A    )} % Q;
+                    B[LOGQ -1:LOGQ0] = {$urandom(2*A + 1)} % Q;
+                    C[LOGQ0-1:    0] = (A[LOGQ -1:LOGQ0] * B[LOGQ-1:LOGQ0]  + A[LOGQ0-1:    0] * B[LOGQ0-1:    0]) % Q;
+                    C[LOGQ -1:LOGQ0] = (A[LOGQ0-1:    0] * B[LOGQ-1:LOGQ0]  + A[LOGQ -1:LOGQ0] * B[LOGQ0-1:    0]) % Q;
 
-    //         #0
+                    $display("[Test POLY %d-%d-%d] A = %x, B = %x, C = %x, Q = %x, MU = %x, , A0 = %x, A1 = %x, B0 = %x, B1 = %x, C0 = %x, C1 = %x",
+                              logq, j, i, A, B, C, Q, MU, A[LOGQ0-1:0], A[LOGQ-1:LOGQ0], B[LOGQ0-1:0], B[LOGQ-1:LOGQ0], C[LOGQ0-1:0], C[LOGQ-1:LOGQ0]);
+                end
+                else begin
+                    A = 0;
+                    B = 0;    
+                    C = 0;                
+                end
 
-    //         if (i >= L) begin
-    //             if (C_ != C_mx) begin
-    //                 $display("FAILED (%d)! Expected C = %x, Got C = %x, C0 = %x, C1 = %x\n",
-    //                         i - L, C_mx, C_, C[LOGQ0-1:0], C[LOGQ-1:LOGQ0]);
-    //                 f += 1;
-    //                 $stop;
-    //             end
-    //         end
+                #0.1
 
-    //         @(posedge clk);
-    //     end
-    
-    // end
+                if (i >= L) begin
+                    if (C_ != C_mx) begin
+                        $display("FAILED POLY (%d-%d-%d)! Expected C = %x, Got C = %x\n", logq, j, i - L, C_mx, C_);
+                        f += 1;
+                        $stop;
+                    end
+                end
+
+                @(posedge clk);
+            end
+        end
+        logq = logq + 1;
+    end
 
 
     if (f > 0)

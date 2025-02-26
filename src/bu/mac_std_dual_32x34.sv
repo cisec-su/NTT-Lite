@@ -38,7 +38,6 @@ endgenerate
 
 localparam mac_std_dual_32x34_params_t params = {LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT};
 localparam LOGA = mac_std_dual_32x34_loga(params);
-// localparam LOGB = mac_std_dual_32x34_logb(params);
 localparam LOGE = mac_std_dual_32x34_loge(params);
 localparam LOGA0 = mac_std_dual_32x34_loga0(params);
 localparam LOGB0 = mac_std_dual_32x34_logb0(params);
@@ -199,9 +198,9 @@ end
 
 always @(*) begin
     S_int = 0;
-    T = P_mx[1][0] + ((mode_mul == MUL_DOUBLE) ? (P_mx[0][1] << (DSP_B_U - DSP_A_U)) : P_mx[0][1]);
+    T = P_mx[1][0] + ((mode_mul == MUL_SINGLE) ? (P_mx[0][1] << (DSP_B_U - DSP_A_U)) : P_mx[0][1]);
     case (mode_mul)
-        MUL_DOUBLE:
+        MUL_SINGLE:
         begin
             S_int = (T << (DSP_A_U)) + D[0];
         end
@@ -226,8 +225,8 @@ generate
     end
     else if (MODE_E == 2) begin
         always @(*) begin
-            S[LOGC0  :    0] = S_int[LOGC0-1:    0] - ((mode_mul == MUL_DOUBLE) ? E_int.mx[1][LOGC0-1:0]                : E_int.mx[1][LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
-            S[LOGC -1:LOGC0] = S_int[LOGC -1:LOGC0] - ((mode_mul == MUL_DOUBLE) ? E_int.mx[1][LOGE -1:LOGC0] + S[LOGC0] : E_int.mx[1][LOGE -1:LOGE0]);
+            S[LOGC0  :    0] = S_int[LOGC0-1:    0] - ((mode_mul == MUL_SINGLE) ? E_int.mx[1][LOGC0-1:0]                : E_int.mx[1][LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
+            S[LOGC -1:LOGC0] = S_int[LOGC -1:LOGC0] - ((mode_mul == MUL_SINGLE) ? E_int.mx[1][LOGE -1:LOGC0] + S[LOGC0] : E_int.mx[1][LOGE -1:LOGE0]);
         end
     end
 endgenerate
