@@ -6,7 +6,7 @@ module modmul
     )
     (
         input                clk ,
-        input                dual,
+        input   mode_mul_t   mode,
         input  [LOGQ -1  :0] Q   ,
         input  [LOGQ +1  :0] MU  ,
         input  [LOGLOGQ-1:0] logq,        
@@ -31,9 +31,9 @@ localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 
 
 wire [K-1:0] C_;
-mode_mul_t mode_mul;
+wire dual;
 
-assign mode_mul = (dual) ? MUL_DUAL : MUL_DOUBLE;
+assign dual = (mode == MUL_DOUBLE) ? 1'b0 : 1'b1;
 
 mac_std_dual_32x34 #(
     .LOGB   (LOGQ  ),
@@ -44,11 +44,11 @@ mac_std_dual_32x34 #(
     .FF_OUT (1     ),
     .FF_MUL (1     )
 ) im_nstd (
-    .clk     (clk       ),
-    .mode_mul(mode_mul  ),
-    .A       (A         ),
-    .B       (B         ),
-    .C       (C_        )
+    .clk     (clk ),
+    .mode_mul(mode),
+    .A       (A   ),
+    .B       (B   ),
+    .C       (C_  )
 );
 
 
