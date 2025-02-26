@@ -194,7 +194,7 @@ assign ntt_otf = (EN_NTT_OTF) ? ((op == `OP_NTT)||(op == `OP_INTT)) && (otf) : 0
 
 ///////////////////// bram signals //////////////////////////////////////
 
-assign coeff_ram_p0_wen   =  wpoly | upoly_mul | upoly_ntt;
+assign coeff_ram_p0_wen   =  wpoly | upoly_mul | upoly_ntt | upoly_intt;
 assign coeff_ram_p0_waddr = (wpoly     ) ?   ctr1       : 
                             (upoly_mul ) ?   ctr1       : 
                             (upoly_ntt ) ?  (ctr1 << 1) : 
@@ -202,8 +202,8 @@ assign coeff_ram_p0_waddr = (wpoly     ) ?   ctr1       :
 assign coeff_ram_p0_din   = (wpoly                   ) ?   i_data : 
                             (upoly_mul               ) ?   M_o    : 
                           /*(upoly_ntt | upoly_intt  ) ?*/ A_o  /*: 0*/;
-assign coeff_ram_p0_raddr = (op == `OP_INTT) ? (ctr0 << 1)  : 
-                                                    ctr0        ;
+assign coeff_ram_p0_raddr = (op == `OP_INTT && !pwm_idx) ? (ctr0 << 1)  : 
+                                                            ctr0        ;
 
 assign coeff_ram_p1_wen   =  upoly_ntt | upoly_intt;
 assign coeff_ram_p1_waddr = (upoly_ntt ) ?  (ctr1 << 1) + 1   : 
@@ -611,7 +611,7 @@ always @(*) begin
             pwm_idx = 1;
             io_word = ctr0_d;
             o_valid_int = 1;
-            o_data = coeff_ram_p1_dout;
+            o_data = coeff_ram_p0_dout;
             busy = 1;
             if (o_read) begin
                 if (ctr0 == num_words_m1) begin

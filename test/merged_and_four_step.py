@@ -529,7 +529,7 @@ def NTT(A, Psi_table, q, debug=False):
     return B
 #----------------------------------Merge INTT----------------------------------------
 
-def INTT(A, Psi_table, q, rev=True, flag=True):
+def INTT(A, Psi_table, q, rev=True, flag=True, debug=True):
     counterr = 0
     N = len(A)
     B = [_ for _ in A]
@@ -551,6 +551,9 @@ def INTT(A, Psi_table, q, rev=True, flag=True):
             Psi_pow = intReverse(h + i, l)
             # print('Psi_pow', Psi_pow)
             S = Psi_table[Psi_pow]
+            if debug:
+                print(f"Psi_pow: {Psi_pow} S: {(hex(S))}")
+
             counterr += 1
             #print(S)
             for j in range(j1, j2 + 1):
@@ -564,6 +567,10 @@ def INTT(A, Psi_table, q, rev=True, flag=True):
             j1 = j1 + 2 * t
         t = 2 * t
         m = int(m / 2)
+
+        if debug:
+            print([hex(Bi) for Bi in B])
+
 
     if flag:
         N_inv = modinv(N, q)

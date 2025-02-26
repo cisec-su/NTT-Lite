@@ -12,9 +12,8 @@
 
 
 `define OP_NTT         2'd0
-`define OP_RFU1        2'd1
-`define OP_INTT        2'd2
-`define OP_PWM         2'd3
+`define OP_INTT        2'd1
+`define OP_PWM         2'd2
 
 
 `define MODE_SINGLE       2'd0

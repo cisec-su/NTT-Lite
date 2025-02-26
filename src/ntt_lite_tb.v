@@ -18,10 +18,9 @@ localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 localparam LOGQB = $clog2(LOGQ/B);
 localparam QBMASK = (1 << LOGQB) - 1;
 
-localparam TB_OP = `OP_NTT;
 localparam TB_OTF = 0;
 
-localparam N_ = (TB_OP == `OP_PWM && TB_OTF == 1) ? N/2 : N;
+localparam N_ = N;
 
 
 reg clk;
@@ -88,11 +87,7 @@ initial begin
     $readmemh("../../../../../test/q.txt" , q);
     $readmemh("../../../../../test/psi.txt" , psi);
     $readmemh("../../../../../test/poly_in_single.txt" , poly_in);
-    
-    if (TB_OP == `OP_PWM)
-        $readmemh("../../../../../test/mul_out.txt" , poly_out);
-    else if (TB_OP == `OP_NTT)
-        $readmemh("../../../../../test/poly_out_single_ntt.txt" , poly_out);
+    $readmemh("../../../../../test/poly_out_single_ntt.txt" , poly_out);
 
     $display("Simulation started.");
 
@@ -105,21 +100,18 @@ initial begin
     #(HP);
     #(1);
 
-    op = TB_OP;
     otf = 1'b0;
     o_read = 1'b0;
     logn = LOGN;
     logq = 12;
+
+    op = `OP_NTT;
     mode = `MODE_SINGLE;
 
-    if ((TB_OP == `OP_NTT) && TB_OTF) begin
-        otf = 1;
-    end
-    else begin
-        otf = 0;    
-    end
     cmd = `CMD_LOAD_TWIDDLE;
     #FP;
+    cmd = 0;
+
     while (!done) begin
         if (i_ready) begin
             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
@@ -129,10 +121,11 @@ initial begin
     end
 
     i_valid = 1'b0;
-    otf = TB_OTF;
 
     cmd = `CMD_LOAD_POLY;
     #FP;
+    cmd = 0;
+
     flag = 0;
     flag1 = 0;
 
@@ -168,17 +161,19 @@ initial begin
     end
 
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
-    if (TB_OP == `OP_PWM)
-        $readmemh("../../../../../test/mul_out.txt" , poly_out);
-    else if (TB_OP == `OP_NTT)
-        $readmemh("../../../../../test/poly_out_dual_ntt.txt" , poly_out);
+    $readmemh("../../../../../test/poly_out_dual_ntt.txt" , poly_out);
     #FP;
     #FP;
 
     mode = `MODE_DUAL;
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
     flag = 0;
-
 
     while(!done) begin
         if (i_ready) begin
@@ -213,7 +208,229 @@ initial begin
         flag1 = 1;
     end
 
-    
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/poly_in_single.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
+    $readmemh("../../../../../test/mul_out_single.txt" , poly_out);
+
+    op = `OP_PWM;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            #FP;
+        end
+    end
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS SINGLE PWM)");
+    else begin
+        $display("(FAIL SINGLE PWM)");
+        flag1 = 1;
+    end
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
+    $readmemh("../../../../../test/mul_out_dual.txt" , poly_out);
+
+    op = `OP_PWM;
+    mode = `MODE_DUAL;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            #FP;
+        end
+    end
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS DUAL PWM)");
+    else begin
+        $display("(FAIL DUAL PWM)");
+        flag1 = 1;
+    end
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
+    $readmemh("../../../../../test/mul_out_poly.txt" , poly_out);
+
+    op = `OP_PWM;
+    mode = `MODE_POLY;
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS POLY PWM)");
+    else begin
+        $display("(FAIL POLY PWM)");
+        flag1 = 1;
+    end
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/poly_out_single_ntt.txt" , poly_in);
+    $readmemh("../../../../../test/psi_inv.txt" , psi);
+    $readmemh("../../../../../test/poly_out_single_intt.txt" , poly_out);
+
+    op = `OP_INTT;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            #FP;
+        end
+    end
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS SINGLE INTT)");
+    else begin
+        $display("(FAIL SINGLE INTT)");
+        flag1 = 1;
+    end
+
+
+
     if (flag1 == 0)
         $display("(ALL SUCCESS)");
     else
