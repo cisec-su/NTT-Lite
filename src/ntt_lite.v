@@ -2,7 +2,7 @@
 
 module ntt_lite
    #(   
-        parameter LOGN       = 4,
+        parameter LOGN       = 8,
         parameter LOGQ       = 32,
         parameter W          = 16,
         parameter B          = 32, // bandwidth, must divide LOGQ
@@ -13,7 +13,7 @@ module ntt_lite
         input                       clk    ,
         input                       rst    ,
         input      [           2:0] cmd    ,
-        input      [           1:0] op     ,
+        input      [           3:0] op     ,
         input                       otf    ,
         input      [   LOGLOGN-1:0] logn   ,
         input      [   LOGLOGQ-1:0] logq   ,
@@ -63,6 +63,7 @@ localparam ST_PWM0         = 4'd7;
 localparam ST_PWM1         = 4'd8;
 localparam ST_NTT_OTF      = 4'd10;
 localparam ST_TWIDDLE_OTF  = 4'd11;
+localparam ST_ADDSUB       = 4'd12;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -129,6 +130,9 @@ wire [LOGQ-1:0] M_o;
 
 reg  sr_i;
 wire sr_o;
+wire sr_t;
+wire sr_sel_i;
+wire sr_sel_o;
 
 
 // bram signals
@@ -147,6 +151,11 @@ wire [LOGN-1:0] twiddle_ram_waddr;
 wire [LOGQ-1:0] twiddle_ram_din;
 wire [LOGN-1:0] twiddle_ram_raddr;
 wire [LOGQ-1:0] twiddle_ram_dout;
+
+reg  coeff_ram_p0_rsel;
+wire coeff_ram_p1_rsel;
+reg  coeff_ram_p0_wsel;
+wire coeff_ram_p1_wsel;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -194,6 +203,10 @@ assign ntt_otf = (EN_NTT_OTF) ? ((op == `OP_NTT)||(op == `OP_INTT)) && (otf) : 0
 
 ///////////////////// bram signals //////////////////////////////////////
 
+assign sr_sel_i = coeff_ram_p0_rsel;
+assign coeff_ram_p1_rsel = coeff_ram_p0_rsel;
+assign coeff_ram_p1_wsel = coeff_ram_p0_wsel;
+
 assign coeff_ram_p0_wen   =  wpoly | upoly_mul | upoly_ntt | upoly_intt;
 assign coeff_ram_p0_waddr = (wpoly     ) ?   ctr1       : 
                             (upoly_mul ) ?   ctr1       : 
@@ -215,14 +228,14 @@ assign coeff_ram_p1_raddr = (pwm_idx             ) ?  ctr0             :
 // todo: check pwm_idx, use `OP_PWM if posslbe
 
 assign maskS    = (1 << ctr2) - 1 ;
-assign maskIS   = (1 << (logn_m1 - ctr2)) - 1;
+assign maskIS   = ((1 << (logn_m1 - ctr2)) - 1);
 
 assign twiddle_ram_wen   =  wpsi | upsi;
 assign twiddle_ram_waddr = (wpsi) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
 assign twiddle_ram_din   = (wpsi) ? i_data : /*(upsi) ?*/ M_o/* : 0*/;
 assign twiddle_ram_raddr = (EN_NTT_OTF && ntt_otf_feed_bu) ?                    ctr2            : 
                            (pwm_idx                      ) ?                    ctr0            : 
-                           (op == `OP_INTT               ) ? ((~maskIS << 1) + (ctr0 & maskIS)) : 
+                           (op == `OP_INTT               ) ? (  maskIS       + (ctr0 & maskIS)) : 
                                                              (  maskS        + (ctr0 & maskS )) ; 
 
 /////////////////////////////////////////////////////////////////////////
@@ -340,23 +353,28 @@ end
 ////////////////////////// coefficient ram //////////////////////////////
 
 
-ntt_lite_coeff_ram #(
+ntt_lite_coeff_ram_double #(
     .LOGQ(LOGQ),
     .LOGN(LOGN)
 ) coeff_ram_inst (
     .clk     (clk               ),
+    .logn    (logn              ),
 
     .p0_wen  (coeff_ram_p0_wen  ),
     .p0_waddr(coeff_ram_p0_waddr),
     .p0_din  (coeff_ram_p0_din  ),
     .p0_raddr(coeff_ram_p0_raddr),
     .p0_dout (coeff_ram_p0_dout ),
+    .p0_rsel (coeff_ram_p0_rsel ),
+    .p0_wsel (coeff_ram_p0_wsel ),
 
     .p1_wen  (coeff_ram_p1_wen  ),
     .p1_waddr(coeff_ram_p1_waddr),
     .p1_din  (coeff_ram_p1_din  ),
     .p1_raddr(coeff_ram_p1_raddr),
-    .p1_dout (coeff_ram_p1_dout )
+    .p1_dout (coeff_ram_p1_dout ),
+    .p1_rsel (coeff_ram_p1_rsel ),
+    .p1_wsel (coeff_ram_p1_wsel )
 );
 
 /////////////////////////////////////////////////////////////////////////
@@ -415,12 +433,35 @@ butterfly #(
 shiftreg #(
     .SHIFT(L + 1),
     .DATA (    1)
-) shreg (
+) shreg_mul (
     .clk     (clk ),
     .rst     (rst ),
     .data_in (sr_i),
     .data_out(sr_o)
 );
+
+
+shiftreg #(
+    .SHIFT(1),
+    .DATA (1)
+) shreg_addsub (
+    .clk     (clk ),
+    .rst     (rst ),
+    .data_in (sr_i),
+    .data_out(sr_t)
+);
+
+
+shiftreg #(
+    .SHIFT(L + 1),
+    .DATA (    1)
+) shreg_sel (
+    .clk     (clk     ),
+    .rst     (rst     ),
+    .data_in (sr_sel_i),
+    .data_out(sr_sel_o)
+);
+
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -464,6 +505,9 @@ always @(*) begin
     error_set = 0;
     io_word = 0;
     i_ready = 0;
+
+    coeff_ram_p0_rsel = 0;
+    coeff_ram_p0_wsel = 0;
 
     case (state)
         ST_IDLE: begin
@@ -536,13 +580,41 @@ always @(*) begin
             if (i_valid) begin
                 wpoly = 1;
                 if (ctr1 == num_words_m1) begin
-                    next_state = ((op == `OP_NTT)||(op == `OP_INTT)) ? ST_NTT0 : (op == `OP_PWM) ? ST_PWM0 : ST_IDLE;
+                    case (op)
+                        `OP_NTT : next_state = ST_NTT0;
+                        `OP_INTT: next_state = ST_NTT0;
+                        `OP_PWM : next_state = ST_PWM0;
+                        `OP_ADD : next_state = ST_ADDSUB;
+                        `OP_SUB : next_state = ST_ADDSUB;
+                        default : next_state = ST_IDLE;
+                    endcase
                     ctr1_rst = 1;
                 end
                 else
                     ctr1_inc = 1;
             end
 
+        end
+        ST_ADDSUB: begin
+
+            pwm_idx = 1;
+            busy = 1;
+            sr_i = 1;
+            if (ctr0 != n_m1) begin
+                ctr0_inc = 1;
+            end
+
+            if (sr_t) begin
+                upoly_mul = 1;
+                if (ctr1 == n_m1) begin
+                    ctr0_rst = 1;
+                    ctr1_rst = 1;
+                    next_state = ST_POLY_OUT;
+                    end
+                else
+                    ctr1_inc = 1;
+            end
+            
         end
         ST_PWM0: begin
 
@@ -552,7 +624,6 @@ always @(*) begin
             if (((otf == 1) && (ctr0 == logn_m1_shft_m1)) || (ctr0 == n_m1)) begin
                 ctr0_rst = 1;
                 next_state = ST_PWM1;
-                ctr2_rst = 1;
             end
             else
                 ctr0_inc = 1;
@@ -574,6 +645,7 @@ always @(*) begin
 
             busy = 1;
             sr_i = 1;
+            coeff_ram_p0_rsel = ctr2 & 1'b1;
             if (ctr0 == logn_m1_shft_m1) begin
                 ctr0_rst = 1;
                 next_state = ST_NTT1;
@@ -611,6 +683,7 @@ always @(*) begin
             pwm_idx = 1;
             io_word = ctr0_d;
             o_valid_int = 1;
+            coeff_ram_p0_rsel = (op == `OP_NTT || op == `OP_INTT) ? logn & 1'b1 : 1'b0;
             o_data = coeff_ram_p0_dout;
             busy = 1;
             if (o_read) begin
@@ -683,6 +756,7 @@ always @(*) begin
                 ctr1_inc = 1;
             upoly_ntt = (op == `OP_NTT);
             upoly_intt = (op == `OP_INTT);
+            coeff_ram_p0_wsel = ~sr_sel_o;
         end
     end
     else if (pwm_rcv_bu) begin

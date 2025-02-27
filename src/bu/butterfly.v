@@ -9,7 +9,7 @@ module butterfly
     (
         input                clk ,
 
-        input  [        1:0] op  ,
+        input  [        3:0] op  ,
         input  [        1:0] mode,
         input  [LOGQ   -1:0] A   ,
         input  [LOGQ   -1:0] B   ,
@@ -44,14 +44,18 @@ wire             dual;
 
 assign MM_in_A     = (op == `OP_INTT) ? sub_out_C : B;
 assign MM_in_B     = ((op == `OP_NTT || op == `OP_INTT) && dual) ? {PSI[LOGQ0-1:0], PSI[LOGQ0-1:0]} : PSI;
-assign add_in_A    = (op == `OP_INTT) ? A : shift_out;
-assign add_in_B    = (op == `OP_INTT) ? B : MM_out_C;
-assign sub_in_A    = (op == `OP_INTT) ? A : shift_out;
-assign sub_in_B    = (op == `OP_INTT) ? B : MM_out_C;
+assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A : shift_out;
+assign add_in_B    = (op == `OP_INTT) ? B : (op == `OP_ADD) ? PSI : MM_out_C;
+assign sub_in_A    = (op == `OP_INTT || op == `OP_SUB) ? A : shift_out;
+assign sub_in_B    = (op == `OP_INTT) ? B : (op == `OP_SUB) ? PSI : MM_out_C;
+// assign add_in_A    = (op == `OP_INTT) ? A : shift_out;
+// assign add_in_B    = (op == `OP_INTT) ? B : MM_out_C;
+// assign sub_in_A    = (op == `OP_INTT) ? A : shift_out;
+// assign sub_in_B    = (op == `OP_INTT) ? B : MM_out_C;
 assign E           = (op == `OP_INTT) ? shift_out : add_out_C;
 assign O           = (op == `OP_INTT) ? MM_out_C : sub_out_C;
 assign shift_in    = (op == `OP_INTT) ? add_out_C : A;
-assign M           = MM_out_C;
+assign M           = (op == `OP_ADD ) ? add_out_C : (op == `OP_SUB) ? sub_out_C : MM_out_C;
 // MODE_POLY is undefined for (I)NTT
 assign mode_mul  = (op == `OP_PWM) ? mode : (mode == `MODE_POLY && (op == `OP_INTT || op == `OP_NTT)) ? `MODE_DUAL : mode;
 assign dual      = mode == `MODE_DUAL || mode == `MODE_POLY;
@@ -68,8 +72,7 @@ shiftreg #(
 
 
 modmul #(
-    .LOGQ   (LOGQ  ),
-    .MUL_OP (MUL_OP)
+    .LOGQ(LOGQ)
 ) mm0 (
     .clk (clk     ),
     .mode(mode_mul),

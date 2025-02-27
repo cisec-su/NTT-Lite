@@ -8,10 +8,10 @@ parameter HP = 5;
 parameter FP = (2*HP);
 parameter B = 32;
 parameter LOGQ = 32;
-parameter N = 16;
+parameter LOGN = 8;
 //parameter L = 11;
 parameter EN_NTT_OTF = 1;
-localparam LOGN = $clog2(N);
+localparam N = 1 << LOGN;
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 
@@ -26,13 +26,15 @@ localparam N_ = N;
 reg clk;
 reg rst;
 
-reg [LOGQ+1:0] q [0:1]; // higher address is for mu
+reg [LOGQ-1:0] q;
+reg [LOGQ+1:0] mu;
+reg [LOGQ+1:0] meta     [0:  3];
 reg [LOGQ-1:0] psi      [0:N-1];
 reg [LOGQ-1:0] poly_in  [0:N-1];
 reg [LOGQ-1:0] poly_out [0:N-1];
 
 reg  [2  :0] cmd;
-reg  [1  :0] op;
+reg  [3  :0] op;
 reg          otf;
 reg          dual;
 reg  [1  :0] mode;
@@ -69,8 +71,8 @@ ntt_lite #(
     .logn(logn),
     .logq(logq),
     .mode(mode),
-    .q(q[0]),
-    .mu(q[1]),
+    .q(q),
+    .mu(mu),
     .i_data(i_data),
     .i_valid(i_valid),
     .i_ready(i_ready),
@@ -84,10 +86,10 @@ ntt_lite #(
 
 initial begin
 
-    $readmemh("../../../../../test/q.txt" , q);
+    $readmemh("../../../../../test/meta.txt" , meta);
     $readmemh("../../../../../test/psi.txt" , psi);
     $readmemh("../../../../../test/poly_in_single.txt" , poly_in);
-    $readmemh("../../../../../test/poly_out_single_ntt.txt" , poly_out);
+    $readmemh("../../../../../test/ntt_out_single.txt" , poly_out);
 
     $display("Simulation started.");
 
@@ -102,8 +104,11 @@ initial begin
 
     otf = 1'b0;
     o_read = 1'b0;
-    logn = LOGN;
-    logq = 12;
+
+    q = meta[0];
+    mu = meta[1];
+    logn = meta[2];
+    logq = meta[3];
 
     op = `OP_NTT;
     mode = `MODE_SINGLE;
@@ -160,12 +165,11 @@ initial begin
         flag1 = 1;
     end
 
-
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
-    $readmemh("../../../../../test/poly_out_dual_ntt.txt" , poly_out);
+    $readmemh("../../../../../test/ntt_out_dual.txt" , poly_out);
     #FP;
     #FP;
 
@@ -267,7 +271,7 @@ initial begin
     end
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
@@ -326,7 +330,7 @@ initial begin
 
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
@@ -372,12 +376,12 @@ initial begin
     end
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    $readmemh("../../../../../test/poly_out_single_ntt.txt" , poly_in);
+    $readmemh("../../../../../test/ntt_out_single.txt" , poly_in);
     $readmemh("../../../../../test/psi_inv.txt" , psi);
-    $readmemh("../../../../../test/poly_out_single_intt.txt" , poly_out);
+    $readmemh("../../../../../test/intt_out_single.txt" , poly_out);
 
     op = `OP_INTT;
     mode = `MODE_SINGLE;
@@ -426,6 +430,286 @@ initial begin
         $display("(SUCCESS SINGLE INTT)");
     else begin
         $display("(FAIL SINGLE INTT)");
+        flag1 = 1;
+    end
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    $readmemh("../../../../../test/ntt_out_dual.txt" , poly_in);
+    $readmemh("../../../../../test/psi_inv.txt" , psi);
+    $readmemh("../../../../../test/intt_out_dual.txt" , poly_out);
+
+    op = `OP_INTT;
+    mode = `MODE_DUAL;
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS DUAL INTT)");
+    else begin
+        $display("(FAIL DUAL INTT)");
+        flag1 = 1;
+    end
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    $readmemh("../../../../../test/poly_in_single.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
+    $readmemh("../../../../../test/add_out_single.txt" , poly_out);
+
+    op = `OP_ADD;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            #FP;
+        end
+    end
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS SINGLE ADD)");
+    else begin
+        $display("(FAIL SINGLE ADD)");
+        flag1 = 1;
+    end
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/poly_in_single.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
+    $readmemh("../../../../../test/sub_out_single.txt" , poly_out);
+
+    op = `OP_SUB;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            #FP;
+        end
+    end
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS SINGLE SUB)");
+    else begin
+        $display("(FAIL SINGLE SUB)");
+        flag1 = 1;
+    end
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
+    $readmemh("../../../../../test/add_out_dual.txt" , poly_out);
+
+    op = `OP_ADD;
+    mode = `MODE_DUAL;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            #FP;
+        end
+    end
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS DUAL ADD)");
+    else begin
+        $display("(FAIL DUAL ADD)");
+        flag1 = 1;
+    end
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
+    $readmemh("../../../../../test/sub_out_dual.txt" , poly_out);
+
+    op = `OP_SUB;
+    mode = `MODE_DUAL;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            #FP;
+        end
+    end
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS DUAL SUB)");
+    else begin
+        $display("(FAIL DUAL SUB)");
         flag1 = 1;
     end
 
