@@ -130,6 +130,7 @@ ntt_lite_ctrl #(
     .logq(ctrl_logq),//
     .mode(ctrl_mode),//
     .op(ctrl_op),//
+    .mu(ctrl_mu),//
     .q(ctrl_q),//
     .otf(ctrl_otf),//
     .done(ctrl_done),//
@@ -195,7 +196,11 @@ ntt_lite_acc_wb ntt_lite_acc_wb_inst (
 );
 
 
-ntt_lite_acc_fsm ntt_lite_acc_fsm_inst (
+ntt_lite_acc_fsm #(
+    .B   (B   ),
+    .LOGQ(LOGQ),
+    .LOGN(LOGN)
+) ntt_lite_acc_fsm_inst (
     .clk       (clk),
     .rst       (rst) ,
     // dma <-> fsm
@@ -222,7 +227,7 @@ ntt_lite_acc_fsm ntt_lite_acc_fsm_inst (
     .ctrl_logn(ctrl_logn),//
     .ctrl_logq(ctrl_logq),//
     .ctrl_cmd(ctrl_cmd)//
-    );
+);
 
 
 endmodule

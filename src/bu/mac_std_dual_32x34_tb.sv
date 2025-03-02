@@ -2,7 +2,7 @@
 
 module mac_std_dual_32x34_tb();
 
-parameter mode_e_t MODE_E  = SUB_E;
+parameter mode_e_t MODE_E  = DIS_E;
 parameter          FF_IN_A = 0;
 parameter          FF_IN_B = 0;
 parameter          FF_IN_E = 0;
@@ -14,9 +14,9 @@ parameter TEST_NUM         = 100000;
 
 `include "mac_std_dual_32x34.svh"
 
-localparam mac_std_dual_32x34_params_t params = {MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT};
+localparam LOGB = 32;
+localparam mac_std_dual_32x34_params_t params = {LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT};
 localparam LOGA = mac_std_dual_32x34_loga(params);
-localparam LOGB = mac_std_dual_32x34_logb(params);
 localparam LOGE = mac_std_dual_32x34_loge(params);
 localparam LOGA0 = mac_std_dual_32x34_loga0(params);
 localparam LOGB0 = mac_std_dual_32x34_logb0(params);
@@ -68,6 +68,7 @@ end
 
 mac_std_dual_32x34 #(
     .MODE_E (MODE_E),
+    .LOGB(LOGB),
     .FF_IN_A(FF_IN_A),
     .FF_IN_B(FF_IN_B),
     .FF_IN_E(FF_IN_E),

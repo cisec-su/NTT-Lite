@@ -33,7 +33,7 @@ reg [LOGQ-1:0] psi      [0:N-1];
 reg [LOGQ-1:0] poly_in  [0:N-1];
 reg [LOGQ-1:0] poly_out [0:N-1];
 
-reg  [2  :0] cmd;
+reg  [3  :0] cmd;
 reg  [3  :0] op;
 reg          otf;
 reg          dual;

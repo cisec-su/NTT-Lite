@@ -55,8 +55,6 @@ localparam N_A = ((LOGA - 1) / DSP_A_U) + 1;
 localparam N_B = ((LOGB - 1) / DSP_B_U) + 1;
 localparam N_D = N_A + N_B - 1;
 
-integer i;
-
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -73,31 +71,23 @@ reg  [DSP_B_U-1:0] B_i_q [0:N_B-1];
 wire [DSP_B_U-1:0] B_i_mx[0:N_B-1];
 
 
-generate
-    if (MODE_E != 0) begin : E_int
-        localparam E_len = 2;
-        wire [LOGE-1:0] mx [0:E_len-1];
-        reg  [LOGE-1:0] q  [0:E_len-1];
-    end
-endgenerate
+wire [LOGE-1:0] E_mx_0;
+reg  [LOGE-1:0] E_q_0;
+wire [LOGE-1:0] E_mx_1;
+reg  [LOGE-1:0] E_q_1;
 
 (* use_dsp = "yes" *) wire [DSP_M_U-1:0] P [0:N_A-1][0:N_B-1];
 reg  [DSP_M_U-1:0] P_q [0:N_A-1][0:N_B-1];
 wire [DSP_M_U-1:0] P_mx[0:N_A-1][0:N_B-1];
 
-reg  [LOGD-1:0] D [0:N_D-1];
-for (genvar i = 0; i < N_D; i = i + 1) begin
-    initial D[i] = 0;
-end
 
-(* use_dsp = "no" *) reg  [LOGC-1:0] S;
+wire  [LOGC-1:0] S;
+(* use_dsp = "no" *) wire  [LOGC0:0] S0;
+(* use_dsp = "no" *) wire  [LOGC0:0] S1;
 reg  [LOGC-1:0] S_q;
 
-reg [LOGD0+1:0] T;
-
-generate
-    reg  [LOGC-1:0] S_int;
-endgenerate
+wire [LOGD0+1:0] T;
+reg  [LOGC-1:0] S_int;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -139,8 +129,8 @@ for (genvar i = 0; i < N_B; i = i + 1) begin
     assign B_i_mx[i] = (FF_IN_B) ? B_i_q[i] : B_i[i];
 end
 
-if (MODE_E != 0) begin
-    assign E_int.mx[0] = (FF_IN_E) ? E_int.q[0] : E;
+if (MODE_E != DIS_E) begin
+    assign E_mx_0 = (FF_IN_E) ? E_q_0 : E;
 end
 
 for (genvar i = 0; i < N_A; i = i + 1) begin
@@ -149,8 +139,8 @@ for (genvar i = 0; i < N_A; i = i + 1) begin
     end
 end
 
-if (MODE_E != 0) begin
-    assign E_int.mx[1]   = (FF_MUL) ? E_int.q[1] : E_int.mx[0];
+if (MODE_E != DIS_E) begin
+    assign E_mx_1   = (FF_MUL) ? E_q_1 : E_mx_0;
 end
 
 assign C = (FF_OUT) ? S_q : S;
@@ -173,36 +163,17 @@ end
 
 
 
-///////////////////////////// diagonal assignments //////////////////////
-
-for (genvar i = 0; i < N_A; i = i + 1) begin
-    for (genvar j = 0; j < N_B; j = j + 1) begin
-        always @(*) begin
-            if (((i*DSP_A_U) + (j*DSP_B_U) + DSP_M_U) <= (LOGA+LOGB)) begin
-                D[(i-j+N_D) % N_D][(i*DSP_A_U) + (j*DSP_B_U) +: DSP_M_U] = P_mx[i][j];
-            end
-            else begin
-                D[(i-j+N_D) % N_D][LOGA + LOGB - 1 : (i*DSP_A_U) + (j*DSP_B_U)] = P_mx[i][j];
-            end
-        end
-
-    end
-end
-
-/////////////////////////////////////////////////////////////////////////
-
-
-
-
 ///////////////////////////// summation /////////////////////////////////
+
+
+assign T = P_mx[1][0] + ((mode_mul == MUL_SINGLE) ? (P_mx[0][1] << (DSP_B_U - DSP_A_U)) : P_mx[0][1]);
 
 always @(*) begin
     S_int = 0;
-    T = P_mx[1][0] + ((mode_mul == MUL_SINGLE) ? (P_mx[0][1] << (DSP_B_U - DSP_A_U)) : P_mx[0][1]);
     case (mode_mul)
         MUL_SINGLE:
         begin
-            S_int = (T << (DSP_A_U)) + D[0];
+            S_int = (T << (DSP_A_U)) + {P_mx[1][1],P_mx[0][0]};
         end
         MUL_DUAL:
         begin
@@ -217,19 +188,14 @@ always @(*) begin
     endcase
 end
 
-generate
-    if (MODE_E == 0) begin
-        always @(*) begin
-            S = S_int;
-        end
-    end
-    else if (MODE_E == 2) begin
-        always @(*) begin
-            S[LOGC0  :    0] = S_int[LOGC0-1:    0] - ((mode_mul == MUL_SINGLE) ? E_int.mx[1][LOGC0-1:0]                : E_int.mx[1][LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
-            S[LOGC -1:LOGC0] = S_int[LOGC -1:LOGC0] - ((mode_mul == MUL_SINGLE) ? E_int.mx[1][LOGE -1:LOGC0] + S[LOGC0] : E_int.mx[1][LOGE -1:LOGE0]);
-        end
-    end
-endgenerate
+if (MODE_E == DIS_E) begin
+    assign S = S_int;
+end
+else if (MODE_E == SUB_E) begin
+    assign S0 = S_int[LOGC0-1:    0] - ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGC0-1:0]                 : E_mx_1[LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
+    assign S1 = S_int[LOGC -1:LOGC0] - ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGE -1:LOGC0] + S0[LOGC0] : E_mx_1[LOGE -1:LOGE0]);
+    assign S = {S1[LOGC0-1:0], S0[LOGC0-1:0]};
+end
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -238,50 +204,49 @@ endgenerate
 
 ///////////////////////////// sequential logic //////////////////////////
 
-generate
-    if (FF_IN_A) begin
-        for (genvar i = 0; i < N_A; i = i + 1) begin
-            always @(posedge clk) begin
-                A_i_q[i] <= A_i[i];
-            end
-        end
-    end
-    if (FF_IN_B) begin
-        for (genvar i = 0; i < N_B; i = i + 1) begin
-            always @(posedge clk) begin
-                B_i_q[i] <= B_i[i];
-            end
-        end
-    end
-    if (FF_IN_E) begin
-        if (MODE_E != 0) begin
-            always @(posedge clk) begin
-                E_int.q[0] <= E;
-            end
-        end
-    end
 
-    if (FF_MUL) begin
-        for (genvar i = 0; i < N_A; i = i + 1) begin
-            for (genvar j = 0; j < N_B; j = j + 1) begin
-                always @(posedge clk) begin
-                    P_q[i][j] <= P[i][j];
-                end
-            end
-        end
-        if (MODE_E != 0) begin
-            always @(posedge clk) begin
-                E_int.q[1] <= E_int.mx[0];
-            end
-        end
-    end
-
-    if (FF_OUT) begin
+if (FF_IN_A) begin
+    for (genvar i = 0; i < N_A; i = i + 1) begin
         always @(posedge clk) begin
-            S_q <= S;
+            A_i_q[i] <= A_i[i];
         end
     end
-endgenerate
+end
+if (FF_IN_B) begin
+    for (genvar i = 0; i < N_B; i = i + 1) begin
+        always @(posedge clk) begin
+            B_i_q[i] <= B_i[i];
+        end
+    end
+end
+if (FF_IN_E && MODE_E != DIS_E) begin
+    always @(posedge clk) begin
+        E_q_0 <= E;
+    end
+end
+
+if (FF_MUL) begin
+    for (genvar i = 0; i < N_A; i = i + 1) begin
+        for (genvar j = 0; j < N_B; j = j + 1) begin
+            always @(posedge clk) begin
+                P_q[i][j] <= P[i][j];
+            end
+        end
+    end
+end
+
+if (MODE_E != DIS_E && FF_MUL) begin
+    always @(posedge clk) begin
+        E_q_1 <= E_mx_0;
+    end
+end
+
+
+if (FF_OUT) begin
+    always @(posedge clk) begin
+        S_q <= S;
+    end
+end
 
 /////////////////////////////////////////////////////////////////////////
 

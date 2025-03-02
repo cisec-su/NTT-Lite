@@ -43,7 +43,7 @@ localparam mac_std_dual_32x34_params_t mac_0_params = barrett_mac_0_params(param
 localparam mac_std_dual_32x34_params_t mac_1_params = barrett_mac_1_params(params);
 
 localparam LOGT  = (CORRECT) ? LOGQ : LOGQ + 2;
-localparam LOGC  = LOGQ << 1;//(LOGQ + 1) << 1;
+localparam LOGC  = LOGQ << 1;
 localparam LOGC0 = LOGC >> 1;
 localparam LOGCH_0 = LOGC0 - (LOGQ >> 1);
 localparam LOGCH = LOGCH_0 << 1;
@@ -77,29 +77,10 @@ localparam LOGQ_D = (PIPE_Q) ? LAT_0 + FF_IN : 0;
 
 ///////////////////////////// signals ///////////////////////////////////
 
-generate
-    if (FF_IN) begin : C_GEN
-        reg  [LOGC-1:0] C_q;
-    end
-endgenerate
-
-generate
-    if (FF_IN && PIPE_Q) begin : MU_GEN
-        reg  [LOGQ+1:0] mu_q;
-    end
-endgenerate
-
-generate
-    if (Q_D) begin : Q_GEN
-        reg  [LOGQH-1:0] qH_q [0:Q_D-1];
-    end
-endgenerate
-
-generate
-    if (LOGQ_D) begin : LOGQ_GEN
-        reg  [LOGLOGQ-1:0] B_q [0:LOGQ_D-1];
-    end
-endgenerate
+reg  [LOGC   -1:0] C_q;
+reg  [LOGQ   +1:0] mu_q;
+reg  [LOGQH  -1:0] qH_q [0:   Q_D-1];
+reg  [LOGLOGQ-1:0] B_q  [0:LOGQ_D-1];
 
 wire [LOGC -1:0] C_mx;
 wire [LOGQH-1:0] qH_mx   [0:1];
@@ -114,11 +95,8 @@ wire [LOGCH_0-1:0] CH_1;
 wire [LOGCL  -1:0] CL;
 wire [LOGCL_0-1:0] CL_0;
 wire [LOGCL_0-1:0] CL_1;
-generate
-    if (CL_D) begin : CL_GEN
-        reg [LOGCL-1:0] CL_q [0:CL_D-1];
-    end
-endgenerate
+
+reg  [LOGCL-1:0] CL_q [0:CL_D-1];
 wire [LOGCL-1:0] CL_mx;
 
 wire [LOGT0 -1:0] T0;
@@ -133,48 +111,37 @@ wire [LOGT1  -1:0] T1N;
 wire [LOGT1_0-1:0] T1N_0;
 wire [LOGT1_0-1:0] T1N_1;
 
-generate
-    if (FF_NEG_) begin : T1N_GEN
-        reg [LOGT1-1:0] T1N_q;
-    end
-endgenerate
+reg  [LOGT1-1:0] T1N_q;
 wire [LOGT1-1:0] T1N_mx;
 
 wire [LOGQ-1:0] q;
 wire [LOGQ-1:0] q_dual;
 
-generate
-    if (CORRECT) begin : CORR_GEN
-        wire [LOGQ   -1:0] q;
-        wire [LOGT1  -1:0] T1N_d1_mx;
-        wire [LOGT1  -1:0] T2;
-        wire [LOGT1_0  :0] T2_0;
-        wire [LOGT1_0-1:0] T2_1;
-        wire [LOGT1  -1:0] T2_mx;
-        wire [LOGT1  -1:0] T3;
-        wire [LOGT1_0  :0] T3_0;
-        wire [LOGT1_0-1:0] T3_1;
-        wire [LOGT1  -1:0] T3_mx;
-        wire [LOGT1  -1:0] T4;
-        wire [LOGT1_0  :0] T4_0;
-        wire [LOGT1_0-1:0] T4_1;
-        wire [LOGT1  -1:0] T4_mx;
-        if (FF_CORR) begin : FF
-            reg  [LOGT1-1:0] T1N_d1_q;
-            reg  [LOGT1-1:0] T2_q;
-            reg  [LOGT1-1:0] T3_q;
-            reg  [LOGT1-1:0] T4_q;
-        end
-    end    
-endgenerate
+// correction
+wire [LOGQ   -1:0] CORR_q;
+wire [LOGT1  -1:0] CORR_T1N_d1_mx;
+wire [LOGT1  -1:0] CORR_T2;
+wire [LOGT1_0  :0] CORR_T2_0;
+wire [LOGT1_0-1:0] CORR_T2_1;
+wire [LOGT1  -1:0] CORR_T2_mx;
+wire [LOGT1  -1:0] CORR_T3;
+wire [LOGT1_0  :0] CORR_T3_0;
+wire [LOGT1_0-1:0] CORR_T3_1;
+wire [LOGT1  -1:0] CORR_T3_mx;
+wire [LOGT1  -1:0] CORR_T4;
+wire [LOGT1_0  :0] CORR_T4_0;
+wire [LOGT1_0-1:0] CORR_T4_1;
+wire [LOGT1  -1:0] CORR_T4_mx;
+reg  [LOGT1-1:0] CORR_FF_T1N_d1_q;
+reg  [LOGT1-1:0] CORR_FF_T2_q;
+reg  [LOGT1-1:0] CORR_FF_T3_q;
+reg  [LOGT1-1:0] CORR_FF_T4_q;
 
 wire [LOGQ-1:0] T5;
 wire [LOGQ0-1:0] T5_0;
 wire [LOGQ0-1:0] T5_1;
 
-if (FF_OUT) begin : OUT_GEN
-    reg  [LOGQ-1:0] T5_q;
-end
+reg  [LOGQ-1:0] T5_q;
 
 mode_mul_t mode_mul;
 
@@ -215,89 +182,73 @@ assign T1N = (dual) ? {T1N_1, T1N_0} : -T1;
 
 /////////////////////////// pipeline steps  /////////////////////////////
 
-generate
-    if (FF_IN) begin
-        assign C_mx = C_GEN.C_q;
+if (FF_IN) begin
+    assign C_mx = C_q;
+end
+else begin
+    assign C_mx = C;
+end
+
+if (CL_D) begin
+    assign CL_mx = CL_q[CL_D - 1];
+end
+else begin
+    assign CL_mx = CL;
+end
+
+if (FF_IN && PIPE_Q) begin
+    assign mu_mx = mu_q;
+end
+else begin
+    assign mu_mx = MU;
+end
+
+if (Q_D) begin
+    assign qH_mx[0] = qH_q[FF_IN + LAT_0 - 1];
+    assign qH_mx[1] = qH_q[          Q_D - 1];
+end
+else begin
+    assign qH_mx[0] = qH;
+    assign qH_mx[1] = qH;
+end
+
+if (LOGQ_D) begin
+    assign B_mx[0] = B_q[ FF_IN - 1];
+    assign B_mx[1] = B_q[LOGQ_D - 1];
+end
+else begin
+    assign B_mx[0] = B;
+    assign B_mx[1] = B;
+end
+
+if (FF_NEG_) begin
+    assign T1N_mx = T1N_q;
+end
+else begin
+    assign T1N_mx = T1N;
+end
+
+if (CORRECT) begin
+    if (FF_CORR) begin
+        assign CORR_T1N_d1_mx = CORR_FF_T1N_d1_q;
+        assign CORR_T2_mx     = CORR_FF_T2_q;
+        assign CORR_T3_mx     = CORR_FF_T3_q;
+        assign CORR_T4_mx     = CORR_FF_T4_q;
     end
     else begin
-        assign C_mx = C;
+        assign CORR_T1N_d1_mx = T1N_mx;
+        assign CORR_T2_mx     = CORR_T2;
+        assign CORR_T3_mx     = CORR_T3;
+        assign CORR_T4_mx     = CORR_T4;
     end
-endgenerate
+end
 
-generate
-    if (CL_D) begin
-        assign CL_mx = CL_GEN.CL_q[CL_D - 1];
-    end
-    else begin
-        assign CL_mx = CL;
-    end
-endgenerate
-
-generate
-    if (FF_IN && PIPE_Q) begin
-        assign mu_mx = MU_GEN.mu_q;
-    end
-    else begin
-        assign mu_mx = MU;
-    end
-endgenerate
-
-generate
-    if (Q_D) begin
-        assign qH_mx[0] = Q_GEN.qH_q[FF_IN + LAT_0 - 1];
-        assign qH_mx[1] = Q_GEN.qH_q[          Q_D - 1];
-    end
-    else begin
-        assign qH_mx[0] = qH;
-        assign qH_mx[1] = qH;
-    end
-endgenerate
-
-generate
-    if (LOGQ_D) begin
-        assign B_mx[0] = LOGQ_GEN.B_q[ FF_IN - 1];
-        assign B_mx[1] = LOGQ_GEN.B_q[LOGQ_D - 1];
-    end
-    else begin
-        assign B_mx[0] = B;
-        assign B_mx[1] = B;
-    end
-endgenerate
-
-generate
-    if (FF_NEG_) begin
-        assign T1N_mx = T1N_GEN.T1N_q;
-    end
-    else begin
-        assign T1N_mx = T1N;
-    end
-endgenerate
-
-generate
-    if (CORRECT) begin
-        if (FF_CORR) begin
-            assign CORR_GEN.T1N_d1_mx = CORR_GEN.FF.T1N_d1_q;
-            assign CORR_GEN.T2_mx     = CORR_GEN.FF.T2_q;
-            assign CORR_GEN.T3_mx     = CORR_GEN.FF.T3_q;
-            assign CORR_GEN.T4_mx     = CORR_GEN.FF.T4_q;
-        end
-        else begin
-            assign CORR_GEN.T1N_d1_mx = T1N_mx;
-            assign CORR_GEN.T2_mx     = CORR_GEN.T2;
-            assign CORR_GEN.T3_mx     = CORR_GEN.T3;
-            assign CORR_GEN.T4_mx     = CORR_GEN.T4;
-        end
-    end
-endgenerate
-
-generate
-    if (FF_OUT) begin
-        assign T = OUT_GEN.T5_q;
-    end
-    else begin
-        assign T = T5;
-    end
-endgenerate
+if (FF_OUT) begin
+    assign T = T5_q;
+end
+else begin
+    assign T = T5;
+end
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -354,52 +305,37 @@ mac_std_dual_32x34 #(
 /////////////////////////// correction //////////////////////////////////
 
 if (CORRECT) begin
-    assign CORR_GEN.q = (LOGQ > LOGQH) ? {qH_mx[1], {(W - 1){1'b0}}, 1'b1} : qH_mx[1];
+    assign CORR_q = (LOGQ > LOGQH) ? {qH_mx[1], {(W - 1){1'b0}}, 1'b1} : qH_mx[1];
 
-    assign CORR_GEN.T2_0 = T1N_mx[LOGT1_0-1:      0] - CORR_GEN.q[LOGT1_0-1:0];
-    assign CORR_GEN.T2_1 = T1N_mx[LOGT1  -1:LOGT1_0] - ((dual) ? CORR_GEN.q[LOGT1_0-1:0] : (CORR_GEN.q >> LOGT1_0) + CORR_GEN.T2_0[LOGT1_0]);
-    assign CORR_GEN.T2   = {CORR_GEN.T2_1, CORR_GEN.T2_0[LOGT1_0-1:0]};
+    assign CORR_T2_0 = T1N_mx[LOGT1_0-1:      0] - CORR_q[LOGT1_0-1:0];
+    assign CORR_T2_1 = T1N_mx[LOGT1  -1:LOGT1_0] - ((dual) ? CORR_q[LOGT1_0-1:0] : (CORR_q >> LOGT1_0) + CORR_T2_0[LOGT1_0]);
+    assign CORR_T2   = {CORR_T2_1, CORR_T2_0[LOGT1_0-1:0]};
 
-    assign CORR_GEN.T3_0 = T1N_mx[LOGT1_0-1:      0] - {CORR_GEN.q[LOGT1_0-2:0], 1'b0};
-    assign CORR_GEN.T3_1 = T1N_mx[LOGT1  -1:LOGT1_0] - ((dual) ? {CORR_GEN.q, 1'b0} : ({CORR_GEN.q, 1'b0} >> LOGT1_0) + CORR_GEN.T3_0[LOGT1_0]);
-    assign CORR_GEN.T3   = {CORR_GEN.T3_1, CORR_GEN.T3_0[LOGT1_0-1:0]};
+    assign CORR_T3_0 = T1N_mx[LOGT1_0-1:      0] - {CORR_q[LOGT1_0-2:0], 1'b0};
+    assign CORR_T3_1 = T1N_mx[LOGT1  -1:LOGT1_0] - ((dual) ? {CORR_q, 1'b0} : ({CORR_q, 1'b0} >> LOGT1_0) + CORR_T3_0[LOGT1_0]);
+    assign CORR_T3   = {CORR_T3_1, CORR_T3_0[LOGT1_0-1:0]};
 
-    assign CORR_GEN.T4_0 = CORR_GEN.T3[LOGT1_0-1:      0] - CORR_GEN.q[LOGT1_0-1:0];
-    assign CORR_GEN.T4_1 = CORR_GEN.T3[LOGT1  -1:LOGT1_0] - ((dual) ? CORR_GEN.q : (CORR_GEN.q >> LOGT1_0) + CORR_GEN.T4_0[LOGT1_0]);
-    assign CORR_GEN.T4   = {CORR_GEN.T4_1, CORR_GEN.T4_0[LOGT1_0-1:0]};
-
-
-    assign T5_0 = ((dual && CORR_GEN.T2_mx[LOGQ0+1] == 1'b1) || (!dual && CORR_GEN.T2_mx[LOGQ+1] == 1'b1)) ? CORR_GEN.T1N_d1_mx[LOGQ0-1:0] :
-                  ((dual && CORR_GEN.T3_mx[LOGQ0+1] == 1'b1) || (!dual && CORR_GEN.T3_mx[LOGQ+1] == 1'b1)) ? CORR_GEN.T2_mx    [LOGQ0-1:0] :
-                  ((dual && CORR_GEN.T4_mx[LOGQ0+1] == 1'b1) || (!dual && CORR_GEN.T4_mx[LOGQ+1] == 1'b1)) ? CORR_GEN.T3_mx    [LOGQ0-1:0] : 
-                                                                                                   CORR_GEN.T4_mx    [LOGQ0-1:0] ;
-
-    assign T5_1 = (!dual && CORR_GEN.T2_mx[LOGQ         +1] == 1'b1) ? CORR_GEN.T1N_d1_mx[LOGQ0   +: LOGQ0] :
-                  (!dual && CORR_GEN.T3_mx[LOGQ         +1] == 1'b1) ? CORR_GEN.T2_mx    [LOGQ0   +: LOGQ0] :
-                  (!dual && CORR_GEN.T4_mx[LOGQ         +1] == 1'b1) ? CORR_GEN.T3_mx    [LOGQ0   +: LOGQ0] : 
-                  (!dual                                           ) ? CORR_GEN.T4_mx    [LOGQ0   +: LOGQ0] :
-                  ( dual && CORR_GEN.T2_mx[LOGT1_0+LOGQ0+1] == 1'b1) ? CORR_GEN.T1N_d1_mx[LOGT1_0 +: LOGQ0] :
-                  ( dual && CORR_GEN.T3_mx[LOGT1_0+LOGQ0+1] == 1'b1) ? CORR_GEN.T2_mx    [LOGT1_0 +: LOGQ0] :
-                  ( dual && CORR_GEN.T4_mx[LOGT1_0+LOGQ0+1] == 1'b1) ? CORR_GEN.T3_mx    [LOGT1_0 +: LOGQ0] : 
-                                                                       CORR_GEN.T4_mx    [LOGT1_0 +: LOGQ0] ;
-
-                //   (CORR_GEN.T3_mx[LOGQ+1] == 1'b1) ? ((dual) ? CORR_GEN.T2_mx    [LOGT1_0 +: LOGQ0] : CORR_GEN.T2_mx    [LOGQ0 +: LOGQ0]) :
-                //   (CORR_GEN.T4_mx[LOGQ+1] == 1'b1) ? ((dual) ? CORR_GEN.T3_mx    [LOGT1_0 +: LOGQ0] : CORR_GEN.T3_mx    [LOGQ0 +: LOGQ0]) : 
-                //                                       ((dual) ? CORR_GEN.T4_mx    [LOGT1_0 +: LOGQ0] : CORR_GEN.T4_mx    [LOGQ0 +: LOGQ0]) ;
+    assign CORR_T4_0 = CORR_T3[LOGT1_0-1:      0] - CORR_q[LOGT1_0-1:0];
+    assign CORR_T4_1 = CORR_T3[LOGT1  -1:LOGT1_0] - ((dual) ? CORR_q : (CORR_q >> LOGT1_0) + CORR_T4_0[LOGT1_0]);
+    assign CORR_T4   = {CORR_T4_1, CORR_T4_0[LOGT1_0-1:0]};
 
 
+    assign T5_0 = ((dual && CORR_T2_mx[LOGQ0+1] == 1'b1) || (!dual && CORR_T2_mx[LOGQ+1] == 1'b1)) ? CORR_T1N_d1_mx[LOGQ0-1:0] :
+                  ((dual && CORR_T3_mx[LOGQ0+1] == 1'b1) || (!dual && CORR_T3_mx[LOGQ+1] == 1'b1)) ? CORR_T2_mx    [LOGQ0-1:0] :
+                  ((dual && CORR_T4_mx[LOGQ0+1] == 1'b1) || (!dual && CORR_T4_mx[LOGQ+1] == 1'b1)) ? CORR_T3_mx    [LOGQ0-1:0] : 
+                                                                                                   CORR_T4_mx    [LOGQ0-1:0] ;
 
-    // assign T5_1 = (CORR_GEN.T2_mx[LOGQ+1] == 1'b1) ? ((dual) ? CORR_GEN.T1N_d1_mx[LOGT1_0 +: LOGQ0] : CORR_GEN.T1N_d1_mx[LOGQ0 +: LOGQ0]) :
-    //               (CORR_GEN.T3_mx[LOGQ+1] == 1'b1) ? ((dual) ? CORR_GEN.T2_mx    [LOGT1_0 +: LOGQ0] : CORR_GEN.T2_mx    [LOGQ0 +: LOGQ0]) :
-    //               (CORR_GEN.T4_mx[LOGQ+1] == 1'b1) ? ((dual) ? CORR_GEN.T3_mx    [LOGT1_0 +: LOGQ0] : CORR_GEN.T3_mx    [LOGQ0 +: LOGQ0]) : 
-    //                                                   ((dual) ? CORR_GEN.T4_mx    [LOGT1_0 +: LOGQ0] : CORR_GEN.T4_mx    [LOGQ0 +: LOGQ0]) ;
+    assign T5_1 = (!dual && CORR_T2_mx[LOGQ         +1] == 1'b1) ? CORR_T1N_d1_mx[LOGQ0   +: LOGQ0] :
+                  (!dual && CORR_T3_mx[LOGQ         +1] == 1'b1) ? CORR_T2_mx    [LOGQ0   +: LOGQ0] :
+                  (!dual && CORR_T4_mx[LOGQ         +1] == 1'b1) ? CORR_T3_mx    [LOGQ0   +: LOGQ0] : 
+                  (!dual                                       ) ? CORR_T4_mx    [LOGQ0   +: LOGQ0] :
+                  ( dual && CORR_T2_mx[LOGT1_0+LOGQ0+1] == 1'b1) ? CORR_T1N_d1_mx[LOGT1_0 +: LOGQ0] :
+                  ( dual && CORR_T3_mx[LOGT1_0+LOGQ0+1] == 1'b1) ? CORR_T2_mx    [LOGT1_0 +: LOGQ0] :
+                  ( dual && CORR_T4_mx[LOGT1_0+LOGQ0+1] == 1'b1) ? CORR_T3_mx    [LOGT1_0 +: LOGQ0] : 
+                                                                   CORR_T4_mx    [LOGT1_0 +: LOGQ0] ;
 
     assign T5 = {T5_1, T5_0};
 
-
-    // assign T5/*[LOGQ-1:LOGQ]*/ = (CORR_GEN.T2_mx[LOGQ+1] == 1'b1) ? CORR_GEN.T1N_d1_mx :
-    //                              (CORR_GEN.T3_mx[LOGQ+1] == 1'b1) ? CORR_GEN.T2_mx     :
-    //                              (CORR_GEN.T4_mx[LOGQ+1] == 1'b1) ? CORR_GEN.T3_mx     : CORR_GEN.T4_mx;
 end
 else begin
     assign T5 = T1N_mx;
@@ -412,76 +348,62 @@ end
 
 /////////////////////////// sequential logic  ///////////////////////////
 
-generate
-    if (FF_IN) begin
-        always @(posedge clk) begin           
-            C_GEN.C_q <= C;
-        end
+if (FF_IN) begin
+    always @(posedge clk) begin           
+        C_q <= C;
     end
-endgenerate
+end
 
-generate
-    if (CL_D) begin
-        for (genvar i = 0; i < CL_D; i = i + 1) begin
-            always @(posedge clk) begin
-                CL_GEN.CL_q[i] <= (i == 0) ? CL : CL_GEN.CL_q[i - 1];
-            end
-        end
-    end
-endgenerate
-
-
-generate
-    if (FF_IN && PIPE_Q) begin
-        always @(posedge clk) begin           
-            MU_GEN.mu_q <= mu_dual;
-        end
-    end
-endgenerate
-
-
-generate
-    if (Q_D) begin
-        for (genvar i = 0; i < Q_D; i = i + 1) begin
-            always @(posedge clk) begin
-                Q_GEN.qH_q[i] <= (i == 0) ? qH : Q_GEN.qH_q[i - 1];
-            end
-        end
-    end
-endgenerate
-
-generate
-    if (LOGQ_D) begin
-        for (genvar i = 0; i < LOGQ_D; i = i + 1) begin
-            always @(posedge clk) begin
-                LOGQ_GEN.B_q[i] <= (i == 0) ? B : LOGQ_GEN.B_q[i - 1];
-            end
-        end
-    end
-endgenerate
-
-generate
-    if (FF_NEG_) begin
+if (CL_D) begin
+    for (genvar i = 0; i < CL_D; i = i + 1) begin
         always @(posedge clk) begin
-            T1N_GEN.T1N_q <= T1N;
+            CL_q[i] <= (i == 0) ? CL : CL_q[i - 1];
         end
     end
-endgenerate
+end
 
-generate
-    if (CORRECT && FF_CORR) begin
+
+if (FF_IN && PIPE_Q) begin
+    always @(posedge clk) begin           
+        mu_q <= mu_dual;
+    end
+end
+
+
+if (Q_D) begin
+    for (genvar i = 0; i < Q_D; i = i + 1) begin
         always @(posedge clk) begin
-            CORR_GEN.FF.T1N_d1_q <= T1N_mx;
-            CORR_GEN.FF.T2_q <= CORR_GEN.T2;
-            CORR_GEN.FF.T3_q <= CORR_GEN.T3;
-            CORR_GEN.FF.T4_q <= CORR_GEN.T4;
+            qH_q[i] <= (i == 0) ? qH : qH_q[i - 1];
         end
     end
-endgenerate
+end
+
+if (LOGQ_D) begin
+    for (genvar i = 0; i < LOGQ_D; i = i + 1) begin
+        always @(posedge clk) begin
+            B_q[i] <= (i == 0) ? B : B_q[i - 1];
+        end
+    end
+end
+
+if (FF_NEG_) begin
+    always @(posedge clk) begin
+        T1N_q <= T1N;
+    end
+end
+
+if (CORRECT && FF_CORR) begin
+    always @(posedge clk) begin
+        CORR_FF_T1N_d1_q <= T1N_mx;
+        CORR_FF_T2_q <= CORR_T2;
+        CORR_FF_T3_q <= CORR_T3;
+        CORR_FF_T4_q <= CORR_T4;
+    end
+end
 
 if (FF_OUT) begin
     always @(posedge clk) begin
-        OUT_GEN.T5_q <= T5;
+        T5_q <= T5;
     end
 end
 

@@ -4,7 +4,6 @@ module ntt_lite
    #(   
         parameter LOGN       = 8,
         parameter LOGQ       = 32,
-        parameter W          = 16,
         parameter B          = 32, // bandwidth, must divide LOGQ
         parameter L          = 8, // BU latency
         parameter EN_NTT_OTF = 1
@@ -12,7 +11,7 @@ module ntt_lite
     (
         input                       clk    ,
         input                       rst    ,
-        input      [           2:0] cmd    ,
+        input      [           3:0] cmd    ,
         input      [           3:0] op     ,
         input                       otf    ,
         input      [   LOGLOGN-1:0] logn   ,
@@ -245,7 +244,6 @@ assign twiddle_ram_raddr = (EN_NTT_OTF && ntt_otf_feed_bu) ?                    
 
 ///////////////////// Sequential Logic //////////////////////////////////
 
-
 if (EN_NTT_OTF) begin
     for(genvar i = 0; i < LOGN ;i = i + 1) begin: TWIDDLE_LOAD_GEN
         for(genvar j = 0; j < (LOGQ/B); j = j + 1) begin
@@ -256,7 +254,6 @@ if (EN_NTT_OTF) begin
         end
     end
 end
-
 
 always @(posedge clk) begin
     if (rst)
@@ -503,11 +500,14 @@ always @(*) begin
     ctr_all_rst = 0;
     done_set = 0;
     error_set = 0;
-    io_word = 0;
+    // io_word = 0;
     i_ready = 0;
 
     coeff_ram_p0_rsel = 0;
     coeff_ram_p0_wsel = 0;
+
+    o_data = coeff_ram_p0_dout; // will change
+    io_word = ctr0_d; // will change
 
     case (state)
         ST_IDLE: begin
@@ -681,10 +681,8 @@ always @(*) begin
         ST_POLY_OUT: begin
 
             pwm_idx = 1;
-            io_word = ctr0_d;
             o_valid_int = 1;
             coeff_ram_p0_rsel = (op == `OP_NTT || op == `OP_INTT) ? logn & 1'b1 : 1'b0;
-            o_data = coeff_ram_p0_dout;
             busy = 1;
             if (o_read) begin
                 if (ctr0 == num_words_m1) begin
