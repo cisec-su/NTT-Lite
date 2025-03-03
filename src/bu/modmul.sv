@@ -13,6 +13,7 @@ module modmul
         input  [LOGQ   -1:0] A   ,
         input  [LOGQ   -1:0] B   ,
         output [LOGT   -1:0] T   ,        
+        output [LOGT   +1:0] D   ,
         output [LOGQ   -1:0] C
     );
 
@@ -59,18 +60,19 @@ mac_std_dual_32x34 #(
 
 
 barrett #(
-    .LOGQ    (LOGQ),
-    .LOGQH   (LOGQ),
-    .PIPE_Q  (0   ),
-    .FF_IN   (0   ),
-    .FF_SHF  (0   ),
-    .FF_MUL  (1   ),
-    .FF_OUT  (1   )
+    .LOGQ  (LOGQ),
+    .LOGQH (LOGQ),
+    .PIPE_Q(0   ),
+    .FF_IN (0   ),
+    .FF_SHF(0   ),
+    .FF_MUL(1   ),
+    .FF_OUT(1   )
 ) barrett_inst (
     .clk (clk ),
     .dual(dual),
     .C   (T   ),
     .T   (C   ),
+    .D   (D   ),
     .B   (logq),
     .MU  (MU  ),
     .qH  (Q   )
