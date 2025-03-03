@@ -76,18 +76,18 @@ begin
             end
             else if(ctrl_cmd == 3)
             begin
-                LIMIT <= (2 << ctrl_logn)- 2;
+                LIMIT <= (1 << ctrl_logn);
                 cstate <= ST_GET0;
             end
             else if(ctrl_cmd == 4)
             begin
-                LIMIT <= (2 << ctrl_logn);
+                LIMIT <= (1 << ctrl_logn);
                 cstate <= ST_GET0;
             end
             else if(fsm_o_valid)
             begin
                 cstate <= ST_PUT;
-                LIMIT <= (2 << ctrl_logn);
+                LIMIT <= (1 << ctrl_logn);
             end
         end
         ST_GET0:
@@ -104,7 +104,7 @@ begin
         
         ST_PUT:
         begin
-            if(cnt == (LIMIT-1))
+            if(fsm_io_word == (LIMIT-1))
                 cstate <= ST_IDLE; 
         end
         endcase
@@ -154,12 +154,12 @@ begin
     begin
         if(fsm_o_valid)
         begin  
-            mem_addr = ctrl_dout_addr + (cnt << 2);
+            mem_addr = ctrl_dout_addr + (fsm_io_word << 2);
             mem_we = fsm_o_valid;
             fsm_o_read = mem_o_ready;
-            cnt_up = mem_o_ready;
-            if(cnt == (LIMIT-1))
-                cnt_rst = 1;
+            // cnt_up = mem_o_ready;
+            // if(fsm_io_word == (LIMIT-1))
+            //     cnt_rst = 1;
         end
     end
     endcase    

@@ -1,10 +1,9 @@
 module ntt_lite_acc_top
     #(
         parameter BASE_ADDR  = 32'h40001000,
-        parameter LOGN       = 4           ,
+        parameter LOGN       = 8           ,
         parameter LOGQ       = 32          ,
-        parameter B          = 32          ,  // bandwidth, must divide LOGQ
-        parameter L          = 13             // BU latency
+        parameter B          = 32
     )
     (
         input           wb_cyc_i,
@@ -34,6 +33,9 @@ module ntt_lite_acc_top
     );
 
 localparam LOGWB   = $clog2(LOGQ/B);
+localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
+localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
+
 
 wire clk, rst;
 //WB & CTRL
@@ -64,9 +66,12 @@ wire [LOGN+LOGWB-1:0] fsm_io_word;
 
 // CTRL & NTT
 wire [3:0] ctrl_cmd;
-wire [3:0] ctrl_logn;
-wire [3:0] ctrl_logq;
+wire [LOGLOGN-1:0] ctrl_logn;
+wire [LOGLOGQ-1:0] ctrl_logq;
 wire [1:0] ctrl_mode;
+wire [3:0] ctrl_op;
+wire [LOGQ-1:0] ctrl_q;
+wire [LOGQ  :0] ctrl_mu;
 wire ctrl_otf;
 wire ctrl_done;
 wire ctrl_busy;
@@ -79,8 +84,7 @@ wire [31:0] ctrl_dout_addr;
 ntt_lite #(
     .LOGN(LOGN),
     .LOGQ(LOGQ),
-    .B(B),
-    .L(L)
+    .B(B)
 ) ntt_lite (
     .clk(clk),
     .rst(rst),
@@ -96,6 +100,9 @@ ntt_lite #(
     .cmd(ctrl_cmd),//
     .logn(ctrl_logn),//
     .logq(ctrl_logq),//
+    .q(ctrl_q),//
+    .mu({1'b0, ctrl_mu}), 
+    .op(ctrl_op),  
     .mode(ctrl_mode),//
     .otf(ctrl_otf),//
     .done(ctrl_done),//
@@ -122,6 +129,9 @@ ntt_lite_ctrl #(
     .logn(ctrl_logn),//
     .logq(ctrl_logq),//
     .mode(ctrl_mode),//
+    .op(ctrl_op),//
+    .mu(ctrl_mu),//
+    .q(ctrl_q),//
     .otf(ctrl_otf),//
     .done(ctrl_done),//
     .busy(ctrl_busy),//
@@ -186,7 +196,11 @@ ntt_lite_acc_wb ntt_lite_acc_wb_inst (
 );
 
 
-ntt_lite_acc_fsm ntt_lite_acc_fsm_inst (
+ntt_lite_acc_fsm #(
+    .B   (B   ),
+    .LOGQ(LOGQ),
+    .LOGN(LOGN)
+) ntt_lite_acc_fsm_inst (
     .clk       (clk),
     .rst       (rst) ,
     // dma <-> fsm
@@ -213,7 +227,7 @@ ntt_lite_acc_fsm ntt_lite_acc_fsm_inst (
     .ctrl_logn(ctrl_logn),//
     .ctrl_logq(ctrl_logq),//
     .ctrl_cmd(ctrl_cmd)//
-    );
+);
 
 
 endmodule

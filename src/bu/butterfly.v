@@ -1,4 +1,5 @@
 `include "ntt_lite.vh"
+
 module butterfly
    #(
         parameter LOGQ   = 32,
@@ -8,28 +9,24 @@ module butterfly
     (
         input                clk ,
 
+        input  [        3:0] op  ,
         input  [        1:0] mode,
         input  [LOGQ   -1:0] A   ,
         input  [LOGQ   -1:0] B   ,
         input  [LOGQ   -1:0] PSI ,
         input  [LOGQ   -1:0] Q   ,
-        input  [LOGQ     :0] MU  ,
+        input  [LOGQ   +1:0] MU  ,
         input  [LOGLOGQ-1:0] logq,
-
         output [LOGQ   -1:0] E   ,
         output [LOGQ   -1:0] O   ,
-        output [LOGQ   -1:0] M
-    );
+        output [LOGQ   -1:0] M);
 
 
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
-localparam LOGQH   = LOGQ - 1; // we fix LOGQH as we use Barrett
+localparam LOGQ0   = LOGQ >> 1;
 
-
-wire [LOGQH-1:0] qH;
 wire [LOGQ -1:0] A_shift;
 wire [LOGQ -1:0] MM;
-
 wire [LOGQ -1:0] MM_in_A;
 wire [LOGQ -1:0] MM_in_B;
 wire [LOGQ -1:0] MM_out_C;
@@ -41,20 +38,27 @@ wire [LOGQ -1:0] sub_in_B;
 wire [LOGQ -1:0] sub_out_C;
 wire [LOGQ -1:0] shift_in;
 wire [LOGQ -1:0] shift_out;
-
-assign MM_in_A     = (mode == `MODE_INTT) ? sub_out_C : B;
-assign MM_in_B     = PSI;
-assign add_in_A    = (mode == `MODE_INTT) ? A : shift_out;
-assign add_in_B    = (mode == `MODE_INTT) ? B : MM_out_C;
-assign sub_in_A    = (mode == `MODE_INTT) ? A : shift_out;
-assign sub_in_B    = (mode == `MODE_INTT) ? B : MM_out_C;
-assign E           = (mode == `MODE_INTT) ? shift_out : add_out_C;
-assign O           = (mode == `MODE_INTT) ? MM_out_C : sub_out_C;
-assign shift_in    = (mode == `MODE_INTT) ? add_out_C : A;
+wire [      1:0] mode_mul;
+wire             dual;
 
 
-assign qH = Q[LOGQ-1 -: LOGQH];
-
+assign MM_in_A     = (op == `OP_INTT) ? sub_out_C : B;
+assign MM_in_B     = ((op == `OP_NTT || op == `OP_INTT) && dual) ? {PSI[LOGQ0-1:0], PSI[LOGQ0-1:0]} : PSI;
+assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A : shift_out;
+assign add_in_B    = (op == `OP_INTT) ? B : (op == `OP_ADD) ? PSI : MM_out_C;
+assign sub_in_A    = (op == `OP_INTT || op == `OP_SUB) ? A : shift_out;
+assign sub_in_B    = (op == `OP_INTT) ? B : (op == `OP_SUB) ? PSI : MM_out_C;
+// assign add_in_A    = (op == `OP_INTT) ? A : shift_out;
+// assign add_in_B    = (op == `OP_INTT) ? B : MM_out_C;
+// assign sub_in_A    = (op == `OP_INTT) ? A : shift_out;
+// assign sub_in_B    = (op == `OP_INTT) ? B : MM_out_C;
+assign E           = (op == `OP_INTT) ? shift_out : add_out_C;
+assign O           = (op == `OP_INTT) ? MM_out_C : sub_out_C;
+assign shift_in    = (op == `OP_INTT) ? add_out_C : A;
+assign M           = (op == `OP_ADD ) ? add_out_C : (op == `OP_SUB) ? sub_out_C : MM_out_C;
+// MODE_POLY is undefined for (I)NTT
+assign mode_mul  = (op == `OP_PWM) ? mode : (mode == `MODE_POLY && (op == `OP_INTT || op == `OP_NTT)) ? `MODE_DUAL : mode;
+assign dual      = mode == `MODE_DUAL || mode == `MODE_POLY;
 
 shiftreg #(
     .SHIFT(L   ),
@@ -67,44 +71,52 @@ shiftreg #(
 );
 
 
-
 modmul #(
-    .LOGQ   (LOGQ  ),
-    .MUL_OP (MUL_OP)
+    .LOGQ(LOGQ)
 ) mm0 (
-    .clk (clk      ),
-    .Q   (Q        ),
-    .MU  (MU       ),
-    .logq(logq     ),
-    .A   (MM_in_A  ),
-    .B   (MM_in_B  ),
-    .C   (MM_out_C )
+    .clk (clk     ),
+    .mode(mode_mul),
+    .Q   (Q       ),
+    .MU  (MU      ),
+    .logq(logq    ),
+    .A   (MM_in_A ),
+    .B   (MM_in_B ),
+    .C   (MM_out_C)
 );
 
 
 modadd  #(
-    .LOGQ (LOGQ ),
-    .LOGQH(LOGQH)
+    .LOGQ   (LOGQ),
+    .LOGQH  (LOGQ),
+    .LOGQH_DUAL (LOGQ >> 1),
+    .EN_DUAL(1   ),
+    .FF_IN  (0   ),
+    .FF_ADD (0   ),
+    .FF_OUT (0   )
 ) ma (
-    .A (add_in_A ),
-    .B (add_in_B ),
-    .qH(qH       ),
-    .C (add_out_C) 
+    .A   (add_in_A ),
+    .B   (add_in_B ),
+    .dual(dual     ),
+    .qH  (Q        ),
+    .C   (add_out_C) 
 );
 
 
 modsub #(
-    .LOGQ (LOGQ ),
-    .LOGQH(LOGQH)
+    .LOGQ   (LOGQ),
+    .LOGQH  (LOGQ),
+    .LOGQH_DUAL (LOGQ >> 1),
+    .EN_DUAL(1   ),
+    .FF_IN  (0   ),
+    .FF_SUB (0   ),
+    .FF_OUT (0   )
 ) ms (
-    .A (sub_in_A ),
-    .B (sub_in_B ),
-    .qH(qH       ),
-    .C (sub_out_C)
+    .A   (sub_in_A ),
+    .B   (sub_in_B ),
+    .dual(dual     ),
+    .qH  (Q        ),
+    .C   (sub_out_C)
 );
-
-assign M = MM_out_C;
-
 
 
 endmodule

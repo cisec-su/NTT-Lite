@@ -5,6 +5,7 @@ module ntt_lite_coeff_ram
     )
     (   input                 clk     ,
 
+        input   [LOGLOGN-1:0] logn    ,
         input                 p0_wen  ,
         input      [LOGN-1:0] p0_waddr,
         input      [LOGQ-1:0] p0_din  ,
@@ -21,6 +22,7 @@ module ntt_lite_coeff_ram
 localparam N  = 1 << LOGN;
 localparam LOGN4 = LOGN - 2;
 localparam N4 = 1 << LOGN4;
+localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 
 
 localparam RAM0 = 2'b00;
@@ -99,11 +101,18 @@ wire p0_wen_ram_1;
 wire p0_wen_ram_2;
 wire p0_wen_ram_3;
 
+wire [LOGN-1:0] addr_mask;
 
-assign p0_waddr_ram_id = {p0_waddr[LOGN-1],p0_waddr[0]};
-assign p0_raddr_ram_id = {p0_raddr[LOGN-1],p0_raddr[0]};
-assign p1_waddr_ram_id = {p1_waddr[LOGN-1],p1_waddr[0]};
-assign p1_raddr_ram_id = {p1_raddr[LOGN-1],p1_raddr[0]};
+wire [LOGN-1:0] p0_waddr_masked;
+wire [LOGN-1:0] p0_raddr_masked;
+wire [LOGN-1:0] p1_waddr_masked;
+wire [LOGN-1:0] p1_raddr_masked;
+
+
+assign p0_waddr_ram_id = {p0_waddr[logn-1],p0_waddr[0]};
+assign p0_raddr_ram_id = {p0_raddr[logn-1],p0_raddr[0]};
+assign p1_waddr_ram_id = {p1_waddr[logn-1],p1_waddr[0]};
+assign p1_raddr_ram_id = {p1_raddr[logn-1],p1_raddr[0]};
 
 
 assign p0_waddr_ram_0 = (p0_waddr_ram_id == RAM0);
@@ -124,30 +133,36 @@ assign p1_waddr_ram_3 = (p1_waddr_ram_id == RAM3);
 assign p1_raddr_ram_3 = (p1_raddr_ram_id == RAM3);
 
 
+assign addr_mask = ((1 << (logn - 2)) - 1) << 1;
+assign p0_waddr_masked = (p0_waddr & addr_mask) >> 1;
+assign p0_raddr_masked = (p0_raddr & addr_mask) >> 1;
+assign p1_waddr_masked = (p1_waddr & addr_mask) >> 1;
+assign p1_raddr_masked = (p1_raddr & addr_mask) >> 1;
 
-assign bram_0_waddr = (p0_waddr_ram_0) ? p0_waddr[LOGN-2:1] :
-                                         p1_waddr[LOGN-2:1] ;
 
-assign bram_0_raddr = (p0_raddr_ram_0) ? p0_raddr[LOGN-2:1] :
-                                         p1_raddr[LOGN-2:1] ;
+assign bram_0_waddr = (p0_waddr_ram_0) ? p0_waddr_masked :
+                                         p1_waddr_masked ;
 
-assign bram_1_waddr = (p0_waddr_ram_1) ? p0_waddr[LOGN-2:1] :
-                                         p1_waddr[LOGN-2:1] ;
+assign bram_0_raddr = (p0_raddr_ram_0) ? p0_raddr_masked :
+                                         p1_raddr_masked ;
 
-assign bram_1_raddr = (p0_raddr_ram_1) ? p0_raddr[LOGN-2:1] :
-                                         p1_raddr[LOGN-2:1] ;
+assign bram_1_waddr = (p0_waddr_ram_1) ? p0_waddr_masked :
+                                         p1_waddr_masked ;
 
-assign bram_2_waddr = (p0_waddr_ram_2) ? p0_waddr[LOGN-2:1] :
-                                         p1_waddr[LOGN-2:1] ;
+assign bram_1_raddr = (p0_raddr_ram_1) ? p0_raddr_masked :
+                                         p1_raddr_masked ;
 
-assign bram_2_raddr = (p0_raddr_ram_2) ? p0_raddr[LOGN-2:1] :
-                                         p1_raddr[LOGN-2:1] ;
+assign bram_2_waddr = (p0_waddr_ram_2) ? p0_waddr_masked :
+                                         p1_waddr_masked ;
 
-assign bram_3_waddr = (p0_waddr_ram_3) ? p0_waddr[LOGN-2:1] :
-                                         p1_waddr[LOGN-2:1] ;
+assign bram_2_raddr = (p0_raddr_ram_2) ? p0_raddr_masked :
+                                         p1_raddr_masked ;
 
-assign bram_3_raddr = (p0_raddr_ram_3) ? p0_raddr[LOGN-2:1] :
-                                         p1_raddr[LOGN-2:1] ;
+assign bram_3_waddr = (p0_waddr_ram_3) ? p0_waddr_masked :
+                                         p1_waddr_masked ;
+
+assign bram_3_raddr = (p0_raddr_ram_3) ? p0_raddr_masked :
+                                         p1_raddr_masked ;
 
 
 assign p0_wen_ram_0 = (p0_wen && p0_waddr_ram_0);
