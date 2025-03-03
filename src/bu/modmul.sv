@@ -13,7 +13,7 @@ module modmul
         input  [LOGQ   -1:0] A   ,
         input  [LOGQ   -1:0] B   ,
         output [LOGT   -1:0] T   ,        
-        output [LOGT   +1:0] D   ,
+        output [LOGT   -1:0] D   ,
         output [LOGQ   -1:0] C
     );
 

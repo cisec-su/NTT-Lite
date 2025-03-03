@@ -42,7 +42,8 @@ localparam mac_std_dual_32x34_params_t mac_0_params = barrett_mac_0_params(param
 localparam mac_std_dual_32x34_params_t mac_1_params = barrett_mac_1_params(params);
 
 localparam LOGC  = LOGQ << 1;
-localparam LOGD  = (LOGQ + 1) << 1;
+localparam LOGD  = LOGQ << 1;
+localparam LOGD0 = LOGD >> 1;
 localparam LOGC0 = LOGC >> 1;
 localparam LOGCH_0 = LOGC0 - (LOGQ >> 1);
 localparam LOGCH = LOGCH_0 << 1;
@@ -147,7 +148,7 @@ assign T1N = (dual) ? {T1N_1, T1N_0} : -T1;
 
 assign D0 = D_apx_mx[LOGT0_0-1:0      ] + K[1:0];
 assign D1 = D_apx_mx[LOGT0  -1:LOGT0_0] + ((dual) ? K[3:2] : D0[LOGT0_0]);
-assign D_int = {D1[LOGT0_0-1:0], D0[LOGT0_0-1:0]};
+assign D_int = {D1[LOGT0_0-1:0] >> dual, D0[LOGT0_0-1:0] ^ (D1[0] << LOGT0_0-1)};
 
 /////////////////////////////////////////////////////////////////////////
 
