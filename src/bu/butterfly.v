@@ -16,6 +16,7 @@ module butterfly
         input  [LOGQ   -1:0] Q   ,
         input  [LOGQ   +1:0] MU  ,
         input  [LOGLOGQ-1:0] logq,
+        input  [LOGLOGQ-1:0] d   ,
         output [LOGQ   -1:0] E   ,
         output [LOGQ   -1:0] O   ,
         output [LOGQ   -1:0] M
@@ -26,12 +27,13 @@ localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 localparam LOGQ0   = LOGQ >> 1;
 localparam LOGT    = LOGQ << 1;
 
-wire [LOGQ -1:0] A_shift;
-wire [LOGQ -1:0] MM;
+
 wire [LOGQ -1:0] MM_in_A;
 wire [LOGQ -1:0] MM_in_B;
+wire [LOGQ -1:0] MM_in_E;
 wire [LOGQ -1:0] MM_out_C;
 wire [LOGT -1:0] MM_out_T;
+wire [LOGT -1:0] MM_out_D;
 wire [LOGQ -1:0] add_in_A;
 wire [LOGQ -1:0] add_in_B;
 wire [LOGQ -1:0] add_out_C;
@@ -40,25 +42,61 @@ wire [LOGQ -1:0] sub_in_B;
 wire [LOGQ -1:0] sub_out_C;
 wire [LOGQ -1:0] shift_in;
 wire [LOGQ -1:0] shift_out;
+wire [LOGT -1:0] asr_in;
+wire [LOGT -1:0] asr_out;
 wire [      1:0] mode_mul;
 wire             dual;
 wire [LOGQ -1:0] q_dual;
+wire [LOGQ -1:0] q_half_dual;
+wire [LOGQ -1:0] psi_dual;
+wire [LOGQ -1:0] pow_2_d;
 
 
-assign MM_in_A     = (op == `OP_INTT) ? sub_out_C : B;
-assign MM_in_B     = ((op == `OP_NTT || op == `OP_INTT) && dual) ? {PSI[LOGQ0-1:0], PSI[LOGQ0-1:0]} : PSI;
-assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A : shift_out;
-assign add_in_B    = (op == `OP_INTT) ? B : (op == `OP_ADD) ? PSI : MM_out_C;
-assign sub_in_A    = (op == `OP_INTT || op == `OP_SUB) ? A : shift_out;
-assign sub_in_B    = (op == `OP_INTT) ? B : (op == `OP_SUB) ? PSI : MM_out_C;
-assign E           = (op == `OP_INTT) ? shift_out : add_out_C;
-assign O           = (op == `OP_INTT) ? MM_out_C : sub_out_C;
-assign shift_in    = (op == `OP_INTT) ? add_out_C : A;
-assign M           = (op == `OP_ADD ) ? add_out_C : (op == `OP_SUB) ? sub_out_C : MM_out_C;
-// MODE_POLY is undefined for (I)NTT
-assign mode_mul    = (op == `OP_PWM) ? mode : (mode == `MODE_POLY && (op == `OP_INTT || op == `OP_NTT)) ? `MODE_DUAL : mode;
-assign dual        = mode == `MODE_DUAL || mode == `MODE_POLY;
-assign q_dual      = dual ? {Q[LOGQ0-1:0], Q[LOGQ0-1:0]} : Q;
+assign mode_mul    = (mode == `MODE_POLY && op != `OP_PWM) ? `MODE_DUAL : 
+                                                              mode      ;
+assign dual        =  mode == `MODE_DUAL || mode == `MODE_POLY;
+assign q_dual      = (dual) ? {Q[LOGQ0-1:0], Q[LOGQ0-1:0]} : 
+                               Q                           ;
+assign q_half_dual = (dual) ? {Q[LOGQ0-1:0] >> 1, Q[LOGQ0-1:0] >> 1} : 
+                               Q >> 1                                ;
+assign psi_dual    = ((op == `OP_NTT || op == `OP_INTT) && dual) ? {PSI[LOGQ0-1:0], PSI[LOGQ0-1:0]} : 
+                                                                    PSI                             ;
+
+assign pow_2_d     = ({{(LOGQ-1){1'b0}}, 1'b1} << d);
+
+assign MM_in_A     = (op == `OP_INTT                          ) ? sub_out_C      : 
+                                                                  B              ;
+assign MM_in_B     = (op == `OP_COMPRESS                      ) ? pow_2_d        :
+                     (op == `OP_DECOMPRESS                    ) ? Q              : 
+                                                                  psi_dual       ;
+assign MM_in_E     = (op == `OP_COMPRESS                      ) ? q_half_dual    :
+                     (op == `OP_DECOMPRESS                    ) ? (pow_2_d >> 1) :
+                                                                  {LOGQ{1'b0}}   ;
+
+assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A              :
+                                                         shift_out      ;
+assign add_in_B    = (op == `OP_INTT                 ) ? B              : 
+                     (op == `OP_ADD                  ) ? PSI            :
+                                                         MM_out_C       ;
+assign sub_in_A    = (op == `OP_INTT || op == `OP_SUB) ? A              : 
+                                                         shift_out      ;
+assign sub_in_B    = (op == `OP_INTT                 ) ? B              : 
+                     (op == `OP_SUB                  ) ? PSI            : 
+                                                         MM_out_C       ;
+assign shift_in    = (op == `OP_INTT                 ) ? add_out_C      : 
+                                                         A              ;
+
+assign asr_in      = MM_out_T;
+
+assign E           = (op == `OP_INTT) ? shift_out :
+                                        add_out_C ;
+assign O           = (op == `OP_INTT) ? MM_out_C  :
+                                        sub_out_C ;
+assign M           = (op == `OP_ADD       ) ? add_out_C :
+                     (op == `OP_SUB       ) ? sub_out_C :
+                     (op == `OP_COMPRESS  ) ? MM_out_D  :
+                     (op == `OP_DECOMPRESS) ? asr_out   :
+                     /*                  */   MM_out_C  ;
 
 
 shiftreg #(
@@ -82,8 +120,10 @@ modmul #(
     .logq(logq    ),
     .A   (MM_in_A ),
     .B   (MM_in_B ),
+    .E   (MM_in_E ),
     .C   (MM_out_C),
-    .T   (MM_out_T)
+    .T   (MM_out_T),
+    .D   (MM_out_D)
 );
 
 
@@ -106,6 +146,16 @@ modsub #(
     .dual(dual     ),
     .q   (q_dual   ),
     .C   (sub_out_C)
+);
+
+
+asr #(
+    .LOGQ(LOGT)
+) asr0 (
+    .A   (asr_in  ),
+    .d   ({1'b0,d}),
+    .dual(dual    ),
+    .C   (asr_out )
 );
 
 

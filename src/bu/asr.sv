@@ -30,7 +30,7 @@ wire [LOGQ0-1:0] C0;
 
 ///////////////////////////// Assignments ///////////////////////////////
 
-assign C0 = A[LOGQ0 -1:0] >> d;
+assign C0 =  A[LOGQ0-1:    0]                 >> d;
 assign C1 = {A[LOGQ -1:LOGQ0], {LOGQ0{1'b0}}} >> d;
 
 assign C[LOGQ0-1:    0] = C0 ^ ((dual) ? {LOGQ0{1'b0}} : C1[LOGQ0-1:0]);

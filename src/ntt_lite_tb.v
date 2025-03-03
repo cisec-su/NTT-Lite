@@ -28,7 +28,7 @@ reg rst;
 
 reg [LOGQ-1:0] q;
 reg [LOGQ+1:0] mu;
-reg [LOGQ+1:0] meta     [0:  3];
+reg [LOGQ+1:0] meta     [0:  4];
 reg [LOGQ-1:0] psi      [0:N-1];
 reg [LOGQ-1:0] poly_in  [0:N-1];
 reg [LOGQ-1:0] poly_out [0:N-1];
@@ -40,6 +40,7 @@ reg          dual;
 reg  [1  :0] mode;
 reg  [LOGLOGN-1:0] logn;
 reg  [LOGLOGQ-1:0] logq;
+reg  [LOGLOGQ-1:0] d;
 reg  [B-1:0] i_data;
 reg          o_read;
 reg          i_valid;
@@ -72,6 +73,7 @@ ntt_lite #(
     .logq(logq),
     .mode(mode),
     .q(q),
+    .d(d),
     .mu(mu),
     .i_data(i_data),
     .i_valid(i_valid),
@@ -109,6 +111,7 @@ initial begin
     mu = meta[1];
     logn = meta[2];
     logq = meta[3];
+    d = meta[4];
 
     op = `OP_NTT;
     mode = `MODE_SINGLE;
@@ -211,7 +214,6 @@ initial begin
         $display("(FAIL DUAL NTT)");
         flag1 = 1;
     end
-
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -713,6 +715,50 @@ initial begin
         flag1 = 1;
     end
 
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/comp_out_single.txt" , poly_in);
+    $readmemh("../../../../../test/decomp_out_single.txt" , poly_out);
+
+    op = `OP_DECOMPRESS;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS SINGLE DECOMPRESS)");
+    else begin
+        $display("(FAIL SINGLE DECOMPRESS)");
+        flag1 = 1;
+    end
 
 
     if (flag1 == 0)

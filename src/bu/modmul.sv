@@ -11,6 +11,7 @@ module modmul
         input  [LOGQ   +1:0] MU  ,
         input  [LOGLOGQ-1:0] logq,        
         input  [LOGQ   -1:0] A   ,
+        input  [LOGQ   -1:0] E   ,
         input  [LOGQ   -1:0] B   ,
         output [LOGT   -1:0] T   ,        
         output [LOGT   -1:0] D   ,
@@ -44,7 +45,7 @@ assign dual = (mode == MUL_SINGLE) ? 1'b0 : 1'b1;
 
 mac_std_dual_32x34 #(
     .LOGB   (LOGQ  ),
-    .MODE_E (DIS_E ),
+    .MODE_E (ADD_E ),
     .FF_IN_A(1     ),
     .FF_IN_B(1     ),
     .FF_IN_E(1     ),
@@ -55,6 +56,7 @@ mac_std_dual_32x34 #(
     .mode_mul(mode),
     .A       (A   ),
     .B       (B   ),
+    .E       (E   ),
     .C       (T   )
 );
 

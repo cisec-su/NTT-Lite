@@ -5,7 +5,8 @@ module ntt_lite
         parameter LOGN       = 8,
         parameter LOGQ       = 32,
         parameter B          = 32, // bandwidth, must divide LOGQ
-        parameter L          = 8, // BU latency
+        parameter L          = 8, // BU  latency
+        parameter LX         = 3, // MUL latency
         parameter EN_NTT_OTF = 1
     )
     (
@@ -16,6 +17,7 @@ module ntt_lite
         input                       otf    ,
         input      [   LOGLOGN-1:0] logn   ,
         input      [   LOGLOGQ-1:0] logq   ,
+        input      [   LOGLOGQ-1:0] d      ,        
         input      [      LOGQ-1:0] q      ,
         input      [      LOGQ+1:0] mu     ,
         input      [           1:0] mode   ,
@@ -130,6 +132,7 @@ wire [LOGQ-1:0] M_o;
 reg  sr_i;
 wire sr_o;
 wire sr_t;
+wire sr_x;
 wire sr_sel_i;
 wire sr_sel_o;
 
@@ -414,6 +417,7 @@ butterfly #(
     .PSI (psi_i),
     .Q   (q    ),
     .MU  (mu   ),
+    .d   (d    ),
     .logq(logq ),
     .E   (A_o  ),
     .O   (B_o  ),
@@ -435,6 +439,17 @@ shiftreg #(
     .rst     (rst ),
     .data_in (sr_i),
     .data_out(sr_o)
+);
+
+
+shiftreg #(
+    .SHIFT(LX+ 1),
+    .DATA (    1)
+) shreg_mulx (
+    .clk     (clk ),
+    .rst     (rst ),
+    .data_in (sr_i),
+    .data_out(sr_x)
 );
 
 
@@ -581,11 +596,13 @@ always @(*) begin
                 wpoly = 1;
                 if (ctr1 == num_words_m1) begin
                     case (op)
-                        `OP_NTT : next_state = ST_NTT0;
-                        `OP_INTT: next_state = ST_NTT0;
-                        `OP_PWM : next_state = ST_PWM0;
-                        `OP_ADD : next_state = ST_ADDSUB;
-                        `OP_SUB : next_state = ST_ADDSUB;
+                        `OP_NTT        : next_state = ST_NTT0;
+                        `OP_INTT       : next_state = ST_NTT0;
+                        `OP_PWM        : next_state = ST_PWM0;
+                        `OP_ADD        : next_state = ST_ADDSUB;
+                        `OP_SUB        : next_state = ST_ADDSUB;
+                        `OP_COMPRESS   : next_state = ST_PWM0;
+                        `OP_DECOMPRESS : next_state = ST_PWM0;
                         default : next_state = ST_IDLE;
                     endcase
                     ctr1_rst = 1;
@@ -758,7 +775,11 @@ always @(*) begin
         end
     end
     else if (pwm_rcv_bu) begin
-        if (sr_o) begin
+        if (sr_x && op == `OP_DECOMPRESS) begin
+            ctr1_inc = 1;
+            upoly_mul = 1;
+        end
+        else if (sr_o) begin
             ctr1_inc = 1;
             upoly_mul = 1;
         end

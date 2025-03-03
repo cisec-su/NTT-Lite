@@ -14,13 +14,14 @@ n = 1 << logn
 mu = (1 << 24) // q
 log = 12
 b = 32
-
+d = 10
 
 with open("meta.txt", "w") as f:
     f.write(hex(q)[2:] + "\n")
     f.write(hex(mu)[2:] + "\n")
     f.write(hex(logn)[2:] + "\n")
     f.write(hex(logq)[2:] + "\n")
+    f.write(hex(d)[2:] + "\n")
 
 A_0 =  [random.randint(0, q-1) for _ in range(n)]
 A_1 =  [random.randint(0, q-1) for _ in range(n)]
@@ -154,3 +155,27 @@ with open("psi_inv.txt", "w") as f:
         f.write(hex(psi_inv_table_[j])[2:] + "\n")
     f.write("0\n")
 
+
+
+A_0_comp =  [round(((1 << d)/q)*A_0[i]) for i in range(n)]
+A_1_comp =  [round(((1 << d)/q)*A_1[i]) for i in range(n)]
+
+with open("comp_out_single.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A_0_comp[i])[2:] + "\n")
+
+with open("comp_out_dual.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((A_1_comp[i] << (b // 2)) + A_0_comp[i])[2:] + "\n")
+
+
+A_0_decomp =  [round((q/(1 << d))*A_0_comp[i]) for i in range(n)]
+A_1_decomp =  [round((q/(1 << d))*A_1_comp[i]) for i in range(n)]
+
+with open("decomp_out_single.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A_0_decomp[i])[2:] + "\n")
+
+with open("decomp_out_dual.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((A_1_decomp[i] << (b // 2)) + A_0_decomp[i])[2:] + "\n")

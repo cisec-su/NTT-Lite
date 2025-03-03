@@ -16,7 +16,8 @@
 `define OP_PWM                4'd2
 `define OP_ADD                4'd3
 `define OP_SUB                4'd4
-
+`define OP_COMPRESS           4'd5
+`define OP_DECOMPRESS         4'd6
 
 `define MODE_SINGLE           2'd0
 `define MODE_DUAL             2'd2
