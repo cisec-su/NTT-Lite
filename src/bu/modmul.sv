@@ -62,12 +62,9 @@ barrett #(
     .LOGQ    (LOGQ),
     .LOGQH   (LOGQ),
     .PIPE_Q  (0   ),
-    .CORRECT (1   ),
     .FF_IN   (0   ),
     .FF_SHF  (0   ),
     .FF_MUL  (1   ),
-    .FF_NEG  (0   ),
-    .FF_CORR (0   ),
     .FF_OUT  (1   )
 ) barrett_inst (
     .clk (clk ),
