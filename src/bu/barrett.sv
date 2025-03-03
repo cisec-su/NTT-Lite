@@ -88,6 +88,7 @@ wire [LOGLOGQ:0] B_mx [0:1];
 wire [LOGQ +1:0] mu_mx;
 wire [LOGQ +1:0] mu_dual;
 
+wire [LOGC   -1:0] ASR_0_C;
 wire [LOGCH  -1:0] CH;
 wire [LOGCH_0-1:0] CH_0;
 wire [LOGCH_0-1:0] CH_1;
@@ -100,6 +101,7 @@ reg  [LOGCL-1:0] CL_q [0:CL_D-1];
 wire [LOGCL-1:0] CL_mx;
 
 wire [LOGT0 -1:0] T0;
+wire [LOGT0 -1:0] ASR_1_C;
 wire [LOGT0H-1:0] T0H;
 wire [LOGT0H_0-1:0] T0H_0;
 wire [LOGT0H_0-1:0] T0H_1;
@@ -157,23 +159,47 @@ assign mode_mul = (dual) ? MUL_DUAL : MUL_SINGLE;
 assign mu_dual  = (dual) ? {mu_mx[LOGQ0:0], mu_mx[LOGQ0:0]} : mu_mx;
 assign q_dual   = (dual) ? {q[LOGQ0-1:0], q[LOGQ0-1:0]} : q;
 
-assign CH_0 = C_mx[LOGC0-1:    0] >> B_mx[0];
-assign CH_1 = C_mx[LOGC -1:LOGC0] >> B_mx[1];
-assign CH  = (dual) ? {CH_1, CH_0} : C_mx >> B_mx[0];
-
 assign CL_0 = C_mx[LOGC0-1:    0] & ((1 << (LOGQ0 + 2)) - 1);
 assign CL_1 = C_mx[LOGC -1:LOGC0] & ((1 << (LOGQ0 + 2)) - 1);   
 assign CL  = (dual) ? {CL_1, CL_0} : C_mx & ((1 << (LOGQ + 2)) - 1);
-
-assign T0H_0 = T0[LOGT0_0-1:      0] >> B_mx[0];
-assign T0H_1 = T0[LOGT0  -1:LOGT0_0] >> B_mx[1];
-assign T0H = (dual) ? {T0H_1,  T0H_0} : T0 >> B_mx[1];
 
 assign T1_0 = T1[LOGT1_MAC_0-1:          0];
 assign T1_1 = T1[LOGT1_MAC  -1:LOGT1_MAC_0];
 assign T1N_0 = -T1_0;
 assign T1N_1 = -T1_1;
 assign T1N = (dual) ? {T1N_1, T1N_0} : -T1;
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+/////////////////////////// shift right  ////////////////////////////////
+
+asr #(
+    .LOGQ(LOGC)
+) asr_inst_0 (
+    .A   (C_mx   ),
+    .d   (B_mx[0]),
+    .dual(dual   ),
+    .C   (ASR_0_C)
+);
+
+assign CH[LOGCH_0-1:      0] = ASR_0_C[LOGCH_0-1:0];
+assign CH[LOGCH  -1:LOGCH_0] = (dual) ? ASR_0_C[LOGC0+:LOGCH] : ASR_0_C[LOGCH-1:LOGCH_0];
+
+
+asr #(
+    .LOGQ(LOGT0)
+) asr_inst_1 (
+    .A   (T0     ),
+    .d   (B_mx[1]),
+    .dual(dual   ),
+    .C   (ASR_1_C)
+);
+
+assign T0H[LOGT0H_0-1:0       ] = ASR_1_C[LOGT0H_0-1:0];
+assign T0H[LOGT0H  -1:LOGT0H_0] = (dual) ? ASR_1_C[LOGT0_0+:LOGT0H_0] : ASR_1_C[LOGT0H-1:LOGT0H_0];
 
 /////////////////////////////////////////////////////////////////////////
 

@@ -21,10 +21,10 @@ reg   [LOGQ  :0]   A   ;
 reg   [LOGQ  :0]   B   ;
 reg   [LOGQ0 :0]   q0  ;
 reg   [LOGQ  :0]   q   ;
-reg   [LOGQ+1:0]   C_  ;
-reg   [LOGQ+1:0]   C   ;
-reg   [LOGQ-1:0]   T_  ;
-reg   [LOGQ-1:0]   T   ;
+reg   [LOGQ+1:0]   T_  ;
+reg   [LOGQ+1:0]   T   ;
+reg   [LOGQ-1:0]   C_  ;
+reg   [LOGQ-1:0]   C   ;
 
 always #HP clk = ~clk;
 
@@ -36,8 +36,8 @@ modadd #(
     .A   (A   ),
     .B   (B   ),
     .q   (q   ),
-    .C   (C_  ),
-    .T   (T_  )
+    .T   (T_  ),
+    .C   (C_  )
 );
 
 initial begin
@@ -58,9 +58,9 @@ initial begin
             q = {$urandom(2*i ),$urandom(2*i + 1)} & ((1 << LOGQ) - 1);
             A = {$urandom(2*q ),$urandom(2*q + 1)} % q;
             B = {$urandom(2*A ),$urandom(2*A + 1)} % q;
-            C = A + B;
-            T = (A + B) % q;
-            $display("[Test %d] A = %x, B = %x, q = %x, C = %x, T = %x", i, A, B, q, C, T);
+            T = A + B;
+            C = (A + B) % q;
+            $display("[Test %d] A = %x, B = %x, q = %x, T = %x, C = %x", i, A, B, q, T, C);
         end
         else begin
             A = 0;
@@ -70,8 +70,8 @@ initial begin
 
         #0.01
 
-        if (C_ != C || T != T_) begin
-            $display("FAILED (%d)! Expected C = %x, T = %x, Got C = %x, T = %x\n", i, C, T, C_, T_);
+        if (T_ != T || C != C_) begin
+            $display("FAILED (%d)! Expected T = %x, C = %x, Got T = %x, C = %x\n", i, T, C, T_, C_);
             f += 1;
             $stop;
         end
@@ -94,12 +94,12 @@ initial begin
             A[LOGQ -1:LOGQ0]  = {$urandom(4*q),$urandom(4*q + 3)} % q0;
             B[LOGQ0-1:    0]  = {$urandom(4*A ),$urandom(4*A  + 1)} % q0;
             B[LOGQ -1:LOGQ0]  = {$urandom(4*A ),$urandom(4*A  + 3)} % q0;
-            T[LOGQ0-1:    0]  = (A[LOGQ0-1:    0] + B[LOGQ0-1:    0]) % q0;
-            T[LOGQ -1:LOGQ0]  = (A[LOGQ -1:LOGQ0] + B[LOGQ -1:LOGQ0]) % q0;
-            C[LOGQ0  :    0]  = (A[LOGQ0-1:    0] + B[LOGQ0-1:    0]);
-            C[LOGQ+1 :LOGQ0+1]  = (A[LOGQ -1:LOGQ0] + B[LOGQ -1:LOGQ0]);
+            C[LOGQ0-1:    0]  = (A[LOGQ0-1:    0] + B[LOGQ0-1:    0]) % q0;
+            C[LOGQ -1:LOGQ0]  = (A[LOGQ -1:LOGQ0] + B[LOGQ -1:LOGQ0]) % q0;
+            T[LOGQ0  :    0]  = (A[LOGQ0-1:    0] + B[LOGQ0-1:    0]);
+            T[LOGQ+1 :LOGQ0+1]  = (A[LOGQ -1:LOGQ0] + B[LOGQ -1:LOGQ0]);
 
-            $display("[Test %d] A = %x, B = %x, q = %x, C = %x, T = %x", i, A, B, q, C, T);
+            $display("[Test %d] A = %x, B = %x, q = %x, T = %x, C = %x", i, A, B, q, T, C);
         end
         else begin
             A = 0;
@@ -109,8 +109,8 @@ initial begin
 
         #0.01
 
-        if (C_ != C || T != T_) begin
-            $display("FAILED (%d)! Expected C = %x, T = %x, Got C = %x, T = %x\n", i, C, T, C_, T_);
+        if (T_ != T || C != C_) begin
+            $display("FAILED (%d)! Expected T = %x, C = %x, Got T = %x, C = %x\n", i, T, C, T_, C_);
             f += 1;
             $stop;
         end

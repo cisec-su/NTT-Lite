@@ -7,12 +7,13 @@ module modmul
     (
         input                clk ,
         input   mode_mul_t   mode,
-        input  [LOGQ -1  :0] Q   ,
-        input  [LOGQ +1  :0] MU  ,
+        input  [LOGQ   -1:0] Q   ,
+        input  [LOGQ   +1:0] MU  ,
         input  [LOGLOGQ-1:0] logq,        
-        input  [LOGQ -1  :0] A   ,
-        input  [LOGQ -1  :0] B   ,
-        output [LOGQ -1  :0] C
+        input  [LOGQ   -1:0] A   ,
+        input  [LOGQ   -1:0] B   ,
+        output [LOGT   -1:0] T   ,        
+        output [LOGQ   -1:0] C
     );
 
 ///////////////////////////// input check ///////////////////////////////
@@ -26,11 +27,16 @@ endgenerate
 /////////////////////////////////////////////////////////////////////////
 
 
-localparam K     = 2*LOGQ;
+
+
+///////////////////////////// parameters ////////////////////////////////
+
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
+localparam LOGT    = LOGQ << 1;
+
+/////////////////////////////////////////////////////////////////////////
 
 
-wire [K-1:0] C_;
 wire dual;
 
 assign dual = (mode == MUL_SINGLE) ? 1'b0 : 1'b1;
@@ -48,7 +54,7 @@ mac_std_dual_32x34 #(
     .mode_mul(mode),
     .A       (A   ),
     .B       (B   ),
-    .C       (C_  )
+    .C       (T   )
 );
 
 
@@ -66,7 +72,7 @@ barrett #(
 ) barrett_inst (
     .clk (clk ),
     .dual(dual),
-    .C   (C_  ),
+    .C   (T   ),
     .T   (C   ),
     .B   (logq),
     .MU  (MU  ),
