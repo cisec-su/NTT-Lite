@@ -28,15 +28,12 @@ wire [LOGA -1:0] A;
 wire [LOGA -1:0] T1;
 wire [LOGA0  :0] T1_0;
 wire [LOGA0-1:0] T1_1;
-wire [LOGA -1:0] T1;
 wire [LOGA -1:0] T2;
 wire [LOGA0  :0] T2_0;
 wire [LOGA0-1:0] T2_1;
-wire [LOGA -1:0] T2;
 wire [LOGA -1:0] T3;
 wire [LOGA0  :0] T3_0;
 wire [LOGA0-1:0] T3_1;
-wire [LOGA -1:0] T3;
 wire [LOGQ0-1:0] T4_0;
 wire [LOGQ0-1:0] T4_1;
 
