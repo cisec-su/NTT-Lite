@@ -5,8 +5,8 @@ module ntt_lite
         parameter LOGN       = 8,
         parameter LOGQ       = 32,
         parameter B          = 32, // bandwidth, must divide LOGQ
-        parameter L          = 8, // BU  latency
-        parameter LX         = 3, // MUL latency
+        parameter L_RED      = 5, // BU  latency
+        parameter L_MUL      = 3, // MUL latency
         parameter EN_NTT_OTF = 1
     )
     (
@@ -52,6 +52,7 @@ localparam N       = 1 << LOGN;
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 localparam LOGWB   = $clog2(LOGQ/B);
 localparam WBMASK  = (1 << LOGWB) - 1;
+localparam L       = L_MUL + L_RED;
 
 // states, todo: add glitch protection as HW codes
 localparam ST_IDLE         = 4'd0;
@@ -431,27 +432,6 @@ butterfly #(
 
 ////////////////////////// shift register ///////////////////////////////
 
-shiftreg #(
-    .SHIFT(L + 1),
-    .DATA (    1)
-) shreg_mul (
-    .clk     (clk ),
-    .rst     (rst ),
-    .data_in (sr_i),
-    .data_out(sr_o)
-);
-
-
-shiftreg #(
-    .SHIFT(LX+ 1),
-    .DATA (    1)
-) shreg_mulx (
-    .clk     (clk ),
-    .rst     (rst ),
-    .data_in (sr_i),
-    .data_out(sr_x)
-);
-
 
 shiftreg #(
     .SHIFT(1),
@@ -461,6 +441,28 @@ shiftreg #(
     .rst     (rst ),
     .data_in (sr_i),
     .data_out(sr_t)
+);
+
+
+shiftreg #(
+    .SHIFT(L_MUL),
+    .DATA (    1)
+) shreg_mulx (
+    .clk     (clk ),
+    .rst     (rst ),
+    .data_in (sr_t),
+    .data_out(sr_x)
+);
+
+
+shiftreg #(
+    .SHIFT(L_RED),
+    .DATA (    1)
+) shreg_mul (
+    .clk     (clk ),
+    .rst     (rst ),
+    .data_in (sr_x),
+    .data_out(sr_o)
 );
 
 

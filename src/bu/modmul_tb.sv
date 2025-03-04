@@ -26,6 +26,7 @@ integer j    = 0;
 reg                       clk ;
 mode_mul_t                mode;
 reg         [LOGQ-1:0]    Q   ;
+reg         [LOGQ-1:0]    Q_dual;
 reg         [LOGQ+1:0]    MU  ;
 reg         [LOGLOGQ-1:0] logq;
 reg         [LOGQ-1:0]    A   ;
@@ -63,6 +64,8 @@ else begin
     assign D_mx = D;
 end
 
+assign Q_dual = (mode == MUL_SINGLE) ? Q : {Q[LOGQ0-1:0], Q[LOGQ0-1:0]};
+
 
 modmul #(
     .LOGQ (LOGQ)
@@ -74,6 +77,7 @@ modmul #(
     .logq(logq),
     .A   (A   ),
     .B   (B   ),
+    .E   (0   ),
     .C   (C_  ),
     .D   (D_  )
 );

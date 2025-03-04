@@ -44,12 +44,16 @@ wire [LOGQ -1:0] shift_in;
 wire [LOGQ -1:0] shift_out;
 wire [LOGT -1:0] asr_in;
 wire [LOGT -1:0] asr_out;
+wire [LOGQ -1:0] asr_out_dual;
 wire [      1:0] mode_mul;
 wire             dual;
 wire [LOGQ -1:0] q_dual;
 wire [LOGQ -1:0] q_half_dual;
 wire [LOGQ -1:0] psi_dual;
 wire [LOGQ -1:0] pow_2_d;
+wire [LOGQ -1:0] pow_2_d_dual;
+wire [LOGQ -1:0] pow_2_d_shift_dual;
+wire [LOGQ -1:0] D_dual;
 
 
 assign mode_mul    = (mode == `MODE_POLY && op != `OP_PWM) ? `MODE_DUAL : 
@@ -61,17 +65,29 @@ assign q_half_dual = (dual) ? {Q[LOGQ0-1:0] >> 1, Q[LOGQ0-1:0] >> 1} :
                                Q >> 1                                ;
 assign psi_dual    = ((op == `OP_NTT || op == `OP_INTT) && dual) ? {PSI[LOGQ0-1:0], PSI[LOGQ0-1:0]} : 
                                                                     PSI                             ;
+assign asr_out_dual = (dual) ? {asr_out[LOGQ+LOGQ0-1:LOGQ], asr_out[LOGQ0-1:0]} : 
+                                asr_out                                         ;
 
 assign pow_2_d     = ({{(LOGQ-1){1'b0}}, 1'b1} << d);
 
-assign MM_in_A     = (op == `OP_INTT                          ) ? sub_out_C      : 
-                                                                  B              ;
-assign MM_in_B     = (op == `OP_COMPRESS                      ) ? pow_2_d        :
-                     (op == `OP_DECOMPRESS                    ) ? Q              : 
-                                                                  psi_dual       ;
-assign MM_in_E     = (op == `OP_COMPRESS                      ) ? q_half_dual    :
-                     (op == `OP_DECOMPRESS                    ) ? (pow_2_d >> 1) :
-                                                                  {LOGQ{1'b0}}   ;
+assign pow_2_d_dual = (dual) ? {pow_2_d[LOGQ0-1:0], pow_2_d[LOGQ0-1:0]} : 
+                                pow_2_d                                 ;
+
+assign pow_2_d_shift_dual = (dual) ? {pow_2_d[LOGQ0-1:0] >> 1, pow_2_d[LOGQ0-1:0] >> 1} : 
+                                      pow_2_d >> 1;
+
+assign D_dual      = (dual) ? {MM_out_D[LOGQ+LOGQ0-1:LOGQ], MM_out_D[LOGQ0-1:0]} : 
+                               MM_out_D                                          ;
+
+
+assign MM_in_A     = (op == `OP_INTT                          ) ? sub_out_C          : 
+                                                                  B                  ;
+assign MM_in_B     = (op == `OP_COMPRESS                      ) ? pow_2_d_dual       :
+                     (op == `OP_DECOMPRESS                    ) ? q_dual             : 
+                                                                  psi_dual           ;
+assign MM_in_E     = (op == `OP_COMPRESS                      ) ? q_half_dual        :
+                     (op == `OP_DECOMPRESS                    ) ? pow_2_d_shift_dual :
+                                                                  {LOGQ{1'b0}}       ;
 
 assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A              :
                                                          shift_out      ;
@@ -92,11 +108,11 @@ assign E           = (op == `OP_INTT) ? shift_out :
                                         add_out_C ;
 assign O           = (op == `OP_INTT) ? MM_out_C  :
                                         sub_out_C ;
-assign M           = (op == `OP_ADD       ) ? add_out_C :
-                     (op == `OP_SUB       ) ? sub_out_C :
-                     (op == `OP_COMPRESS  ) ? MM_out_D  :
-                     (op == `OP_DECOMPRESS) ? asr_out   :
-                     /*                  */   MM_out_C  ;
+assign M           = (op == `OP_ADD       ) ? add_out_C    :
+                     (op == `OP_SUB       ) ? sub_out_C    :
+                     (op == `OP_COMPRESS  ) ? D_dual       :
+                     (op == `OP_DECOMPRESS) ? asr_out_dual :
+                     /*                  */   MM_out_C     ;
 
 
 shiftreg #(

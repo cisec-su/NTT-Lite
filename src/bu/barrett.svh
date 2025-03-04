@@ -5,7 +5,7 @@
 
 
 typedef struct packed {
-    int LOGQ, LOGQH, FF_IN, FF_SHF, FF_MUL, FF_OUT;
+    int LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT;
 } barrett_params_t;
 
 

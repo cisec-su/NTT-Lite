@@ -18,6 +18,7 @@ module ntt_lite_ctrl
         output reg [ 3:0]  op  ,         // (Write)
         output reg         otf,          // (Read/Write)
         output reg [ 5:0]  logq,         // (Read/Write)
+        output reg [ 5:0]  d,            // (Read/Write)
         output reg [31:0]  q,            // (Read/Write)
         output reg [32:0]  mu,           // (Read/Write)
         //data address registers
@@ -55,6 +56,9 @@ localparam CTRL_LOGQ_LEN  = CTRL_LOGQ_MSB - CTRL_LOGQ_LSB + 1;
 localparam CTRL_MODE_LSB  = 19;
 localparam CTRL_MODE_MSB  = 20;
 localparam CTRL_MODE_LEN  = CTRL_MODE_MSB - CTRL_MODE_LSB + 1;
+localparam CTRL_D_LSB     = 21;
+localparam CTRL_D_MSB     = 26;
+localparam CTRL_D_LEN     = CTRL_D_MSB - CTRL_D_LSB + 1;
 localparam CTRL_BUSY_BIT  = 30;
 localparam CTRL_DONE_BIT  = 31;
 
@@ -93,6 +97,7 @@ always @(posedge clk) begin
         op    <= {CTRL_OP_LEN{1'b0}};
         otf   <= 1'b0;
         logq  <= {CTRL_LOGQ_LEN{1'b0}};
+        d     <= {CTRL_D_LEN{1'b0}};
         q     <= 32'd0;
         mu    <= 33'd0;
         din_addr  <= 32'd0;
@@ -106,6 +111,7 @@ always @(posedge clk) begin
                 otf  <= wdata[CTRL_OTF_BIT];
                 logq <= wdata[CTRL_LOGQ_MSB:CTRL_LOGQ_LSB];
                 op   <= wdata[CTRL_OP_MSB  :CTRL_OP_LSB  ];
+                d    <= wdata[CTRL_D_MSB   :CTRL_D_LSB   ];
             end
             DIN_ADDR    : din_addr  <= wdata;
             DOUT_ADDR   : dout_addr <= wdata;
@@ -129,6 +135,7 @@ always @(posedge clk) begin
                 rdata[CTRL_MODE_MSB:CTRL_MODE_LSB] <= mode;
                 rdata[CTRL_OTF_BIT]                <= otf;
                 rdata[CTRL_LOGQ_MSB:CTRL_LOGQ_LSB] <= logq;
+                rdata[CTRL_D_MSB   :CTRL_D_LSB   ] <= d;
                 rdata[CTRL_BUSY_BIT]               <= busy;
                 rdata[CTRL_DONE_BIT]               <= done_q | done;
             end

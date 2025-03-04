@@ -3,7 +3,6 @@
 module barrett
    #(
         parameter  LOGQ     = 32,
-        parameter  LOGQH    = 15,
         parameter  PIPE_Q   = 1 ,
         parameter  CORRECT  = 1 ,
         parameter  FF_IN    = 1 ,
@@ -19,7 +18,7 @@ module barrett
         input  [LOGLOGQ-1:0] B   ,   // 2^{B-1} < q < 2^B
         input  [LOGQ   +1:0] MU  ,
         input  [LOGD   -1:0] D   ,
-        input  [LOGQH  -1:0] qH
+        input  [LOGQ   -1:0] Q
     );
 
 ///////////////////////////// input check ///////////////////////////////
@@ -37,7 +36,7 @@ endgenerate
 
 ///////////////////////////// parameters ////////////////////////////////
 
-localparam barrett_params_t params = {LOGQ, LOGQH, FF_IN, FF_SHF, FF_MUL, FF_OUT};
+localparam barrett_params_t params = {LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT};
 localparam mac_std_dual_32x34_params_t mac_0_params = barrett_mac_0_params(params);
 localparam mac_std_dual_32x34_params_t mac_1_params = barrett_mac_1_params(params);
 
@@ -59,7 +58,6 @@ localparam LOGT1_MAC = barrett_logt1(params);
 localparam LOGT1_MAC_0 = LOGT1_MAC >> 1;
 localparam LOGT1   = (LOGQ0 + 2) << 1;
 localparam LOGT1_0 = LOGT1 >> 1;
-localparam W       = LOGQ - LOGQH;
 
 localparam LAT    = barrett_lat(params);
 localparam LAT_0  = barrett_mac_0_lat(params);
@@ -78,11 +76,11 @@ localparam LOGQ_D = (PIPE_Q) ? LAT_0 + FF_IN : 0;
 
 reg  [LOGC   -1:0] C_q;
 reg  [LOGQ   +1:0] mu_q;
-reg  [LOGQH  -1:0] qH_q [0:   Q_D-1];
+reg  [LOGQ   -1:0] qH_q [0:   Q_D-1];
 reg  [LOGLOGQ-1:0] B_q  [0:LOGQ_D-1];
 
 wire [LOGC -1:0] C_mx;
-wire [LOGQH-1:0] qH_mx   [0:1];
+wire [LOGQ -1:0] qH_mx   [0:1];
 wire [LOGLOGQ:0] B_mx [0:1];
 wire [LOGQ +1:0] mu_mx;
 wire [LOGQ +1:0] mu_dual;
@@ -131,7 +129,7 @@ mode_mul_t mode_mul;
 
 /////////////////////////// comb. assignments //////////////////////
 
-assign q = (LOGQ > LOGQH) ? {qH_mx[0], {(W - 1){1'b0}}, 1'b1} : qH_mx[0];
+assign q = qH_mx[0];
 assign mode_mul = (dual) ? MUL_DUAL : MUL_SINGLE;
 assign mu_dual  = (dual) ? {mu_mx[LOGQ0:0], mu_mx[LOGQ0:0]} : mu_mx;
 assign q_dual   = (dual) ? {q[LOGQ0-1:0], q[LOGQ0-1:0]} : q;
@@ -183,8 +181,8 @@ if (Q_D) begin
     assign qH_mx[1] = qH_q[          Q_D - 1];
 end
 else begin
-    assign qH_mx[0] = qH;
-    assign qH_mx[1] = qH;
+    assign qH_mx[0] = Q;
+    assign qH_mx[1] = Q;
 end
 
 if (LOGQ_D) begin
@@ -338,7 +336,7 @@ end
 if (Q_D) begin
     for (genvar i = 0; i < Q_D; i = i + 1) begin
         always @(posedge clk) begin
-            qH_q[i] <= (i == 0) ? qH : qH_q[i - 1];
+            qH_q[i] <= (i == 0) ? Q : qH_q[i - 1];
         end
     end
 end

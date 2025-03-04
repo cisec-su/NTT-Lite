@@ -63,7 +63,6 @@ mac_std_dual_32x34 #(
 
 barrett #(
     .LOGQ  (LOGQ),
-    .LOGQH (LOGQ),
     .PIPE_Q(0   ),
     .FF_IN (0   ),
     .FF_SHF(0   ),
@@ -77,7 +76,7 @@ barrett #(
     .D   (D   ),
     .B   (logq),
     .MU  (MU  ),
-    .qH  (Q   )
+    .Q   (Q   )
 );
 
 
