@@ -899,6 +899,52 @@ initial begin
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+    $readmemh("../../../../../test/encode_in_poly.txt" , poly_in);
+    $readmemh("../../../../../test/encode_out_poly.txt" , poly_out);
+
+    op = `OP_ENCODE;
+    mode = `MODE_POLY;
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+    d = 1; // this test is specific to d = 1 (poly_to_msg)
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS POLY ENCODE)");
+    else begin
+        $display("(FAIL POLY ENCODE)");
+        flag1 = 1;
+    end
+
+    d = meta[4];
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     if (flag1 == 0)
         $display("(ALL SUCCESS)");
     else

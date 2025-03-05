@@ -24,6 +24,7 @@ module ntt_lite_acc_fsm
         output reg                 fsm_o_read,
         input                      fsm_o_valid,
         input      [LOGN+LOGWB-1:0]fsm_io_word,
+        input                      fsm_o_done,
         
         input      [31:0]          ctrl_din_addr,
         input      [31:0]          ctrl_dout_addr,
@@ -104,7 +105,7 @@ begin
         
         ST_PUT:
         begin
-            if(fsm_io_word == (LIMIT-1))
+            if(fsm_o_done)
                 cstate <= ST_IDLE; 
         end
         endcase

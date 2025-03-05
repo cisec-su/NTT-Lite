@@ -179,3 +179,19 @@ with open("decomp_out_single.txt", "w") as f:
 with open("decomp_out_dual.txt", "w") as f:
     for i in range(n):
         f.write(hex((A_1_decomp[i] << (b // 2)) + A_0_decomp[i])[2:] + "\n")
+
+
+A_0_bin = [random.randint(0, 1) for _ in range(n)]
+A_1_bin = [random.randint(0, 1) for _ in range(n)]
+
+with open("encode_in_poly.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((A_1_bin[i] << (b // 2)) + A_0_bin[i])[2:] + "\n")
+
+with open("encode_out_poly.txt", "w") as f:
+    for i in range(n // (b // 2)):
+        t = 0
+        for j in range(b // 2):
+            t += A_0_bin[i*(b // 2) + j] << (2*j    )
+            t += A_1_bin[i*(b // 2) + j] << (2*j + 1)
+        f.write(hex(t)[2:] + "\n")

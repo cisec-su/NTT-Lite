@@ -224,6 +224,7 @@ ntt_lite_acc_fsm #(
     .fsm_o_valid(fsm_o_valid),//
     .fsm_o_read(fsm_o_read),//
     .fsm_io_word(fsm_io_word),//
+    .fsm_o_done(ctrl_done),//
     // fsm <-> ctrl
     .ctrl_din_addr(ctrl_din_addr),//
     .ctrl_dout_addr(ctrl_dout_addr),//
