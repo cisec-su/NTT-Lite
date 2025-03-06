@@ -73,6 +73,7 @@ wire [1:0] ctrl_mode;
 wire [3:0] ctrl_op;
 wire [LOGQ-1:0] ctrl_q;
 wire [LOGQ  :0] ctrl_mu;
+wire [LOGQ-1:0] ctrl_inv2;
 wire ctrl_otf;
 wire ctrl_done;
 wire ctrl_busy;
@@ -105,7 +106,8 @@ ntt_lite #(
     .d(ctrl_d),//
     .o_dis(ctrl_o_dis),//
     .q(ctrl_q),//
-    .mu({1'b0, ctrl_mu}), 
+    .mu({1'b0, ctrl_mu}),
+    .inv2(ctrl_inv2), 
     .op(ctrl_op),  
     .mode(ctrl_mode),//
     .otf(ctrl_otf),//
@@ -137,6 +139,7 @@ ntt_lite_ctrl #(
     .mode(ctrl_mode),//
     .op(ctrl_op),//
     .mu(ctrl_mu),//
+    .inv2(ctrl_inv2),//
     .q(ctrl_q),//
     .otf(ctrl_otf),//
     .done(ctrl_done),//

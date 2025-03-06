@@ -21,6 +21,7 @@ module ntt_lite_ctrl
         output reg [ 5:0]  d,            // (Write)
         output reg         o_dis,        // (Write)        
         output reg [31:0]  q,            // (Read/Write)
+        output reg [31:0]  inv2,            // (Read/Write)        
         output reg [32:0]  mu,           // (Read/Write)
         //data address registers
         output reg [31:0]  din_addr,     // (Write)
@@ -39,6 +40,7 @@ localparam STRIDE_ADDR    = 8'h0C; // Offset for stride register
 localparam Q_ADDR         = 8'h10; // Offset for coefficient modulus register
 localparam MU_ADDR_LOW    = 8'h14; // Offset for mu register lsb 32-bits
 localparam MU_ADDR_HIGH   = 8'h18; // Offset for mu register msb 2-bit
+localparam INV2_ADDR      = 8'h1C; // Offset for mu register lsb 32-bits
 
 // Bit-fields for ctrl register
 localparam CTRL_CMD_LSB   = 0;
@@ -123,6 +125,7 @@ always @(posedge clk) begin
             Q_ADDR      : q         <= wdata;
             MU_ADDR_LOW : mu[31:0]  <= wdata;
             MU_ADDR_HIGH: mu[32]    <= wdata[0];
+            INV2_ADDR   : inv2      <= wdata;
             default: ;
         endcase
     end
@@ -148,6 +151,7 @@ always @(posedge clk) begin
             Q_ADDR      : rdata <= q;
             MU_ADDR_LOW : rdata <= mu[31:0];
             MU_ADDR_HIGH: rdata <= mu[32];
+            INV2_ADDR   : rdata <= inv2;
             default     : rdata <= 32'd0;
         endcase
     end

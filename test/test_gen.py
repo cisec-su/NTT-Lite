@@ -159,6 +159,12 @@ with open("psi_inv.txt", "w") as f:
     f.write("0\n")
 
 
+print("PSI INV C:")
+for i in range(n - 1):
+    j = pows[i]
+    print(hex(psi_inv_table_[j]), end=", ")
+print("\n\n")
+
 
 A_0_comp =  [round(((1 << d)/q)*A_0[i]) for i in range(n)]
 A_1_comp =  [round(((1 << d)/q)*A_1[i]) for i in range(n)]

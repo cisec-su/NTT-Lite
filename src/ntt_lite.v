@@ -70,8 +70,7 @@ localparam ST_TWIDDLE_OTF  = 5'd11;
 localparam ST_ADDSUB       = 5'd12;
 localparam ST_ENCODE0      = 5'd13;
 localparam ST_ENCODE1      = 5'd14;
-localparam ST_DECODE0      = 5'd15;
-localparam ST_DECODE1      = 5'd16;
+localparam ST_DECODE       = 5'd15;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -168,15 +167,12 @@ wire coeff_ram_p1_rsel;
 reg  coeff_ram_p0_wsel;
 wire coeff_ram_p1_wsel;
 
-wire [LOGQ-1:0] cache_data;
-reg cache_wen, cache_ren;
-
 // encode signals
 wire [LOGQ-1:0] encode_in;
 wire [LOGQ-1:0] encode_out;
 wire decode;
 reg  encode_rst;
-reg  encode_i_valid;
+wire encode_i_valid;
 wire encode_i_ready;
 wire encode_o_valid;
 
@@ -272,8 +268,8 @@ assign twiddle_ram_raddr = (EN_NTT_OTF && ntt_otf_feed_bu) ?                    
 
 ///////////////////// Encode Inputs /////////////////////////////////////
 
-// assign encode_i_valid = sr_t; // TODO: check if we should filter out based on the opcode or not.
-assign encode_in      = (decode) ? cache_data        :
+assign encode_i_valid = sr_t; // TODO: check if we should filter out based on the opcode or not.
+assign encode_in      = (decode) ? twiddle_ram_dout  :
                                    coeff_ram_p0_dout ;
 assign decode         = (op == `OP_DECODE) ? 1'b1 : 
                                              1'b0 ;
@@ -411,24 +407,6 @@ ntt_lite_coeff_ram_double #(
     .p1_dout (coeff_ram_p1_dout ),
     .p1_rsel (coeff_ram_p1_rsel ),
     .p1_wsel (coeff_ram_p1_wsel )
-);
-
-/////////////////////////////////////////////////////////////////////////
-
-
-
-
-////////////////////////// ram cache for synch. /////////////////////////
-
-cache #(
-    .W(LOGQ)
-) cache_inst (
-    .clk   (clk             ),
-    .rst   (rst             ),
-    .wen   (cache_wen       ),
-    .i_data(twiddle_ram_dout),
-    .ren   (cache_ren       ),
-    .o_data(cache_data      )
 );
 
 /////////////////////////////////////////////////////////////////////////
@@ -614,10 +592,6 @@ always @(*) begin
 
     encode_rst = 0;
     upoly_encode = 0;
-    encode_i_valid = 0;
-
-    cache_wen = 0;
-    cache_ren = 0;
 
     case (state)
         ST_IDLE: begin
@@ -705,7 +679,6 @@ always @(*) begin
         ST_ENCODE0: begin
 
             sr_i = 1;
-            encode_i_valid = sr_t;
             if (ctr0 == n_m1) begin
                 ctr0_rst = 1;
                 next_state = ST_ENCODE1;
@@ -722,31 +695,16 @@ always @(*) begin
         end     
         ST_ENCODE1: begin
 
-            encode_i_valid = sr_t;
             if (encode_o_valid) begin
                 upoly_encode = 1;
                 next_state = ST_POLY_OUT;
             end
 
         end
-        ST_DECODE0: begin
+        ST_DECODE: begin
 
             pwm_idx = 1;
-            if (sr_t) begin
-                cache_wen = 1;
-                next_state = ST_DECODE1;
-            end
-            else begin
-                sr_i = 1;
-                ctr0_inc = 1;
-            end
-
-        end
-        ST_DECODE1: begin
-
-            pwm_idx = 1;
-            if (encode_i_ready && ctr1 != n_m1) begin
-                encode_i_valid = 1;
+            if (encode_i_ready && ctr1 != n_m1 && !sr_t) begin
                 ctr0_inc = 1;
                 sr_i = 1;
             end
@@ -760,13 +718,6 @@ always @(*) begin
                 else begin
                     ctr1_inc = 1;
                 end                
-            end
-
-            if (encode_i_valid && !sr_z) begin
-                cache_ren = 1;
-            end
-            else if (sr_z) begin
-                cache_wen = 1;
             end
 
         end
@@ -973,7 +924,7 @@ always @(*) begin
         `OP_COMPRESS   : next_state_op = ST_PWM0;
         `OP_DECOMPRESS : next_state_op = ST_PWM0;
         `OP_ENCODE     : next_state_op = ST_ENCODE0;
-        `OP_DECODE     : next_state_op = ST_DECODE0;
+        `OP_DECODE     : next_state_op = ST_DECODE;
         default        : next_state_op = ST_IDLE;
     endcase
 end
