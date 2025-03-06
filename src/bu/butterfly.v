@@ -15,6 +15,7 @@ module butterfly
         input  [LOGQ   -1:0] PSI ,
         input  [LOGQ   -1:0] Q   ,
         input  [LOGQ   +1:0] MU  ,
+        input  [LOGQ   -1:0] inv2,
         input  [LOGLOGQ-1:0] logq,
         input  [LOGLOGQ-1:0] d   ,
         output [LOGQ   -1:0] E   ,
@@ -28,23 +29,27 @@ localparam LOGQ0   = LOGQ >> 1;
 localparam LOGT    = LOGQ << 1;
 
 
-wire [LOGQ -1:0] MM_in_A;
-wire [LOGQ -1:0] MM_in_B;
-wire [LOGQ -1:0] MM_in_E;
-wire [LOGQ -1:0] MM_out_C;
-wire [LOGT -1:0] MM_out_T;
-wire [LOGT -1:0] MM_out_D;
+wire [LOGQ -1:0] mm_in_A;
+wire [LOGQ -1:0] mm_in_B;
+wire [LOGQ -1:0] mm_in_E;
+wire [LOGQ -1:0] mm_out_C;
+wire [LOGT -1:0] mm_out_T;
+wire [LOGT -1:0] mm_out_D;
 wire [LOGQ -1:0] add_in_A;
 wire [LOGQ -1:0] add_in_B;
 wire [LOGQ -1:0] add_out_C;
 wire [LOGQ -1:0] sub_in_A;
 wire [LOGQ -1:0] sub_in_B;
 wire [LOGQ -1:0] sub_out_C;
-wire [LOGQ -1:0] shift_in;
-wire [LOGQ -1:0] shift_out;
+wire [LOGQ -1:0] shift_in_0;
+wire [LOGQ -1:0] shift_out_0;
+wire [LOGQ -1:0] shift_in_1;
+wire [LOGQ -1:0] shift_out_1;
 wire [LOGT -1:0] asr_in;
 wire [LOGT -1:0] asr_out;
 wire [LOGQ -1:0] asr_out_dual;
+wire [LOGQ -1:0] mm_inv2_in;
+wire [LOGQ -1:0] mm_inv2_out;
 wire [      1:0] mode_mul;
 wire             dual;
 wire [LOGQ -1:0] q_dual;
@@ -76,70 +81,85 @@ assign pow_2_d_dual = (dual) ? {pow_2_d[LOGQ0-1:0], pow_2_d[LOGQ0-1:0]} :
 assign pow_2_d_shift_dual = (dual) ? {pow_2_d[LOGQ0-1:0] >> 1, pow_2_d[LOGQ0-1:0] >> 1} : 
                                       pow_2_d >> 1;
 
-assign D_dual      = (dual) ? {MM_out_D[LOGQ+LOGQ0-1:LOGQ], MM_out_D[LOGQ0-1:0]} : 
-                               MM_out_D                                          ;
+assign D_dual      = (dual) ? {mm_out_D[LOGQ+LOGQ0-1:LOGQ], mm_out_D[LOGQ0-1:0]} : 
+                               mm_out_D                                          ;
 
 
-assign MM_in_A     = (op == `OP_INTT                          ) ? sub_out_C          : 
+assign mm_in_A     = (op == `OP_INTT                          ) ? sub_out_C          : 
                                                                   B                  ;
-assign MM_in_B     = (op == `OP_COMPRESS                      ) ? pow_2_d_dual       :
+assign mm_in_B     = (op == `OP_COMPRESS                      ) ? pow_2_d_dual       :
                      (op == `OP_DECOMPRESS                    ) ? q_dual             : 
                                                                   psi_dual           ;
-assign MM_in_E     = (op == `OP_COMPRESS                      ) ? q_half_dual        :
+assign mm_in_E     = (op == `OP_COMPRESS                      ) ? q_half_dual        :
                      (op == `OP_DECOMPRESS                    ) ? pow_2_d_shift_dual :
                                                                   {LOGQ{1'b0}}       ;
 
 assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A              :
-                                                         shift_out      ;
+                                                         shift_out_1    ;
 assign add_in_B    = (op == `OP_INTT                 ) ? B              : 
                      (op == `OP_ADD                  ) ? PSI            :
-                                                         MM_out_C       ;
+                                                         mm_out_C       ;
 assign sub_in_A    = (op == `OP_INTT || op == `OP_SUB) ? A              : 
-                                                         shift_out      ;
+                                                         shift_out_1    ;
 assign sub_in_B    = (op == `OP_INTT                 ) ? B              : 
                      (op == `OP_SUB                  ) ? PSI            : 
-                                                         MM_out_C       ;
-assign shift_in    = (op == `OP_INTT                 ) ? add_out_C      : 
+                                                         mm_out_C       ;
+assign shift_in_0  = (op == `OP_INTT                 ) ? add_out_C      : 
                                                          A              ;
+assign shift_in_1  = (op == `OP_INTT                 ) ? mm_inv2_out    : 
+                                                         shift_out_0    ;
 
-assign asr_in      = MM_out_T;
+assign mm_inv2_in  = shift_out_0;
 
-assign E           = (op == `OP_INTT) ? shift_out :
-                                        add_out_C ;
-assign O           = (op == `OP_INTT) ? MM_out_C  :
-                                        sub_out_C ;
+assign asr_in      = mm_out_T;
+
+assign E           = (op == `OP_INTT) ? shift_out_1 :
+                                        add_out_C   ;
+assign O           = (op == `OP_INTT) ? mm_out_C    :
+                                        sub_out_C   ;
 assign M           = (op == `OP_ADD       ) ? add_out_C    :
                      (op == `OP_SUB       ) ? sub_out_C    :
                      (op == `OP_COMPRESS  ) ? D_dual       :
                      (op == `OP_DECOMPRESS) ? asr_out_dual :
-                     /*                  */   MM_out_C     ;
+                     /*                  */   mm_out_C     ;
 
 
 shiftreg #(
-    .SHIFT(L   ),
+    .SHIFT(1   ),
     .DATA (LOGQ)
-) sre10(
-    .clk     (clk      ),
-    .rst     (1'b0     ),
-    .data_in (shift_in ),
-    .data_out(shift_out)
+) sre_0 (
+    .clk     (clk        ),
+    .rst     (1'b0       ),
+    .data_in (shift_in_0 ),
+    .data_out(shift_out_0)
+);
+
+
+shiftreg #(
+    .SHIFT(L - 1),
+    .DATA (LOGQ )
+) sre_1 (
+    .clk     (clk        ),
+    .rst     (1'b0       ),
+    .data_in (shift_in_1 ),
+    .data_out(shift_out_1)
 );
 
 
 modmul #(
     .LOGQ(LOGQ)
-) mm0 (
+) mm (
     .clk (clk     ),
     .mode(mode_mul),
     .Q   (Q       ),
     .MU  (MU      ),
     .logq(logq    ),
-    .A   (MM_in_A ),
-    .B   (MM_in_B ),
-    .E   (MM_in_E ),
-    .C   (MM_out_C),
-    .T   (MM_out_T),
-    .D   (MM_out_D)
+    .A   (mm_in_A ),
+    .B   (mm_in_B ),
+    .E   (mm_in_E ),
+    .C   (mm_out_C),
+    .T   (mm_out_T),
+    .D   (mm_out_D)
 );
 
 
@@ -167,11 +187,22 @@ modsub #(
 
 asr #(
     .LOGQ(LOGT)
-) asr0 (
+) asr (
     .A   (asr_in  ),
     .d   ({1'b0,d}),
     .dual(dual    ),
     .C   (asr_out )
+);
+
+
+modmul_inv2 #(
+    .LOGQ(LOGQ)
+) mm_inv2 (
+    .A   (mm_inv2_in ),
+    .inv2(inv2       ),
+    .q   (q_dual     ),
+    .dual(dual       ),
+    .C   (mm_inv2_out)
 );
 
 

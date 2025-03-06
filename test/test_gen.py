@@ -15,6 +15,7 @@ mu = (1 << 24) // q
 log = 12
 b = 32
 d = 10
+inv2 = pow(2, -1, q)
 
 with open("meta.txt", "w") as f:
     f.write(hex(q)[2:] + "\n")
@@ -22,6 +23,7 @@ with open("meta.txt", "w") as f:
     f.write(hex(logn)[2:] + "\n")
     f.write(hex(logq)[2:] + "\n")
     f.write(hex(d)[2:] + "\n")
+    f.write(hex(inv2)[2:] + "\n")
 
 A_0 =  [random.randint(0, q-1) for _ in range(n)]
 A_1 =  [random.randint(0, q-1) for _ in range(n)]
@@ -146,6 +148,7 @@ print("\n\n")
 
 
 psi_inv_table_ = ntt.generate_ntt_tables(n, q, pow(psi, -1, q))
+psi_inv_table_ = [(x*inv2) % q for x in psi_inv_table_]
 # _, _ = ntt.INTT(A_0_ntt, psi_inv_table_, q, debug=False, flag=False)
 
 

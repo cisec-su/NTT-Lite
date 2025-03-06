@@ -19,6 +19,7 @@ module ntt_lite
         input      [   LOGLOGQ-1:0] logq   ,
         input      [   LOGLOGQ-1:0] d      ,        
         input      [      LOGQ-1:0] q      ,
+        input      [      LOGQ-1:0] inv2   ,
         input      [      LOGQ+1:0] mu     ,
         input      [           1:0] mode   ,
         input      [         B-1:0] i_data ,
@@ -470,8 +471,9 @@ butterfly #(
     .PSI (psi_i),
     .Q   (q    ),
     .MU  (mu   ),
-    .d   (d    ),
+    .inv2(inv2 ),
     .logq(logq ),
+    .d   (d    ),
     .E   (A_o  ),
     .O   (B_o  ),
     .M   (M_o  )

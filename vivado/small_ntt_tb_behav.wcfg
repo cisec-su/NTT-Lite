@@ -12,15 +12,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="88,646.162 ns"></ZoomStartTime>
-      <ZoomEndTime time="88,849.968 ns"></ZoomEndTime>
-      <Cursor1Time time="88,816.000 ns"></Cursor1Time>
+      <ZoomStartTime time="88,934.666 ns"></ZoomStartTime>
+      <ZoomEndTime time="89,104.267 ns"></ZoomEndTime>
+      <Cursor1Time time="89,076.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="176"></NameColumnWidth>
-      <ValueColumnWidth column_width="172"></ValueColumnWidth>
+      <ValueColumnWidth column_width="168"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="14" />
+   <WVObjectSize size="21" />
    <wave_markers>
       <marker label="" time="4538310" />
       <marker label="" time="5150000" />
@@ -58,26 +58,6 @@
       <obj_property name="ElementShortName">encode_o_valid</obj_property>
       <obj_property name="ObjectShortName">encode_o_valid</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/bram_cache">
-      <obj_property name="ElementShortName">bram_cache[31:0]</obj_property>
-      <obj_property name="ObjectShortName">bram_cache[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/ucache">
-      <obj_property name="ElementShortName">ucache</obj_property>
-      <obj_property name="ObjectShortName">ucache</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_full">
-      <obj_property name="ElementShortName">cache_full</obj_property>
-      <obj_property name="ObjectShortName">cache_full</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_full_set">
-      <obj_property name="ElementShortName">cache_full_set</obj_property>
-      <obj_property name="ObjectShortName">cache_full_set</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_full_clr">
-      <obj_property name="ElementShortName">cache_full_clr</obj_property>
-      <obj_property name="ObjectShortName">cache_full_clr</obj_property>
-   </wvobject>
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_i">
       <obj_property name="ElementShortName">sr_i</obj_property>
       <obj_property name="ObjectShortName">sr_i</obj_property>
@@ -89,5 +69,53 @@
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_t">
       <obj_property name="ElementShortName">sr_t</obj_property>
       <obj_property name="ObjectShortName">sr_t</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_inst/clk">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_inst/rst">
+      <obj_property name="ElementShortName">rst</obj_property>
+      <obj_property name="ObjectShortName">rst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_inst/full">
+      <obj_property name="ElementShortName">full</obj_property>
+      <obj_property name="ObjectShortName">full</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_inst/wen">
+      <obj_property name="ElementShortName">wen</obj_property>
+      <obj_property name="ObjectShortName">wen</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_inst/ren">
+      <obj_property name="ElementShortName">ren</obj_property>
+      <obj_property name="ObjectShortName">ren</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_inst/i_data">
+      <obj_property name="ElementShortName">i_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">i_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_inst/o_data">
+      <obj_property name="ElementShortName">o_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">o_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_inst/data_q">
+      <obj_property name="ElementShortName">data_q[31:0]</obj_property>
+      <obj_property name="ObjectShortName">data_q[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cache_inst/W">
+      <obj_property name="ElementShortName">W[31:0]</obj_property>
+      <obj_property name="ObjectShortName">W[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/o_data">
+      <obj_property name="ElementShortName">o_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">o_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/o_valid">
+      <obj_property name="ElementShortName">o_valid</obj_property>
+      <obj_property name="ObjectShortName">o_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/io_word">
+      <obj_property name="ElementShortName">io_word[7:0]</obj_property>
+      <obj_property name="ObjectShortName">io_word[7:0]</obj_property>
    </wvobject>
 </wave_config>

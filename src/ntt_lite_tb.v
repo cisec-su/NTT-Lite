@@ -28,7 +28,8 @@ reg rst;
 
 reg [LOGQ-1:0] q;
 reg [LOGQ+1:0] mu;
-reg [LOGQ+1:0] meta     [0:  4];
+reg [LOGQ-1:0] inv2;
+reg [LOGQ+1:0] meta     [0:  5];
 reg [LOGQ-1:0] psi      [0:N-1];
 reg [LOGQ-1:0] poly_in  [0:N-1];
 reg [LOGQ-1:0] poly_out [0:N-1];
@@ -73,6 +74,7 @@ ntt_lite #(
     .logq(logq),
     .mode(mode),
     .q(q),
+    .inv2(inv2),
     .d(d),
     .o_dis(1'b0),
     .mu(mu),
@@ -113,6 +115,7 @@ initial begin
     logn = meta[2];
     logq = meta[3];
     d = meta[4];
+    inv2 = meta[5];
 
     op = `OP_NTT;
     mode = `MODE_SINGLE;
@@ -384,7 +387,7 @@ initial begin
 
     $readmemh("../../../../../test/ntt_out_single.txt" , poly_in);
     $readmemh("../../../../../test/psi_inv.txt" , psi);
-    $readmemh("../../../../../test/intt_out_single.txt" , poly_out);
+    $readmemh("../../../../../test/poly_in_single.txt" , poly_out);
 
     op = `OP_INTT;
     mode = `MODE_SINGLE;
@@ -442,7 +445,7 @@ initial begin
 
     $readmemh("../../../../../test/ntt_out_dual.txt" , poly_in);
     $readmemh("../../../../../test/psi_inv.txt" , psi);
-    $readmemh("../../../../../test/intt_out_dual.txt" , poly_out);
+    $readmemh("../../../../../test/poly_in_dual.txt" , poly_out);
 
     op = `OP_INTT;
     mode = `MODE_DUAL;
