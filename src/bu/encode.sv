@@ -106,7 +106,7 @@ always @(posedge clk) begin
         C_q <= ((o_valid) ? 0 : C_q) ^ ((i_valid) ? (A_dual << ctr[LOGLOGQ-2:0]) : 0);
     end
     else if( decode) begin
-        C_q <= ((i_valid & i_ready) ? (A << ctr_read) : 0) ^ asr_out;
+        C_q <= ((i_valid & i_ready) ? (A << ctr_read) : 0) ^ ((o_valid) ? asr_out : C_q);
     end
 end
 

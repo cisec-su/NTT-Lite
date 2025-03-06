@@ -74,6 +74,7 @@ ntt_lite #(
     .mode(mode),
     .q(q),
     .d(d),
+    .o_dis(1'b0),
     .mu(mu),
     .i_data(i_data),
     .i_valid(i_valid),
@@ -899,8 +900,8 @@ initial begin
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    $readmemh("../../../../../test/encode_in_poly.txt" , poly_in);
-    $readmemh("../../../../../test/encode_out_poly.txt" , poly_out);
+    $readmemh("../../../../../test/encode_in_poly_d1.txt" , poly_in);
+    $readmemh("../../../../../test/encode_out_poly_d1.txt" , poly_out);
 
     op = `OP_ENCODE;
     mode = `MODE_POLY;
@@ -935,15 +936,75 @@ initial begin
     i_valid = 1'b0;
 
     if (flag == 0)
-        $display("(SUCCESS POLY ENCODE)");
+        $display("(SUCCESS POLY ENCODE d=1)");
     else begin
-        $display("(FAIL POLY ENCODE)");
+        $display("(FAIL POLY ENCODE d=1)");
         flag1 = 1;
     end
 
     d = meta[4];
 
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    $readmemh("../../../../../test/encode_out_poly.txt", psi);
+    $readmemh("../../../../../test/comp_out_dual.txt", poly_out);
+
+    mode = `MODE_POLY;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            #FP;
+        end
+    end
+
+    cmd = `CMD_START;
+    op = `OP_DECODE;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS POLY DECODE)");
+    else begin
+        $display("(FAIL POLY DECODE)");
+        flag1 = 1;
+    end
+
+    d = meta[4];
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     if (flag1 == 0)
         $display("(ALL SUCCESS)");

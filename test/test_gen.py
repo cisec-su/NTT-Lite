@@ -184,14 +184,38 @@ with open("decomp_out_dual.txt", "w") as f:
 A_0_bin = [random.randint(0, 1) for _ in range(n)]
 A_1_bin = [random.randint(0, 1) for _ in range(n)]
 
-with open("encode_in_poly.txt", "w") as f:
+with open("encode_in_poly_d1.txt", "w") as f:
     for i in range(n):
         f.write(hex((A_1_bin[i] << (b // 2)) + A_0_bin[i])[2:] + "\n")
 
-with open("encode_out_poly.txt", "w") as f:
+with open("encode_out_poly_d1.txt", "w") as f:
     for i in range(n // (b // 2)):
         t = 0
         for j in range(b // 2):
             t += A_0_bin[i*(b // 2) + j] << (2*j    )
             t += A_1_bin[i*(b // 2) + j] << (2*j + 1)
         f.write(hex(t)[2:] + "\n")
+
+
+A_comp = [A_0_comp[(i>>1)] if (i % 2 == 0) else A_1_comp[(i>>1)] for i in range(2*n)]
+
+A_comp_encoded = []
+t = 0
+tlen = 0
+for i in range(len(A_comp)):
+    t = t + (A_comp[i] << tlen)
+    tlen += d
+    if tlen >= b:
+        A_comp_encoded.append(t & ((1 << b) - 1))
+        t = t >> b
+        tlen = tlen - b
+if tlen > 0:
+    A_comp_encoded.append(t)
+
+A_1_comp_encoded = []
+t = 0
+tlen = 0
+
+with open("encode_out_poly.txt", "w") as f:
+    for i in range(len(A_comp_encoded)):
+        f.write(hex(A_comp_encoded[i])[2:] + "\n")
