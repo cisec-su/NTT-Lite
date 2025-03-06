@@ -70,12 +70,12 @@ begin
         case(cstate)
         ST_IDLE:
         begin
-            if(ctrl_cmd == 2)
+            /*if(ctrl_cmd == 2)
             begin
                 LIMIT <= (1 << ctrl_logq);
                 cstate <= ST_GET0;
             end
-            else if(ctrl_cmd == 3)
+            else */if(ctrl_cmd == 3)
             begin
                 LIMIT <= (1 << ctrl_logn);
                 cstate <= ST_GET0;

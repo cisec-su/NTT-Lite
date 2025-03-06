@@ -5,6 +5,11 @@ import math
 random.seed(0)
 
 
+def _br(i, k):
+    bin_i = bin(i & (2**k - 1))[2:].zfill(k)
+    return int(bin_i[::-1], 2)
+
+
 # %%
 q = 3329
 logq = math.ceil(math.log2(q))
@@ -16,6 +21,12 @@ log = 12
 b = 32
 d = 10
 inv2 = pow(2, -1, q)
+
+_zetas = [pow(psi, _br(i, 7), q) for i in range(n)]
+zetas = []
+for i in range(n//2):
+    zetas.append(_zetas[n//2 + i])
+    zetas.append(q - _zetas[n//2 + i])
 
 with open("meta.txt", "w") as f:
     f.write(hex(q)[2:] + "\n")
@@ -166,8 +177,8 @@ for i in range(n - 1):
 print("\n\n")
 
 
-A_0_comp =  [round(((1 << d)/q)*A_0[i]) for i in range(n)]
-A_1_comp =  [round(((1 << d)/q)*A_1[i]) for i in range(n)]
+A_0_comp =  [round(((1 << d)/q)*A_0[i]) % (1 << d) for i in range(n)]
+A_1_comp =  [round(((1 << d)/q)*A_1[i]) % (1 << d) for i in range(n)]
 
 with open("comp_out_single.txt", "w") as f:
     for i in range(n):
@@ -228,3 +239,9 @@ tlen = 0
 with open("encode_out_poly.txt", "w") as f:
     for i in range(len(A_comp_encoded)):
         f.write(hex(A_comp_encoded[i])[2:] + "\n")
+
+
+print("ZETAS C:")
+for i in range(n):
+    print(hex((zetas[i] << 16) + 1), end=", ")
+print("\n\n")
