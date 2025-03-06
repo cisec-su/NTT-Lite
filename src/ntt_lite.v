@@ -104,7 +104,7 @@ reg ctr2_d_set;
 reg wpoly, upoly_ntt, upoly_intt, upoly_mul, wpsi, wpsi_delta, upsi, wq, pwm_idx, upoly_encode;
 reg ntt_rcv_bu, pwm_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu;
 reg ctr_all_rst;
-reg done_set;
+reg done_set, done_int;
 reg o_valid_int;
 
 
@@ -358,11 +358,13 @@ end
 
 always @(posedge clk) begin
     if (rst)
-        done <= 0;
+        {done, done_int} <= 0;
     else if (done_set)
-        done <= 1;
+        {done, done_int} <= 2'b01;
+    else if (done_int)
+        {done, done_int} <= 2'b10;
     else if (done)
-        done <= 0;
+        {done, done_int} <= 2'b00;
 end
 
 

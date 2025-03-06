@@ -125,8 +125,8 @@ initial begin
         if (i_ready) begin
             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
             i_valid = 1'b1;
-            #FP;
         end
+        #FP;
     end
 
     i_valid = 1'b0;
@@ -233,8 +233,8 @@ initial begin
         if (i_ready) begin
             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
             i_valid = 1'b1;
-            #FP;
         end
+        #FP;
     end
 
     cmd = `CMD_LOAD_POLY;
@@ -291,8 +291,8 @@ initial begin
         if (i_ready) begin
             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
             i_valid = 1'b1;
-            #FP;
         end
+        #FP;
     end
 
     cmd = `CMD_LOAD_POLY;
@@ -396,8 +396,8 @@ initial begin
         if (i_ready) begin
             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
             i_valid = 1'b1;
-            #FP;
         end
+        #FP;
     end
 
     cmd = `CMD_LOAD_POLY;
@@ -501,8 +501,8 @@ initial begin
         if (i_ready) begin
             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
             i_valid = 1'b1;
-            #FP;
         end
+        #FP;
     end
 
     cmd = `CMD_LOAD_POLY;
@@ -559,8 +559,8 @@ initial begin
         if (i_ready) begin
             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
             i_valid = 1'b1;
-            #FP;
         end
+        #FP;
     end
 
     cmd = `CMD_LOAD_POLY;
@@ -618,8 +618,8 @@ initial begin
         if (i_ready) begin
             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
             i_valid = 1'b1;
-            #FP;
         end
+        #FP;
     end
 
     cmd = `CMD_LOAD_POLY;
@@ -676,8 +676,8 @@ initial begin
         if (i_ready) begin
             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
             i_valid = 1'b1;
-            #FP;
         end
+        #FP;
     end
 
     cmd = `CMD_LOAD_POLY;
@@ -959,8 +959,8 @@ initial begin
         if (i_ready) begin
             i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
             i_valid = 1'b1;
-            #FP;
         end
+        #FP;
     end
 
     cmd = `CMD_START;
