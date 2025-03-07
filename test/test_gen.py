@@ -5,6 +5,11 @@ import math
 random.seed(0)
 
 
+def _br(i, k):
+    bin_i = bin(i & (2**k - 1))[2:].zfill(k)
+    return int(bin_i[::-1], 2)
+
+
 # %%
 q = 3329
 logq = math.ceil(math.log2(q))
@@ -14,13 +19,22 @@ n = 1 << logn
 mu = (1 << 24) // q
 log = 12
 b = 32
+d = 10
+inv2 = pow(2, -1, q)
 
+_zetas = [pow(psi, _br(i, 7), q) for i in range(n)]
+zetas = []
+for i in range(n//2):
+    zetas.append(_zetas[n//2 + i])
+    zetas.append(q - _zetas[n//2 + i])
 
 with open("meta.txt", "w") as f:
     f.write(hex(q)[2:] + "\n")
     f.write(hex(mu)[2:] + "\n")
     f.write(hex(logn)[2:] + "\n")
     f.write(hex(logq)[2:] + "\n")
+    f.write(hex(d)[2:] + "\n")
+    f.write(hex(inv2)[2:] + "\n")
 
 A_0 =  [random.randint(0, q-1) for _ in range(n)]
 A_1 =  [random.randint(0, q-1) for _ in range(n)]
@@ -145,6 +159,7 @@ print("\n\n")
 
 
 psi_inv_table_ = ntt.generate_ntt_tables(n, q, pow(psi, -1, q))
+psi_inv_table_ = [(x*inv2) % q for x in psi_inv_table_]
 # _, _ = ntt.INTT(A_0_ntt, psi_inv_table_, q, debug=False, flag=False)
 
 
@@ -154,3 +169,79 @@ with open("psi_inv.txt", "w") as f:
         f.write(hex(psi_inv_table_[j])[2:] + "\n")
     f.write("0\n")
 
+
+print("PSI INV C:")
+for i in range(n - 1):
+    j = pows[i]
+    print(hex(psi_inv_table_[j]), end=", ")
+print("\n\n")
+
+
+A_0_comp =  [round(((1 << d)/q)*A_0[i]) % (1 << d) for i in range(n)]
+A_1_comp =  [round(((1 << d)/q)*A_1[i]) % (1 << d) for i in range(n)]
+
+with open("comp_out_single.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A_0_comp[i])[2:] + "\n")
+
+with open("comp_out_dual.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((A_1_comp[i] << (b // 2)) + A_0_comp[i])[2:] + "\n")
+
+
+A_0_decomp =  [round((q/(1 << d))*A_0_comp[i]) for i in range(n)]
+A_1_decomp =  [round((q/(1 << d))*A_1_comp[i]) for i in range(n)]
+
+with open("decomp_out_single.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A_0_decomp[i])[2:] + "\n")
+
+with open("decomp_out_dual.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((A_1_decomp[i] << (b // 2)) + A_0_decomp[i])[2:] + "\n")
+
+
+A_0_bin = [random.randint(0, 1) for _ in range(n)]
+A_1_bin = [random.randint(0, 1) for _ in range(n)]
+
+with open("encode_in_poly_d1.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((A_1_bin[i] << (b // 2)) + A_0_bin[i])[2:] + "\n")
+
+with open("encode_out_poly_d1.txt", "w") as f:
+    for i in range(n // (b // 2)):
+        t = 0
+        for j in range(b // 2):
+            t += A_0_bin[i*(b // 2) + j] << (2*j    )
+            t += A_1_bin[i*(b // 2) + j] << (2*j + 1)
+        f.write(hex(t)[2:] + "\n")
+
+
+A_comp = [A_0_comp[(i>>1)] if (i % 2 == 0) else A_1_comp[(i>>1)] for i in range(2*n)]
+
+A_comp_encoded = []
+t = 0
+tlen = 0
+for i in range(len(A_comp)):
+    t = t + (A_comp[i] << tlen)
+    tlen += d
+    if tlen >= b:
+        A_comp_encoded.append(t & ((1 << b) - 1))
+        t = t >> b
+        tlen = tlen - b
+if tlen > 0:
+    A_comp_encoded.append(t)
+
+A_1_comp_encoded = []
+t = 0
+tlen = 0
+
+with open("encode_out_poly.txt", "w") as f:
+    for i in range(len(A_comp_encoded)):
+        f.write(hex(A_comp_encoded[i])[2:] + "\n")
+
+
+print("ZETAS C:")
+for i in range(n):
+    print(hex((zetas[i] << 16) + 1), end=", ")
+print("\n\n")

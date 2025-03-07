@@ -191,6 +191,11 @@ end
 if (MODE_E == DIS_E) begin
     assign S = S_int;
 end
+else if (MODE_E == ADD_E) begin
+    assign S0 = S_int[LOGC0-1:    0] + ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGC0-1:0] : E_mx_1[LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
+    assign S1 = S_int[LOGC -1:LOGC0] + ((mode_mul == MUL_SINGLE) ? S0[LOGC0]         : E_mx_1[LOGE -1:LOGE0]);
+    assign S = {S1[LOGC0-1:0], S0[LOGC0-1:0]};
+end
 else if (MODE_E == SUB_E) begin
     assign S0 = S_int[LOGC0-1:    0] - ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGC0-1:0]                 : E_mx_1[LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
     assign S1 = S_int[LOGC -1:LOGC0] - ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGE -1:LOGC0] + S0[LOGC0] : E_mx_1[LOGE -1:LOGE0]);

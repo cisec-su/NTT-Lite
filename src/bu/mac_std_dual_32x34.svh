@@ -9,6 +9,7 @@ typedef struct packed {
 
 typedef enum int {
     DIS_E = 0,
+    ADD_E = 1,
     SUB_E = 2
 } mode_e_t;
 
@@ -36,7 +37,12 @@ endfunction
 
 
 function int mac_std_dual_32x34_loge0(input mac_std_dual_32x34_params_t params);
-    mac_std_dual_32x34_loge0 = 18;
+    if (params.MODE_E == SUB_E) begin
+        mac_std_dual_32x34_loge0 = 18;
+    end
+    else begin
+        mac_std_dual_32x34_loge0 = 16;
+    end
 endfunction
 
 
@@ -61,10 +67,10 @@ endfunction
 
 
 function int mac_std_dual_32x34_logc0(input mac_std_dual_32x34_params_t params);
-    if (params.MODE_E == 0) begin
+    if (params.MODE_E == DIS_E || params.MODE_E == ADD_E) begin
         mac_std_dual_32x34_logc0 = mac_std_dual_32x34_logd0(params);
     end
-    else if (params.MODE_E == 2) begin
+    else if (params.MODE_E == SUB_E) begin
         if (mac_std_dual_32x34_loge0(params) > mac_std_dual_32x34_logd0(params)) begin
             mac_std_dual_32x34_logc0 = mac_std_dual_32x34_loge0(params) + 1;
         end

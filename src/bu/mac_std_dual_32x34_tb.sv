@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "mac_std_dual_32x34.svh"
+
 module mac_std_dual_32x34_tb();
 
 parameter mode_e_t MODE_E  = DIS_E;
@@ -11,8 +13,6 @@ parameter          FF_OUT  = 0;
 parameter HP               = 5 ;
 parameter FP               = (2 * HP);
 parameter TEST_NUM         = 100000;
-
-`include "mac_std_dual_32x34.svh"
 
 localparam LOGB = 32;
 localparam mac_std_dual_32x34_params_t params = {LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT};

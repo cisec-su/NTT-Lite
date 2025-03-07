@@ -18,7 +18,10 @@ module ntt_lite_ctrl
         output reg [ 3:0]  op  ,         // (Write)
         output reg         otf,          // (Read/Write)
         output reg [ 5:0]  logq,         // (Read/Write)
+        output reg [ 5:0]  d,            // (Write)
+        output reg         o_dis,        // (Write)        
         output reg [31:0]  q,            // (Read/Write)
+        output reg [31:0]  inv2,            // (Read/Write)        
         output reg [32:0]  mu,           // (Read/Write)
         //data address registers
         output reg [31:0]  din_addr,     // (Write)
@@ -37,6 +40,7 @@ localparam STRIDE_ADDR    = 8'h0C; // Offset for stride register
 localparam Q_ADDR         = 8'h10; // Offset for coefficient modulus register
 localparam MU_ADDR_LOW    = 8'h14; // Offset for mu register lsb 32-bits
 localparam MU_ADDR_HIGH   = 8'h18; // Offset for mu register msb 2-bit
+localparam INV2_ADDR      = 8'h1C; // Offset for mu register lsb 32-bits
 
 // Bit-fields for ctrl register
 localparam CTRL_CMD_LSB   = 0;
@@ -55,6 +59,10 @@ localparam CTRL_LOGQ_LEN  = CTRL_LOGQ_MSB - CTRL_LOGQ_LSB + 1;
 localparam CTRL_MODE_LSB  = 19;
 localparam CTRL_MODE_MSB  = 20;
 localparam CTRL_MODE_LEN  = CTRL_MODE_MSB - CTRL_MODE_LSB + 1;
+localparam CTRL_D_LSB     = 21;
+localparam CTRL_D_MSB     = 26;
+localparam CTRL_D_LEN     = CTRL_D_MSB - CTRL_D_LSB + 1;
+localparam CTRL_O_DIS_BIT = 29;
 localparam CTRL_BUSY_BIT  = 30;
 localparam CTRL_DONE_BIT  = 31;
 
@@ -93,19 +101,23 @@ always @(posedge clk) begin
         op    <= {CTRL_OP_LEN{1'b0}};
         otf   <= 1'b0;
         logq  <= {CTRL_LOGQ_LEN{1'b0}};
+        d     <= {CTRL_D_LEN{1'b0}};
         q     <= 32'd0;
         mu    <= 33'd0;
         din_addr  <= 32'd0;
         dout_addr <= 32'd0;
         stride    <= 32'd0;
+        o_dis     <= 1'b0;
     end else if (we) begin
         case (addr - BASE_ADDR)
             CTRL_ADDR: begin
-                logn <= wdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB];
-                mode <= wdata[CTRL_MODE_MSB:CTRL_MODE_LSB];
-                otf  <= wdata[CTRL_OTF_BIT];
-                logq <= wdata[CTRL_LOGQ_MSB:CTRL_LOGQ_LSB];
-                op   <= wdata[CTRL_OP_MSB  :CTRL_OP_LSB  ];
+                logn  <= wdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB];
+                mode  <= wdata[CTRL_MODE_MSB:CTRL_MODE_LSB];
+                otf   <= wdata[CTRL_OTF_BIT];
+                logq  <= wdata[CTRL_LOGQ_MSB:CTRL_LOGQ_LSB];
+                op    <= wdata[CTRL_OP_MSB  :CTRL_OP_LSB  ];
+                d     <= wdata[CTRL_D_MSB   :CTRL_D_LSB   ];
+                o_dis <= wdata[CTRL_O_DIS_BIT];
             end
             DIN_ADDR    : din_addr  <= wdata;
             DOUT_ADDR   : dout_addr <= wdata;
@@ -113,6 +125,7 @@ always @(posedge clk) begin
             Q_ADDR      : q         <= wdata;
             MU_ADDR_LOW : mu[31:0]  <= wdata;
             MU_ADDR_HIGH: mu[32]    <= wdata[0];
+            INV2_ADDR   : inv2      <= wdata;
             default: ;
         endcase
     end
@@ -138,6 +151,7 @@ always @(posedge clk) begin
             Q_ADDR      : rdata <= q;
             MU_ADDR_LOW : rdata <= mu[31:0];
             MU_ADDR_HIGH: rdata <= mu[32];
+            INV2_ADDR   : rdata <= inv2;
             default     : rdata <= 32'd0;
         endcase
     end
