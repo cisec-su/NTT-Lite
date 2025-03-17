@@ -697,6 +697,10 @@ always @(*) begin
 
             if (encode_o_valid) begin
                 upoly_encode = 1;
+                next_state = ST_ENCODE1;
+                ctr1_inc = 1;
+            end
+            else if (!encode_i_valid) begin
                 next_state = ST_POLY_OUT;
             end
 
@@ -812,7 +816,7 @@ always @(*) begin
                 coeff_ram_p0_rsel = (op == `OP_NTT || op == `OP_INTT) ? logn & 1'b1 : 1'b0;
                 busy = 1;
                 if (o_read) begin
-                    if (ctr0 == num_words_m1 || ((op == `OP_ENCODE) && (ctr0 == ctr1))) begin
+                    if (ctr0 == num_words_m1 || ((op == `OP_ENCODE) && (ctr0 == (ctr1 - 1)))) begin
                         if (ntt_otf) begin
                             if (ctr1 == n_m1) begin
                                 next_state = ST_IDLE;
