@@ -115,7 +115,7 @@ always @(posedge clk) begin
     if (rst) begin
         ctr <= 0;
     end
-    else if (~decode/* & i_valid*/) begin
+    else if (~decode) begin
         ctr <= ctr + ((i_valid) ? d_dual : 0) - ({ctr[LOGLOGQ-1], {(LOGLOGQ-1){1'b0}}});
     end
     else if (decode) begin

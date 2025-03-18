@@ -99,6 +99,7 @@ reg ctr1_inc, ctr1_rst;
 reg ctr2_inc, ctr2_rst;
 reg ctr3_inc, ctr3_rst;
 reg [LOGN+LOGWB-1:0] ctr0_d;
+wire [LOGN+LOGWB :0] ctr0_p1;
 reg [LOGN-1:0] ctr2_d;
 reg ctr2_d_set;
 reg wpoly, upoly_ntt, upoly_intt, upoly_mul, wpsi, wpsi_delta, upsi, wq, pwm_idx, upoly_encode;
@@ -195,6 +196,7 @@ assign num_words = ((LOGQ/B) << logn);
 assign num_words_m1 = num_words - 1;
 assign num_words_over2 = num_words >> 1;
 assign num_words_over2_m1 = num_words_over2 - 1;
+assign ctr0_p1 = ctr0 + 1;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -295,7 +297,7 @@ always @(posedge clk) begin
     if (rst)
         ctr0 <= 0;
     else if (ctr0_inc)
-        ctr0 <= ctr0 + 1;
+        ctr0 <= ctr0_p1;
     else if (ctr0_rst || ctr_all_rst)
         ctr0 <= 0;
 end
@@ -816,7 +818,7 @@ always @(*) begin
                 coeff_ram_p0_rsel = (op == `OP_NTT || op == `OP_INTT) ? logn & 1'b1 : 1'b0;
                 busy = 1;
                 if (o_read) begin
-                    if (ctr0 == num_words_m1 || ((op == `OP_ENCODE) && (ctr0 == (ctr1 - 1)))) begin
+                    if (ctr0 == num_words_m1 || ((op == `OP_ENCODE) && (ctr0_p1 == ctr1))) begin
                         if (ntt_otf) begin
                             if (ctr1 == n_m1) begin
                                 next_state = ST_IDLE;
