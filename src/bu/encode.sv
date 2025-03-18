@@ -103,7 +103,7 @@ always @(posedge clk) begin
         C_q <= 0;
     end
     else if(~decode) begin
-        C_q <= ((o_valid) ? 0 : C_q) ^ ((i_valid) ? (A_dual << ctr[LOGLOGQ-2:0]) : 0);
+        C_q <= ((o_valid) ? (C_q[K+LOGQ-1:LOGQ]) : C_q) ^ ((i_valid) ? (A_dual << ctr[LOGLOGQ-2:0]) : 0);
     end
     else if( decode) begin
         C_q <= ((i_valid & i_ready) ? (A << ctr_read) : 0) ^ ((o_valid) ? asr_out : C_q);
@@ -115,8 +115,8 @@ always @(posedge clk) begin
     if (rst) begin
         ctr <= 0;
     end
-    else if (~decode & i_valid) begin
-        ctr <= ctr + d_dual - ({ctr[LOGLOGQ-1], {(LOGLOGQ-1){1'b0}}});
+    else if (~decode) begin
+        ctr <= ctr + ((i_valid) ? d_dual : 0) - ({ctr[LOGLOGQ-1], {(LOGLOGQ-1){1'b0}}});
     end
     else if (decode) begin
         ctr <= ctr_read + ((i_valid & i_ready) ? LOGQ : 0);
