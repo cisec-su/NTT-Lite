@@ -78,6 +78,7 @@ wire ctrl_otf;
 wire ctrl_done;
 wire ctrl_busy;
 wire ctrl_o_dis;
+wire ctrl_floor;
 
 // CTRL & FSM
 wire [31:0] ctrl_din_addr;
@@ -89,31 +90,31 @@ ntt_lite #(
     .LOGQ(LOGQ),
     .B(B)
 ) ntt_lite (
-    .clk(clk),
-    .rst(rst),
+    .clk        (clk        ),
+    .rst        (rst        ),
     // ntt <-> fsm
-    .i_data(fsm_i_data),//
-    .i_ready(fsm_i_ready),//
-    .i_valid(fsm_i_valid),//
-    .o_data(fsm_o_data),//
-    .o_valid(fsm_o_valid),//
-    .o_read(fsm_o_read),//
-    .io_word(fsm_io_word),//
+    .i_data     (fsm_i_data ),
+    .i_ready    (fsm_i_ready),
+    .i_valid    (fsm_i_valid),
+    .o_data     (fsm_o_data ),
+    .o_valid    (fsm_o_valid),
+    .o_read     (fsm_o_read ),
+    .io_word    (fsm_io_word),
     // ntt <-> ctrl
-    .cmd(ctrl_cmd),//
-    .logn(ctrl_logn),//
-    .logq(ctrl_logq),//
-    .d(ctrl_d),//
-    .o_dis(ctrl_o_dis),//
-    .q(ctrl_q),//
-    .mu({1'b0, ctrl_mu}),
-    .inv2(ctrl_inv2), 
-    .op(ctrl_op),  
-    .mode(ctrl_mode),//
-    .otf(ctrl_otf),//
-    .done(ctrl_done),//
-    .busy(ctrl_busy),//
-    
+    .cmd        (ctrl_cmd   ),
+    .logn       (ctrl_logn  ),
+    .logq       (ctrl_logq  ),
+    .d          (ctrl_d     ),
+    .o_dis      (ctrl_o_dis ),
+    .floor      (ctrl_floor ),
+    .q          (ctrl_q     ),
+    .mu         ({1'b0, ctrl_mu}),
+    .inv2       (ctrl_inv2  ),
+    .op         (ctrl_op    ),
+    .mode       (ctrl_mode  ),
+    .otf        (ctrl_otf   ),
+    .done       (ctrl_done  ),
+    .busy       (ctrl_busy  ),
     
     .error()
 );
@@ -136,6 +137,7 @@ ntt_lite_ctrl #(
     .logq(ctrl_logq),//
     .d(ctrl_d),//
     .o_dis(ctrl_o_dis),
+    .floor(ctrl_floor),
     .mode(ctrl_mode),//
     .op(ctrl_op),//
     .mu(ctrl_mu),//

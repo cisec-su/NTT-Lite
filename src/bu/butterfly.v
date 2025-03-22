@@ -6,20 +6,21 @@ module butterfly
         parameter L      = 12
     )
     (
-        input                clk ,
+        input                clk      ,
 
-        input  [        3:0] op  ,
-        input  [        1:0] mode,
-        input  [LOGQ   -1:0] A   ,
-        input  [LOGQ   -1:0] B   ,
-        input  [LOGQ   -1:0] PSI ,
-        input  [LOGQ   -1:0] Q   ,
-        input  [LOGQ   +1:0] MU  ,
-        input  [LOGQ   -1:0] inv2,
-        input  [LOGLOGQ-1:0] logq,
-        input  [LOGLOGQ-1:0] d   ,
-        output [LOGQ   -1:0] E   ,
-        output [LOGQ   -1:0] O   ,
+        input  [        3:0] op       ,
+        input  [        1:0] mode     ,
+        input                floor    ,
+        input  [LOGQ   -1:0] A        ,
+        input  [LOGQ   -1:0] B        ,
+        input  [LOGQ   -1:0] PSI      ,
+        input  [LOGQ   -1:0] Q        ,
+        input  [LOGQ   +1:0] MU       ,
+        input  [LOGQ   -1:0] inv2     ,
+        input  [LOGLOGQ-1:0] logq     ,
+        input  [LOGLOGQ-1:0] d        ,
+        output [LOGQ   -1:0] E        ,
+        output [LOGQ   -1:0] O        ,
         output [LOGQ   -1:0] M
     );
 
@@ -48,6 +49,7 @@ wire [LOGQ -1:0] shift_out_1;
 wire [LOGT -1:0] asr_in;
 wire [LOGT -1:0] asr_out;
 wire [LOGQ -1:0] asr_out_dual;
+wire [LOGQ -1:0] asr_out_dual_masked;
 wire [LOGQ -1:0] mm_inv2_in;
 wire [LOGQ -1:0] mm_inv2_out;
 wire [      1:0] mode_mul;
@@ -60,6 +62,8 @@ wire [LOGQ -1:0] pow_2_d_dual;
 wire [LOGQ -1:0] pow_2_d_shift_dual;
 wire [LOGQ -1:0] mask_d;
 wire [LOGQ -1:0] mask_d_dual;
+wire [LOGQ -1:0] mask_logq;
+wire [LOGQ -1:0] mask_logq_dual;
 wire [LOGQ -1:0] D_dual;
 wire [LOGQ -1:0] D_dual_masked;
 
@@ -88,6 +92,11 @@ assign mask_d = pow_2_d - 1'b1;
 assign mask_d_dual = (dual) ? {mask_d[LOGQ0-1:0], mask_d[LOGQ0-1:0]} : 
                                mask_d                                ;
 
+assign mask_logq      = ({{(LOGQ-1){1'b0}}, 1'b1} << logq) - 1'b1;
+assign mask_logq_dual = (dual) ? {mask_logq[LOGQ0-1:0], mask_logq[LOGQ0-1:0]} : 
+                                  mask_logq                                   ;
+
+
 assign D_dual      = (dual) ? {mm_out_D[LOGQ+LOGQ0-1:LOGQ], mm_out_D[LOGQ0-1:0]} : 
                                mm_out_D                                          ;
 assign D_dual_masked = D_dual & mask_d_dual;
@@ -97,7 +106,8 @@ assign mm_in_A     = (op == `OP_INTT                          ) ? sub_out_C     
 assign mm_in_B     = (op == `OP_COMPRESS                      ) ? pow_2_d_dual       :
                      (op == `OP_DECOMPRESS                    ) ? q_dual             : 
                                                                   psi_dual           ;
-assign mm_in_E     = (op == `OP_COMPRESS                      ) ? q_half_dual        :
+assign mm_in_E     = (floor                                   ) ? {LOGQ{1'b0}}       :
+                     (op == `OP_COMPRESS                      ) ? q_half_dual        :
                      (op == `OP_DECOMPRESS                    ) ? pow_2_d_shift_dual :
                                                                   {LOGQ{1'b0}}       ;
 
@@ -120,15 +130,17 @@ assign mm_inv2_in  = shift_out_0;
 
 assign asr_in      = mm_out_T;
 
+assign asr_out_dual_masked = asr_out_dual & mask_logq_dual;
+
 assign E           = (op == `OP_INTT) ? shift_out_1 :
                                         add_out_C   ;
 assign O           = (op == `OP_INTT) ? mm_out_C    :
                                         sub_out_C   ;
-assign M           = (op == `OP_ADD       ) ? add_out_C     :
-                     (op == `OP_SUB       ) ? sub_out_C     :
-                     (op == `OP_COMPRESS  ) ? D_dual_masked :
-                     (op == `OP_DECOMPRESS) ? asr_out_dual  :
-                     /*                  */   mm_out_C      ;
+assign M           = (op == `OP_ADD       ) ? add_out_C            :
+                     (op == `OP_SUB       ) ? sub_out_C            :
+                     (op == `OP_COMPRESS  ) ? D_dual_masked        :
+                     (op == `OP_DECOMPRESS) ? asr_out_dual_masked  :
+                     /*                  */   mm_out_C             ;
 
 
 shiftreg #(
