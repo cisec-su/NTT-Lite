@@ -22,11 +22,9 @@ module barrett
 
 ///////////////////////////// input check ///////////////////////////////
 
-generate
-    if (LOGQ > 32) begin
-        LOGQ_CANT_BE_GREATER_THAN_32();
-    end
-endgenerate
+if (LOGQ > 32) begin
+    LOGQ_CANT_BE_GREATER_THAN_32();
+end
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -61,10 +59,10 @@ localparam LOGT0H = LOGT0H_0 << 1;
 localparam LOGT0HL_0 = LOGQ0 + 1;
 localparam LOGT0HL = LOGT0HL_0 << 1;
 
-localparam LOGT1_MAC = barrett_logt1(params);
-localparam LOGT1_MAC_0 = LOGT1_MAC >> 1;
-localparam LOGT1_0 = (LOGQ0 + 1);
-localparam LOGT1   = LOGT1_0 << 1;
+localparam LOGT1   = barrett_logt1(params);
+localparam LOGT1_0 = LOGT1 >> 1;
+localparam LOGT1L_0 = (LOGQ0 + 1);
+localparam LOGT1L   = LOGT1L_0 << 1;
 
 
 localparam LAT    = barrett_lat(params);
@@ -105,13 +103,9 @@ wire [LOGT0H-1:0] D_apx;
 reg  [LOGT0H-1:0] D_apx_q [0:LAT_1-1];
 wire [LOGT0H-1:0] D_apx_mx;
 
-wire [LOGT1_MAC  -1:0] T1;
-wire [LOGT1 -1:0] T1L;
-// wire [LOGT1_MAC_0-1:0] T1_0;
-// wire [LOGT1_MAC_0-1:0] T1_1;
-wire [LOGT1  -1:0] T1N;
-// wire [LOGT1_0-1:0] T1N_0;
-// wire [LOGT1_0-1:0] T1N_1;
+wire [LOGT1 -1:0] T1;
+wire [LOGT1L-1:0] T1L;
+wire [LOGT1L-1:0] T1N;
 
 wire [LOGQ-1:0] q;
 wire [LOGQ-1:0] q_dual;
@@ -120,8 +114,6 @@ wire [LOGQ-1:0] T5;
 reg  [LOGQ-1:0] T5_q;
 
 wire [1:0] K;
-// wire [LOGT0H:0] D0;
-// wire [LOGT0_0:0] D1;
 wire [LOGD-1:0] D_int;
 reg  [LOGD-1:0] D_int_q;
 
@@ -139,21 +131,7 @@ assign mode_mul = (dual) ? MUL_DUAL : MUL_SINGLE;
 assign mu_dual  = (dual) ? {mu_mx[LOGMU0-1:0], mu_mx[LOGMU0-1:0]} : mu_mx;
 assign q_dual   = (dual) ? {q[LOGQ0-1:0], q[LOGQ0-1:0]} : q;
 
-// assign CL_0 = C_mx[LOGQ0:0];
-// assign CL_1 = C_mx[LOGQ+LOGQ0-1:LOGQ];
-// assign CL   = (dual) ? {CL_1, CL_0} : C_mx[LOGQ:0];
-
 assign D_apx = T0H;
-
-// assign T1_0 = T1[LOGT1_MAC_0-1:          0];
-// assign T1_1 = T1[LOGT1_MAC  -1:LOGT1_MAC_0];
-// assign T1N_0 = -T1_0;
-// assign T1N_1 = -T1_1;
-// assign T1N = (dual) ? {T1N_1, T1N_0} : -T1;
-
-// assign D0 = D_apx_mx[LOGT0H_0-1:0      ] + K[0];
-// assign D1 = D_apx_mx[LOGT0H  -1:LOGT0H_0] + ((dual) ? K[1] : D0[LOGT0H_0]);
-// assign D_int = {D1[LOGT0H_0-1:0] >> dual, D0[LOGT0H_0-1:0] ^ (D1[0] << (LOGT0H_0-1))};
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -286,7 +264,8 @@ mac_std_dual_32x34 #(
     .FF_IN_B (mac_1_params.FF_IN_B),
     .FF_IN_E (mac_1_params.FF_IN_E),
     .FF_MUL  (mac_1_params.FF_MUL ),
-    .FF_OUT  (mac_1_params.FF_OUT )
+    .FF_OUT  (mac_1_params.FF_OUT ),
+    .OPT_HIGH(                   1)
 ) mac_std_inst_1 (
     .clk     (clk     ),
     .mode_mul(mode_mul),
@@ -306,8 +285,8 @@ mac_std_dual_32x34 #(
 
 
 lsb_dual #(
-    .LOGA0(LOGT1_MAC_0),
-    .LOGC0(LOGT1_0    )
+    .LOGA0(LOGT1_0 ),
+    .LOGC0(LOGT1L_0)
 ) lsb_dual_inst_2 (
     .A   (T1  ),
     .dual(dual),
@@ -317,8 +296,8 @@ lsb_dual #(
 
 addsub_dual #(
     .MODE (1      ),
-    .LOGA0(LOGT1_0),
-    .LOGB0(LOGT1_0)
+    .LOGA0(LOGT1L_0),
+    .LOGB0(LOGT1L_0)
 ) addsub_neg_inst (
     .A   (0     ),
     .B   (T1L   ),
