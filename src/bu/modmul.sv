@@ -8,8 +8,7 @@ module modmul
         input                clk ,
         input   mode_mul_t   mode,
         input  [LOGQ   -1:0] Q   ,
-        input  [LOGQ   +1:0] MU  ,
-        input  [LOGLOGQ-1:0] logq,        
+        input  [LOGT   -1:0] MU  ,
         input  [LOGQ   -1:0] A   ,
         input  [LOGQ   -1:0] E   ,
         input  [LOGQ   -1:0] B   ,
@@ -74,7 +73,6 @@ barrett #(
     .C   (T   ),
     .T   (C   ),
     .D   (D   ),
-    .B   (logq),
     .MU  (MU  ),
     .Q   (Q   )
 );

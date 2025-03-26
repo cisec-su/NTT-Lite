@@ -22,11 +22,8 @@ module mac_std_dual_32x34
 ///////////////////////////// input check ///////////////////////////////
 
 generate
-    if (LOGB > 34) begin
-        LOGB_CANT_BE_GREATER_THAN_34();
-    end
-    else if (LOGB % 2) begin
-        LOGB_MUST_BE_EVEN();
+    if (LOGB != 34 && LOGB != 32) begin
+        LOGB_MUST_BE_32_OR_34();
     end
 endgenerate
 
@@ -74,6 +71,7 @@ wire [DSP_B_U-1:0] B_i_mx[0:N_B-1];
 wire [LOGE-1:0] E_mx_0;
 reg  [LOGE-1:0] E_q_0;
 wire [LOGE-1:0] E_mx_1;
+wire [LOGE0-1:0] E_mx_1_H;
 reg  [LOGE-1:0] E_q_1;
 
 (* use_dsp = "yes" *) wire [DSP_M_U-1:0] P [0:N_A-1][0:N_B-1];
@@ -88,6 +86,7 @@ reg  [LOGC-1:0] S_q;
 
 wire [LOGD0+1:0] T;
 reg  [LOGC-1:0] S_int;
+wire dual;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -191,16 +190,30 @@ end
 if (MODE_E == DIS_E) begin
     assign S = S_int;
 end
-else if (MODE_E == ADD_E) begin
-    assign S0 = S_int[LOGC0-1:    0] + ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGC0-1:0] : E_mx_1[LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
-    assign S1 = S_int[LOGC -1:LOGC0] + ((mode_mul == MUL_SINGLE) ? S0[LOGC0]         : E_mx_1[LOGE -1:LOGE0]);
-    assign S = {S1[LOGC0-1:0], S0[LOGC0-1:0]};
+else begin
+    localparam MODE = (MODE_E == ADD_E) ? 0 : 1;
+    assign dual = mode_mul != MUL_SINGLE;
+    addsub_dual #(
+        .MODE (MODE ),
+        .LOGA0(LOGC0),
+        .LOGB0(LOGE0)
+    ) addsub_inst (
+        .A   (S_int ),
+        .B   (E_mx_1),
+        .dual(dual  ),
+        .C   (S     )
+    );
 end
-else if (MODE_E == SUB_E) begin
-    assign S0 = S_int[LOGC0-1:    0] - ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGC0-1:0]                 : E_mx_1[LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
-    assign S1 = S_int[LOGC -1:LOGC0] - ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGE -1:LOGC0] + S0[LOGC0] : E_mx_1[LOGE -1:LOGE0]);
-    assign S = {S1[LOGC0-1:0], S0[LOGC0-1:0]};
-end
+// else if (MODE_E == ADD_E) begin
+//     assign S0 = S_int[LOGC0-1:    0] + ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGC0-1:0] : E_mx_1[LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
+//     assign S1 = S_int[LOGC -1:LOGC0] + ((mode_mul == MUL_SINGLE) ? S0[LOGC0]         : E_mx_1[LOGE -1:LOGE0]);
+//     assign S = {S1[LOGC0-1:0], S0[LOGC0-1:0]};
+// end
+// else if (MODE_E == SUB_E) begin
+//     assign S0 = S_int[LOGC0-1:    0] - ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGC0-1:0]                 : E_mx_1[LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
+//     assign S1 = S_int[LOGC -1:LOGC0] - ((mode_mul == MUL_SINGLE) ? S0[LOGC0] : E_mx_1[LOGE -1:LOGE0]);
+//     assign S = {S1[LOGC0-1:0], S0[LOGC0-1:0]};
+// end
 
 /////////////////////////////////////////////////////////////////////////
 

@@ -1,0 +1,43 @@
+module lsb_dual
+   #(
+        parameter LOGA0 = 64,
+        parameter LOGC0 = 64
+    )
+    (
+        input  [LOGA-1:0] A   ,
+        input             dual,
+        output [LOGC-1:0] C
+    );
+
+///////////////////////////// parameters ////////////////////////////////
+
+localparam LOGA  = LOGA0 << 1;
+localparam LOGC  = LOGC0 << 1;
+localparam LOGLOGA = $rtoi($ceil($clog2(LOGA + 1)));
+    
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////// Signals Declaration ///////////////////////////
+
+wire [LOGC0-1:0] C0;
+wire [LOGC0-1:0] C1;
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////////// Assignments ///////////////////////////////
+
+assign C0 = A[LOGC0-1:0];
+assign C1 = (dual) ? A[LOGA0+LOGC0-1:LOGA0] : A[LOGC0*2-1:LOGC0];
+
+assign C  = {C1, C0};
+
+/////////////////////////////////////////////////////////////////////////
+
+
+endmodule
