@@ -26,8 +26,9 @@ integer j    = 0;
 reg                       clk ;
 mode_mul_t                mode;
 reg         [LOGQ-1:0]    Q   ;
-reg         [LOGQ-1:0]    Q_dual;
+wire        [LOGQ-1:0]    Q_dual;
 reg         [LOGQ*2-1:0]    MU  ;
+wire        [LOGQ*2-1:0]    MU  ;
 reg         [LOGLOGQ-1:0] logq;
 reg         [LOGQ-1:0]    A   ;
 reg         [LOGQ-1:0]    B   ;
@@ -64,7 +65,8 @@ else begin
     assign D_mx = D;
 end
 
-assign Q_dual = (mode == MUL_SINGLE) ? Q : {Q[LOGQ0-1:0], Q[LOGQ0-1:0]};
+assign Q_dual  = (mode == MUL_SINGLE) ? Q  : {Q[LOGQ0-1:0], Q[LOGQ0-1:0]};
+assign MU_dual = (mode == MUL_SINGLE) ? MU : {MU[LOGQ0-1:0], MU[LOGQ0-1:0]};
 
 
 modmul #(
@@ -72,8 +74,8 @@ modmul #(
 ) modmul_inst (
     .clk (clk ),
     .mode(mode),
-    .Q   (Q   ),
-    .MU  (MU  ),
+    .Q   (Q_dual),
+    .MU  (MU_dual),
     .A   (A   ),
     .B   (B   ),
     .E   (0   ),

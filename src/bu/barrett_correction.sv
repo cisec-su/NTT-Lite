@@ -28,14 +28,29 @@ wire [LOGA -1:0] A;
 wire [LOGA -1:0] T1;
 wire [LOGA0  :0] T1_0;
 wire [LOGA0  :0] T1_1;
-wire [LOGA -1:0] T2;
-wire [LOGA0  :0] T2_0;
-wire [LOGA0-1:0] T2_1;
-wire [LOGA -1:0] T3;
-wire [LOGA0  :0] T3_0;
-wire [LOGA0-1:0] T3_1;
 wire [LOGQ0-1:0] T4_0;
 wire [LOGQ0-1:0] T4_1;
+wire [1:0] T2;
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+/////////////////////////// subtract Q //////////////////////////////////
+
+
+addsub_dual #(
+    .MODE (1    ),
+    .LOGA0(LOGA0),
+    .LOGB0(LOGQ0)
+) addsub_neg_inst (
+    .A   (A     ),
+    .B   (Q     ),
+    .dual(dual  ),
+    .C   (T1    ),
+    .K   (T2    )    
+);
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -44,17 +59,13 @@ wire [LOGQ0-1:0] T4_1;
 
 ///////////////////////////// Assignments ///////////////////////////////
 
-assign T1_0 = A[LOGA0-1:     0] - Q[LOGA0-1:0];
-assign T1_1 = A[LOGA  -1:LOGA0] - ((dual) ? Q[LOGA0-1:0] : (Q >> LOGA0) + T1_0[LOGA0]);
-assign T1   = {T1_1[LOGA0-1:0], T1_0[LOGA0-1:0]};
+assign K[0] = ((dual & T2[0]) || (~dual & T2[1])) ? 1'b0 :
+                                                    1'b1 ;
+
+assign K[1] = (T2[1]) ? 1'b0 :
+                        dual ;
 
 
-
-assign K[0] = ((dual & T1_0[LOGA0]) || (~dual & T1_1[LOGA0])) ? 1'b0 :
-                                                                1'b1 ;
-
-assign K[1] = (T1_1[LOGA0]) ? 1'b0 :
-                              dual ;
 
 
 assign T4_0 = (K[0] == 1'b0) ? A     [LOGQ0-1:0] :

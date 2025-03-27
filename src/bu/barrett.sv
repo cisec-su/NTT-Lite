@@ -81,13 +81,12 @@ localparam LOGQ_D = (PIPE_Q) ? LAT_0 + FF_IN : 0;
 ///////////////////////////// signals ///////////////////////////////////
 
 reg  [LOGQ*2 -1:0] C_q;
-reg  [LOGQ*2 -1:0] mu_q;
-reg  [LOGQ   -1:0] qH_q [0:   Q_D-1];
+reg  [LOGMU  -1:0] mu_q;
+reg  [LOGQ   -1:0] Q_q [0:   Q_D-1];
 
 wire [LOGC -1:0] C_mx;
-wire [LOGQ -1:0] qH_mx   [0:1];
+wire [LOGQ -1:0] Q_mx   [0:1];
 wire [LOGMU-1:0] mu_mx;
-wire [LOGMU-1:0] mu_dual;
 
 wire [LOGCL  -1:0] CL;
 wire [LOGCL_0-1:0] CL_0;
@@ -107,9 +106,6 @@ wire [LOGT1 -1:0] T1;
 wire [LOGT1L-1:0] T1L;
 wire [LOGT1L-1:0] T1N;
 
-wire [LOGQ-1:0] q;
-wire [LOGQ-1:0] q_dual;
-
 wire [LOGQ-1:0] T5;
 reg  [LOGQ-1:0] T5_q;
 
@@ -126,10 +122,8 @@ mode_mul_t mode_mul;
 
 /////////////////////////// comb. assignments //////////////////////
 
-assign q = qH_mx[0];
 assign mode_mul = (dual) ? MUL_DUAL : MUL_SINGLE;
 assign mu_dual  = (dual) ? {mu_mx[LOGMU0-1:0], mu_mx[LOGMU0-1:0]} : mu_mx;
-assign q_dual   = (dual) ? {q[LOGQ0-1:0], q[LOGQ0-1:0]} : q;
 
 assign D_apx = T0H;
 
@@ -162,12 +156,12 @@ else begin
 end
 
 if (Q_D) begin
-    assign qH_mx[0] = qH_q[FF_IN + LAT_0 - 1];
-    assign qH_mx[1] = qH_q[          Q_D - 1];
+    assign Q_mx[0] = Q_q[FF_IN + LAT_0 - 1];
+    assign Q_mx[1] = Q_q[          Q_D - 1];
 end
 else begin
-    assign qH_mx[0] = Q;
-    assign qH_mx[1] = Q;
+    assign Q_mx[0] = Q;
+    assign Q_mx[1] = Q;
 end
 
 if (LAT_1) begin
@@ -202,7 +196,6 @@ lsb_dual #(
     .C   (CL   )
 );
 
-
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -219,7 +212,7 @@ intmul_std_dual_64x64 #(
     .clk     (clk      ),
     .dual    (dual     ),
     .A       (C_mx     ),
-    .B       (mu_dual  ),
+    .B       (mu_mx    ),
     .C       (T0       )
 );
 
@@ -269,7 +262,7 @@ mac_std_dual_32x34 #(
 ) mac_std_inst_1 (
     .clk     (clk     ),
     .mode_mul(mode_mul),
-    .A       (q_dual  ),
+    .A       (Q_mx[0] ),
     .B       (T0HL    ),
     .E       (CL_mx   ),
     .C       (T1      )
@@ -280,9 +273,7 @@ mac_std_dual_32x34 #(
 
 
 
-
 /////////////////////////// lsb and negation ////////////////////////////
-
 
 lsb_dual #(
     .LOGA0(LOGT1_0 ),
@@ -310,7 +301,6 @@ addsub_dual #(
 
 
 
-
 /////////////////////////// correction //////////////////////////////////
 
 barrett_correction #(
@@ -320,7 +310,7 @@ barrett_correction #(
     .A   (T1N     ),
     .C   (T5      ),
     .K   (K       ),
-    .Q   (qH_mx[1])
+    .Q   (Q_mx[1] )
 );
 
 /////////////////////////////////////////////////////////////////////////
@@ -340,7 +330,6 @@ addsub_dual #(
     .dual(dual    ),
     .C   (D_int   )
 );
-
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -365,14 +354,14 @@ end
 
 if (FF_IN && PIPE_Q) begin
     always @(posedge clk) begin           
-        mu_q <= mu_dual;
+        mu_q <= mu;
     end
 end
 
 if (Q_D) begin
     for (genvar i = 0; i < Q_D; i = i + 1) begin
         always @(posedge clk) begin
-            qH_q[i] <= (i == 0) ? Q : qH_q[i - 1];
+            Q_q[i] <= (i == 0) ? Q : Q_q[i - 1];
         end
     end
 end

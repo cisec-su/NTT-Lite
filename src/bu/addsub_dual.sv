@@ -8,7 +8,8 @@ module addsub_dual
         input  [LOGA-1:0] A   ,
         input  [LOGB-1:0] B   ,
         input             dual,
-        output [LOGA-1:0] C
+        output [LOGA-1:0] C   ,
+        output [     1:0] K
     );
 
 ///////////////////////////// input check ///////////////////////////////
@@ -67,6 +68,7 @@ else begin
 end
 
 assign C = {C1[LOGA0-1:0], C0[LOGA0-1:0]};
+assign K = {C1[LOGA0], C0[LOGA0]};
 
 /////////////////////////////////////////////////////////////////////////
 
