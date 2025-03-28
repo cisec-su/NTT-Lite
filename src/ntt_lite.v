@@ -120,6 +120,7 @@ wire [LOGLOGN-1:0] logn_m1;
 wire [LOGN   -1:0] n_over2;
 wire [LOGN   -2:0] n_over4;
 wire [LOGN   -1:0] logn_m1_shft_m1;
+wire [LOGN   -1:0] logn_m1_shft_m1_ctr2;
 wire [LOGN+LOGWB  :0] num_words;
 wire [LOGN+LOGWB-1:0] num_words_m1;
 wire [LOGN+LOGWB-1:0] num_words_over2;
@@ -195,6 +196,7 @@ assign logn_m1 = logn - 1;
 assign n_over2 = 1 << logn_m1;
 assign n_over4 = n_over2 >> 1;
 assign logn_m1_shft_m1 = n_over2 - 1;
+assign logn_m1_shft_m1_ctr2 = logn_m1_shft_m1 >> ctr2;
 assign num_words = ((LOGQ/B) << logn);
 assign num_words_m1 = num_words - 1;
 assign num_words_over2 = num_words >> 1;
@@ -818,27 +820,29 @@ always @(*) begin
 
             busy = 1;
             sr_i = 1;
-            coeff_ram_p0_rsel = ctr2 & 1'b1;
-            if (ctr0 == logn_m1_shft_m1) begin
+            if (ctr0 == (logn_m1_shft_m1_ctr2)) begin
                 ctr0_rst = 1;
                 next_state = ST_SUM1;
                 ctr2_d_set = 1;
             end
-            else
-                ctr0_inc = 1;
+            else begin
+                ctr0_inc = 1;                
+            end
 
             sum_rcv_bu = 1;
+
         end
         ST_SUM1: begin
 
             busy = 1;
-            // BU input for next stage is valid after processing half of the poly
-            if ((ctr1 >= (n_over2 >> ctr2_d)) && (ctr2_d != logn_m1)) begin
-                next_state = ST_NTT0;
-                ctr2_inc = 1; // go to next stage
-            end
-            else if ((ctr1 == logn_m1_shft_m1)) begin
-                next_state = ST_POLY_OUT;
+            if ((ctr1 == logn_m1_shft_m1_ctr2)) begin
+                if (ctr2_d != logn_m1) begin
+                    next_state = ST_SUM0;
+                    ctr2_inc = 1; // go to next stage                        
+                end
+                else begin
+                    next_state = ST_POLY_OUT;                    
+                end
             end
 
             sum_rcv_bu = 1;
@@ -852,7 +856,7 @@ always @(*) begin
                 coeff_ram_p0_rsel = (op == `OP_NTT || op == `OP_INTT) ? logn & 1'b1 : 1'b0;
                 busy = 1;
                 if (o_read) begin
-                    if (ctr0 == num_words_m1 || ((op == `OP_ENCODE) && (ctr0_p1 == ctr1))) begin
+                    if (ctr0 == num_words_m1 || ((op == `OP_ENCODE) && (ctr0_p1 == ctr1)) || (op == `OP_SUM)) begin
                         if (ntt_otf) begin
                             if (ctr1 == n_m1) begin
                                 next_state = ST_IDLE;
@@ -949,7 +953,7 @@ always @(*) begin
     end
     else if (sum_rcv_bu) begin
         if (sr_t) begin
-            if (ctr1 == logn_m1_shft_m1) begin
+            if (ctr1 == (logn_m1_shft_m1_ctr2)) begin
                 ctr1_rst = 1;
             end
             else

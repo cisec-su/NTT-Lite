@@ -72,7 +72,7 @@ wire [LOGLOGQ-1:0] ctrl_d;
 wire [1:0] ctrl_mode;
 wire [3:0] ctrl_op;
 wire [LOGQ-1:0] ctrl_q;
-wire [LOGQ  :0] ctrl_mu;
+wire [LOGQ*2-1:0] ctrl_mu;
 wire [LOGQ-1:0] ctrl_inv2;
 wire ctrl_otf;
 wire ctrl_done;

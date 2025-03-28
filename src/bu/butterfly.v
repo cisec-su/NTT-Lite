@@ -115,6 +115,7 @@ assign mm_in_E     = (floor                                   ) ? {LOGQ{1'b0}}  
                                                                   {LOGQ{1'b0}}       ;
 
 assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A              :
+                     (op == `OP_SUM                  ) ? A              :
                                                          shift_out_1    ;
 assign add_in_B    = (op == `OP_INTT                 ) ? B              :
                      (op == `OP_SUM                  ) ? B              : 

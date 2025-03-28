@@ -247,3 +247,16 @@ print("ZETAS C:")
 for i in range(n):
     print(hex((zetas[i] << 16) + 1), end=", ")
 print("\n\n")
+
+
+
+sum0 = 0
+sum1 = 0
+for i in range(n):
+    sum0 += A_0[i]
+    sum1 += A_1[i]
+sum0 %= q
+sum1 %= q
+
+with open("sum_out_dual.txt", "w") as f:
+    f.write(hex((sum1 << (b // 2)) + sum0)[2:] + "\n")
