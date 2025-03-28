@@ -5,7 +5,7 @@ module modadd
     (
         input  [LOGQ-1:0] A   ,
         input  [LOGQ-1:0] B   ,
-        input  [LOGQ-1:0] q   ,
+        input  [LOGQ-1:0] Q   ,
         input             dual,
         output [LOGQ+1:0] T   ,
         output [LOGQ-1:0] C
@@ -43,8 +43,8 @@ assign T1 = A[LOGQ -1:LOGQ0] + B[LOGQ -1:LOGQ0] + ((~dual) & T0[LOGQ0]);
 
 assign c  = dual & T0[LOGQ0];
 
-assign Tq0 = {c, T0[LOGQ0-1:0]} - q[LOGQ0-1:0];
-assign Tq1 = T1 - q[LOGQ-1:LOGQ0] - ((~dual) & Tq0[LOGQ0]);
+assign Tq0 = {c, T0[LOGQ0-1:0]} - Q[LOGQ0-1:0];
+assign Tq1 = T1 - Q[LOGQ-1:LOGQ0] - ((~dual) & Tq0[LOGQ0]);
 
 assign C0 = ((dual && (Tq0[LOGQ0] == 0)) || (!dual &&  Tq1[LOGQ0] == 0)) ? Tq0[LOGQ0-1:0] : T0[LOGQ0-1:0];
 assign C1 = (Tq1[LOGQ0] == 0) ? Tq1[LOGQ0-1:0] : T1[LOGQ0-1:0];

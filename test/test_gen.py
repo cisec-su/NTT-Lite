@@ -16,7 +16,8 @@ logq = math.ceil(math.log2(q))
 psi = 17
 logn = 7
 n = 1 << logn
-mu = (1 << 24) // q
+mu_64 = (1 << 64) // q
+mu_32 = (1 << 32) // q
 log = 12
 b = 32
 d = 10
@@ -30,11 +31,12 @@ for i in range(n//2):
 
 with open("meta.txt", "w") as f:
     f.write(hex(q)[2:] + "\n")
-    f.write(hex(mu)[2:] + "\n")
+    f.write(hex(mu_64)[2:] + "\n")
     f.write(hex(logn)[2:] + "\n")
     f.write(hex(logq)[2:] + "\n")
     f.write(hex(d)[2:] + "\n")
     f.write(hex(inv2)[2:] + "\n")
+    f.write(hex(mu_32)[2:] + "\n")
 
 A_0 =  [random.randint(0, q-1) for _ in range(n)]
 A_1 =  [random.randint(0, q-1) for _ in range(n)]

@@ -20,7 +20,7 @@ module ntt_lite
         input      [   LOGLOGQ-1:0] d        ,        
         input      [      LOGQ-1:0] q        ,
         input      [      LOGQ-1:0] inv2     ,
-        input      [      LOGQ+1:0] mu       ,
+        input      [    LOGQ*2-1:0] mu       ,
         input      [           1:0] mode     ,
         input      [         B-1:0] i_data   ,
         output reg                  i_ready  ,
@@ -72,6 +72,8 @@ localparam ST_ADDSUB       = 5'd12;
 localparam ST_ENCODE0      = 5'd13;
 localparam ST_ENCODE1      = 5'd14;
 localparam ST_DECODE       = 5'd15;
+localparam ST_SUM0         = 5'd16;
+localparam ST_SUM1         = 5'd17;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -104,7 +106,7 @@ wire [LOGN+LOGWB :0] ctr0_p1;
 reg [LOGN-1:0] ctr2_d;
 reg ctr2_d_set;
 reg wpoly, upoly_ntt, upoly_intt, upoly_mul, wpsi, wpsi_delta, upsi, wq, pwm_idx, upoly_encode;
-reg ntt_rcv_bu, pwm_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu;
+reg ntt_rcv_bu, pwm_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu, sum_rcv_bu;
 reg ctr_all_rst;
 reg done_set, done_int;
 reg o_valid_int;
@@ -240,16 +242,16 @@ assign coeff_ram_p0_din   = (wpoly                   ) ?   i_data      :
                             (upoly_mul               ) ?   M_o         : 
                             (upoly_encode            ) ?   encode_out  : 
                           /*(upoly_ntt | upoly_intt  ) ?*/ A_o  /*: 0*/;
-assign coeff_ram_p0_raddr = (op == `OP_INTT && !pwm_idx) ? (ctr0 << 1)  : 
-                                                            ctr0        ;
+assign coeff_ram_p0_raddr = ((op == `OP_INTT || op == `OP_SUM) && !pwm_idx) ? (ctr0 << 1)  : 
+                                                                               ctr0        ;
 
 assign coeff_ram_p1_wen   =  upoly_ntt | upoly_intt;
 assign coeff_ram_p1_waddr = (upoly_ntt ) ?  (ctr1 << 1) + 1   : 
                           /*(upoly_intt) ?*/ ctr1 + n_over2 /*: 0*/;
 assign coeff_ram_p1_din   =  B_o;
-assign coeff_ram_p1_raddr = (pwm_idx             ) ?  ctr0             : 
-                            (op == `OP_INTT      ) ? ((ctr0 << 1) + 1) :  
-                                                     (ctr0 + n_over2)  ;
+assign coeff_ram_p1_raddr = (pwm_idx                        ) ?  ctr0             : 
+                            (op == `OP_INTT || op == `OP_SUM) ? ((ctr0 << 1) + 1) :  
+                                                                (ctr0 + n_over2)  ;
 // todo: check pwm_idx, use `OP_PWM if posslbe
 
 assign maskS    = (1 << ctr2) - 1 ;
@@ -579,6 +581,7 @@ always @(*) begin
     o_valid_int = 0;
     pwm_idx = 0;
     ntt_rcv_bu = 0;
+    sum_rcv_bu = 0;
     ntt_otf_feed_bu = 0;
     ntt_otf_rcv_bu = 0;
     pwm_rcv_bu = 0;
@@ -802,7 +805,7 @@ always @(*) begin
                 ctr2_inc = 1; // go to next stage
             end
             else if (/*!PRLLOUT && */(ctr1 == logn_m1_shft_m1)) begin
-                    next_state = ST_POLY_OUT;
+                next_state = ST_POLY_OUT;
             end
 
             if (otf == 1 && (ctr2_d == logn_m1))begin
@@ -811,7 +814,36 @@ always @(*) begin
             ntt_rcv_bu = 1;
 
         end
-        
+        ST_SUM0: begin
+
+            busy = 1;
+            sr_i = 1;
+            coeff_ram_p0_rsel = ctr2 & 1'b1;
+            if (ctr0 == logn_m1_shft_m1) begin
+                ctr0_rst = 1;
+                next_state = ST_SUM1;
+                ctr2_d_set = 1;
+            end
+            else
+                ctr0_inc = 1;
+
+            sum_rcv_bu = 1;
+        end
+        ST_SUM1: begin
+
+            busy = 1;
+            // BU input for next stage is valid after processing half of the poly
+            if ((ctr1 >= (n_over2 >> ctr2_d)) && (ctr2_d != logn_m1)) begin
+                next_state = ST_NTT0;
+                ctr2_inc = 1; // go to next stage
+            end
+            else if ((ctr1 == logn_m1_shft_m1)) begin
+                next_state = ST_POLY_OUT;
+            end
+
+            sum_rcv_bu = 1;
+
+        end        
         ST_POLY_OUT: begin
 
             if (!o_dis) begin
@@ -915,6 +947,16 @@ always @(*) begin
             end
         end
     end
+    else if (sum_rcv_bu) begin
+        if (sr_t) begin
+            if (ctr1 == logn_m1_shft_m1) begin
+                ctr1_rst = 1;
+            end
+            else
+                ctr1_inc = 1;
+            upoly_mul = 1;
+        end
+    end
 
 
 end
@@ -929,6 +971,7 @@ always @(*) begin
         `OP_PWM        : next_state_op = ST_PWM0;
         `OP_ADD        : next_state_op = ST_ADDSUB;
         `OP_SUB        : next_state_op = ST_ADDSUB;
+        `OP_SUM        : next_state_op = ST_SUM0;
         `OP_COMPRESS   : next_state_op = ST_PWM0;
         `OP_DECOMPRESS : next_state_op = ST_PWM0;
         `OP_ENCODE     : next_state_op = ST_ENCODE0;

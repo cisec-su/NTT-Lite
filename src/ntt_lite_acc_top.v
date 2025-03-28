@@ -108,7 +108,7 @@ ntt_lite #(
     .o_dis      (ctrl_o_dis ),
     .floor      (ctrl_floor ),
     .q          (ctrl_q     ),
-    .mu         ({1'b0, ctrl_mu}),
+    .mu         (ctrl_mu    ),
     .inv2       (ctrl_inv2  ),
     .op         (ctrl_op    ),
     .mode       (ctrl_mode  ),

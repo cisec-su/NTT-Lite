@@ -23,7 +23,7 @@ module ntt_lite_ctrl
         output reg         o_dis,        // (Write)        
         output reg [31:0]  q,            // (Read/Write)
         output reg [31:0]  inv2,            // (Read/Write)        
-        output reg [32:0]  mu,           // (Read/Write)
+        output reg [63:0]  mu,           // (Read/Write)
         //data address registers
         output reg [31:0]  din_addr,     // (Write)
         output reg [31:0]  dout_addr,    // (Write)
@@ -105,7 +105,7 @@ always @(posedge clk) begin
         logq  <= {CTRL_LOGQ_LEN{1'b0}};
         d     <= {CTRL_D_LEN{1'b0}};
         q     <= 32'd0;
-        mu    <= 33'd0;
+        mu    <= 64'd0;
         din_addr  <= 32'd0;
         dout_addr <= 32'd0;
         stride    <= 32'd0;
@@ -153,8 +153,8 @@ always @(posedge clk) begin
             DOUT_ADDR   : rdata <= 32'd0;
             STRIDE_ADDR : rdata <= stride;
             Q_ADDR      : rdata <= q;
-            MU_ADDR_LOW : rdata <= mu[31:0];
-            MU_ADDR_HIGH: rdata <= mu[32];
+            MU_ADDR_LOW : rdata <= mu[31: 0];
+            MU_ADDR_HIGH: rdata <= mu[63:32];
             INV2_ADDR   : rdata <= inv2;
             default     : rdata <= 32'd0;
         endcase
