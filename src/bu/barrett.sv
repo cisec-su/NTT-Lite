@@ -34,7 +34,7 @@ end
 ///////////////////////////// parameters ////////////////////////////////
 
 localparam barrett_params_t params = {LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT};
-localparam intmul_std_dual_64x64_params_t mac_0_params = barrett_mac_0_params(params);
+localparam intmul_karatsuba_dual_params_t mac_0_params = barrett_mac_0_params(params);
 localparam mac_std_dual_32x34_params_t    mac_1_params = barrett_mac_1_params(params);
 
 localparam LOGQ0 = LOGQ >> 1;
@@ -71,7 +71,6 @@ localparam LAT_1  = barrett_mac_1_lat(params);
 
 localparam CL_D   = LAT_0;
 localparam Q_D    = (PIPE_Q) ? LAT_1 + LAT_0 + FF_IN : 0;
-localparam LOGQ_D = (PIPE_Q) ? LAT_0 + FF_IN : 0;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -81,12 +80,12 @@ localparam LOGQ_D = (PIPE_Q) ? LAT_0 + FF_IN : 0;
 ///////////////////////////// signals ///////////////////////////////////
 
 reg  [LOGQ*2 -1:0] C_q;
-reg  [LOGMU  -1:0] mu_q;
-reg  [LOGQ   -1:0] Q_q [0:   Q_D-1];
+reg  [LOGMU  -1:0] MU_q;
+reg  [LOGQ   -1:0] Q_q [0:Q_D-1];
 
 wire [LOGC -1:0] C_mx;
 wire [LOGQ -1:0] Q_mx   [0:1];
-wire [LOGMU-1:0] mu_mx;
+wire [LOGMU-1:0] MU_mx;
 
 wire [LOGCL  -1:0] CL;
 wire [LOGCL_0-1:0] CL_0;
@@ -123,7 +122,6 @@ mode_mul_t mode_mul;
 /////////////////////////// comb. assignments //////////////////////
 
 assign mode_mul = (dual) ? MUL_DUAL : MUL_SINGLE;
-assign mu_dual  = (dual) ? {mu_mx[LOGMU0-1:0], mu_mx[LOGMU0-1:0]} : mu_mx;
 
 assign D_apx = T0H;
 
@@ -149,10 +147,10 @@ else begin
 end
 
 if (FF_IN && PIPE_Q) begin
-    assign mu_mx = mu_q;
+    assign MU_mx = MU_q;
 end
 else begin
-    assign mu_mx = MU;
+    assign MU_mx = MU;
 end
 
 if (Q_D) begin
@@ -203,16 +201,19 @@ lsb_dual #(
 
 /////////////////////////// intmul //////////////////////////////////////
 
-intmul_std_dual_64x64 #(
+intmul_karatsuba_dual #(
+    .LOGA    (             LOGC   ),
     .FF_IN_A (mac_0_params.FF_IN_A),
     .FF_IN_B (mac_0_params.FF_IN_B),
+    .FF_SUM  (mac_0_params.FF_SUM ),
     .FF_MUL  (mac_0_params.FF_MUL ),
+    .FF_SUB  (mac_0_params.FF_SUB ),
     .FF_OUT  (mac_0_params.FF_OUT )
-) intmul_std_inst_0 (
+) intmul_karatsuba_inst_0 (
     .clk     (clk      ),
     .dual    (dual     ),
     .A       (C_mx     ),
-    .B       (mu_mx    ),
+    .B       (MU_mx    ),
     .C       (T0       )
 );
 
@@ -354,7 +355,7 @@ end
 
 if (FF_IN && PIPE_Q) begin
     always @(posedge clk) begin           
-        mu_q <= mu;
+        MU_q <= MU;
     end
 end
 
@@ -362,14 +363,6 @@ if (Q_D) begin
     for (genvar i = 0; i < Q_D; i = i + 1) begin
         always @(posedge clk) begin
             Q_q[i] <= (i == 0) ? Q : Q_q[i - 1];
-        end
-    end
-end
-
-if (LOGQ_D) begin
-    for (genvar i = 0; i < LOGQ_D; i = i + 1) begin
-        always @(posedge clk) begin
-            B_q[i] <= (i == 0) ? B : B_q[i - 1];
         end
     end
 end

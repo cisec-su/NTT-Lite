@@ -17,7 +17,7 @@ module butterfly
         input  [LOGQ   -1:0] Q        ,
         input  [LOGQ*2 -1:0] MU       ,
         input  [LOGQ   -1:0] inv2     ,
-        input  [LOGLOGQ-1:0] logq     ,
+        input  [LOGLOGQ-1:0] k        ,
         input  [LOGLOGQ-1:0] d        ,
         output [LOGQ   -1:0] E        ,
         output [LOGQ   -1:0] O        ,
@@ -63,8 +63,8 @@ wire [LOGQ -1:0] pow_2_d_dual;
 wire [LOGQ -1:0] pow_2_d_shift_dual;
 wire [LOGQ -1:0] mask_d;
 wire [LOGQ -1:0] mask_d_dual;
-wire [LOGQ -1:0] mask_logq;
-wire [LOGQ -1:0] mask_logQ_dual;
+wire [LOGQ -1:0] mask_k;
+wire [LOGQ -1:0] mask_k_dual;
 wire [LOGQ -1:0] D_dual;
 wire [LOGQ -1:0] D_dual_masked;
 
@@ -95,9 +95,10 @@ assign mask_d = pow_2_d - 1'b1;
 assign mask_d_dual = (dual) ? {mask_d[LOGQ0-1:0], mask_d[LOGQ0-1:0]} : 
                                mask_d                                ;
 
-assign mask_logq      = ({{(LOGQ-1){1'b0}}, 1'b1} << logq) - 1'b1;
-assign mask_logQ_dual = (dual) ? {mask_logq[LOGQ0-1:0], mask_logq[LOGQ0-1:0]} : 
-                                  mask_logq                                   ;
+assign mask_k      = (k == 0) ?  {LOGQ{1'b1}}                          : 
+                                 ({{(LOGQ-1){1'b0}}, 1'b1} << k) - 1'b1;
+assign mask_k_dual = (dual) ?    {mask_k[LOGQ0-1:0], mask_k[LOGQ0-1:0]} : 
+                                  mask_k                                ;
 
 
 assign D_dual      = (dual) ? {mm_out_D[LOGQ+LOGQ0-1:LOGQ], mm_out_D[LOGQ0-1:0]} : 
@@ -135,7 +136,7 @@ assign mm_inv2_in  = shift_out_0;
 
 assign asr_in      = mm_out_T;
 
-assign asr_out_dual_masked = asr_out_dual & mask_logQ_dual;
+assign asr_out_dual_masked = asr_out_dual & mask_k_dual;
 
 assign E           = (op == `OP_INTT) ? shift_out_1 :
                                         add_out_C   ;

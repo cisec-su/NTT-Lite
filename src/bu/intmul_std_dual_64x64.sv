@@ -77,12 +77,6 @@ wire [DSP_B_U-1:0] B_i_mx[0:N_B-1];
 reg  [DSP_M_U-1:0] P_q [0:N_A-1][0:N_B-1];
 wire [DSP_M_U-1:0] P_mx[0:N_A-1][0:N_B-1];
 
-
-(* use_dsp = "no" *) wire [DSP_M_U-1:0] P [0:N_A-1][0:N_B-1];
-reg  [DSP_M_U-1:0] P_q [0:N_A-1][0:N_B-1];
-wire [DSP_M_U-1:0] P_mx[0:N_A-1][0:N_B-1];
-
-
 wire  [LOGC0-1:0] D[0:1][0:1];
 
 (* use_dsp = "no" *) wire  [LOGC0:0] S0;

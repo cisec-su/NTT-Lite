@@ -17,9 +17,9 @@ module ntt_lite_ctrl
         output reg [ 1:0]  mode,         // (Read/Write)
         output reg [ 3:0]  op  ,         // (Write)
         output reg         otf,          // (Read/Write)
-        output reg [ 5:0]  logq,         // (Read/Write)
+        output reg [ 5:0]  k,            // (Read/Write)
         output reg [ 5:0]  d,            // (Write)
-        output reg         floor,    // (Write)        
+        output reg         floor,        // (Write)        
         output reg         o_dis,        // (Write)        
         output reg [31:0]  q,            // (Read/Write)
         output reg [31:0]  inv2,            // (Read/Write)        
@@ -102,7 +102,7 @@ always @(posedge clk) begin
         mode  <= {CTRL_MODE_LEN{1'b0}};
         op    <= {CTRL_OP_LEN{1'b0}};
         otf   <= 1'b0;
-        logq  <= {CTRL_LOGQ_LEN{1'b0}};
+        k     <= {CTRL_LOGQ_LEN{1'b0}};
         d     <= {CTRL_D_LEN{1'b0}};
         q     <= 32'd0;
         mu    <= 64'd0;
@@ -117,10 +117,10 @@ always @(posedge clk) begin
                 logn      <= wdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB];
                 mode      <= wdata[CTRL_MODE_MSB:CTRL_MODE_LSB];
                 otf       <= wdata[CTRL_OTF_BIT];
-                logq      <= wdata[CTRL_LOGQ_MSB:CTRL_LOGQ_LSB];
+                k         <= wdata[CTRL_LOGQ_MSB:CTRL_LOGQ_LSB];
                 op        <= wdata[CTRL_OP_MSB  :CTRL_OP_LSB  ];
                 d         <= wdata[CTRL_D_MSB   :CTRL_D_LSB   ];
-                floor <= wdata[CTRL_FLOOR_BIT];
+                floor     <= wdata[CTRL_FLOOR_BIT];
                 o_dis     <= wdata[CTRL_O_DIS_BIT];
             end
             DIN_ADDR    : din_addr  <= wdata;
@@ -145,7 +145,7 @@ always @(posedge clk) begin
                 rdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB] <= logn;
                 rdata[CTRL_MODE_MSB:CTRL_MODE_LSB] <= mode;
                 rdata[CTRL_OTF_BIT]                <= otf;
-                rdata[CTRL_LOGQ_MSB:CTRL_LOGQ_LSB] <= logq;
+                rdata[CTRL_LOGQ_MSB:CTRL_LOGQ_LSB] <= k;
                 rdata[CTRL_BUSY_BIT]               <= busy;
                 rdata[CTRL_DONE_BIT]               <= done_q | done;
             end

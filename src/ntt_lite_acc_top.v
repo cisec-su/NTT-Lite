@@ -67,7 +67,7 @@ wire [LOGN+LOGWB-1:0] fsm_io_word;
 // CTRL & NTT
 wire [3:0] ctrl_cmd;
 wire [LOGLOGN-1:0] ctrl_logn;
-wire [LOGLOGQ-1:0] ctrl_logq;
+wire [LOGLOGQ-1:0] ctrl_k;
 wire [LOGLOGQ-1:0] ctrl_d;
 wire [1:0] ctrl_mode;
 wire [3:0] ctrl_op;
@@ -103,7 +103,7 @@ ntt_lite #(
     // ntt <-> ctrl
     .cmd        (ctrl_cmd   ),
     .logn       (ctrl_logn  ),
-    .logq       (ctrl_logq  ),
+    .k          (ctrl_logq  ),
     .d          (ctrl_d     ),
     .o_dis      (ctrl_o_dis ),
     .floor      (ctrl_floor ),
@@ -134,7 +134,7 @@ ntt_lite_ctrl #(
     // ntt <-> ctrl
     .cmd        (ctrl_cmd   ),
     .logn       (ctrl_logn  ),
-    .logq       (ctrl_logq  ),
+    .k          (ctrl_k  ),
     .d          (ctrl_d     ),
     .o_dis      (ctrl_o_dis ),
     .floor      (ctrl_floor ),
@@ -235,7 +235,7 @@ ntt_lite_acc_fsm #(
     .ctrl_din_addr  (ctrl_din_addr  ),
     .ctrl_dout_addr (ctrl_dout_addr ),
     .ctrl_logn      (ctrl_logn      ),
-    .ctrl_logq      (ctrl_logq      ),
+    .ctrl_k         (ctrl_k         ),
     .ctrl_cmd       (ctrl_cmd       )
 );
 

@@ -42,7 +42,7 @@ reg          otf;
 reg          dual;
 reg  [1  :0] mode;
 reg  [LOGLOGN-1:0] logn;
-reg  [LOGLOGQ-1:0] logq;
+reg  [LOGLOGQ-1:0] k;
 reg  [LOGLOGQ-1:0] d;
 reg  [B-1:0] i_data;
 reg          o_read;
@@ -72,7 +72,7 @@ ntt_lite #(
     .op(op),
     .otf(otf),
     .logn(logn),
-    .logq(logq),
+    .k(k),
     .mode(mode),
     .q(q),
     .floor(0),
@@ -118,7 +118,7 @@ initial begin
     q = meta[0];
     mu_64 = meta[1];
     logn = meta[2];
-    logq = meta[3];
+    k = meta[3];
     d = meta[4];
     inv2 = meta[5];
     mu_32 = meta[6];

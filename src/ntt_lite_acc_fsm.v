@@ -31,7 +31,7 @@ module ntt_lite_acc_fsm
         
         input      [3:0]           ctrl_cmd,
         input      [LOGLOGN-1:0]   ctrl_logn,
-        input      [1:0]           ctrl_logq
+        input      [1:0]           ctrl_k
     );
 
 
@@ -70,12 +70,7 @@ begin
         case(cstate)
         ST_IDLE:
         begin
-            /*if(ctrl_cmd == 2)
-            begin
-                LIMIT <= (1 << ctrl_logq);
-                cstate <= ST_GET0;
-            end
-            else */if(ctrl_cmd == 3)
+            if(ctrl_cmd == 3)
             begin
                 LIMIT <= (1 << ctrl_logn);
                 cstate <= ST_GET0;
@@ -158,9 +153,6 @@ begin
             mem_addr = ctrl_dout_addr + (fsm_io_word << 2);
             mem_we = fsm_o_valid;
             fsm_o_read = mem_o_ready;
-            // cnt_up = mem_o_ready;
-            // if(fsm_io_word == (LIMIT-1))
-            //     cnt_rst = 1;
         end
     end
     endcase    
