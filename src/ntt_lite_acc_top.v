@@ -103,7 +103,7 @@ ntt_lite #(
     // ntt <-> ctrl
     .cmd        (ctrl_cmd   ),
     .logn       (ctrl_logn  ),
-    .k          (ctrl_logq  ),
+    .k          (ctrl_k     ),
     .d          (ctrl_d     ),
     .o_dis      (ctrl_o_dis ),
     .floor      (ctrl_floor ),
@@ -134,7 +134,7 @@ ntt_lite_ctrl #(
     // ntt <-> ctrl
     .cmd        (ctrl_cmd   ),
     .logn       (ctrl_logn  ),
-    .k          (ctrl_k  ),
+    .k          (ctrl_k     ),
     .d          (ctrl_d     ),
     .o_dis      (ctrl_o_dis ),
     .floor      (ctrl_floor ),
@@ -235,7 +235,6 @@ ntt_lite_acc_fsm #(
     .ctrl_din_addr  (ctrl_din_addr  ),
     .ctrl_dout_addr (ctrl_dout_addr ),
     .ctrl_logn      (ctrl_logn      ),
-    .ctrl_k         (ctrl_k         ),
     .ctrl_cmd       (ctrl_cmd       )
 );
 

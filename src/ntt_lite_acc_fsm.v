@@ -30,8 +30,7 @@ module ntt_lite_acc_fsm
         input      [31:0]          ctrl_dout_addr,
         
         input      [3:0]           ctrl_cmd,
-        input      [LOGLOGN-1:0]   ctrl_logn,
-        input      [1:0]           ctrl_k
+        input      [LOGLOGN-1:0]   ctrl_logn
     );
 
 

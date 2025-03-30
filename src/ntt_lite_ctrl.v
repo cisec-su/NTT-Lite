@@ -54,9 +54,9 @@ localparam CTRL_OP_LSB        = 8;
 localparam CTRL_OP_MSB        = 11;
 localparam CTRL_OP_LEN        = CTRL_OP_MSB - CTRL_OP_LSB + 1;
 localparam CTRL_OTF_BIT       = 12;
-localparam CTRL_LOGQ_LSB      = 13;
-localparam CTRL_LOGQ_MSB      = 18;
-localparam CTRL_LOGQ_LEN      = CTRL_LOGQ_MSB - CTRL_LOGQ_LSB + 1;
+localparam CTRL_K_LSB         = 13;
+localparam CTRL_K_MSB         = 18;
+localparam CTRL_K_LEN         = CTRL_K_MSB - CTRL_K_LSB + 1;
 localparam CTRL_MODE_LSB      = 19;
 localparam CTRL_MODE_MSB      = 20;
 localparam CTRL_MODE_LEN      = CTRL_MODE_MSB - CTRL_MODE_LSB + 1;
@@ -102,7 +102,7 @@ always @(posedge clk) begin
         mode  <= {CTRL_MODE_LEN{1'b0}};
         op    <= {CTRL_OP_LEN{1'b0}};
         otf   <= 1'b0;
-        k     <= {CTRL_LOGQ_LEN{1'b0}};
+        k     <= {CTRL_K_LEN{1'b0}};
         d     <= {CTRL_D_LEN{1'b0}};
         q     <= 32'd0;
         mu    <= 64'd0;
@@ -117,7 +117,7 @@ always @(posedge clk) begin
                 logn      <= wdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB];
                 mode      <= wdata[CTRL_MODE_MSB:CTRL_MODE_LSB];
                 otf       <= wdata[CTRL_OTF_BIT];
-                k         <= wdata[CTRL_LOGQ_MSB:CTRL_LOGQ_LSB];
+                k         <= wdata[CTRL_K_MSB   :CTRL_K_LSB   ];
                 op        <= wdata[CTRL_OP_MSB  :CTRL_OP_LSB  ];
                 d         <= wdata[CTRL_D_MSB   :CTRL_D_LSB   ];
                 floor     <= wdata[CTRL_FLOOR_BIT];
@@ -127,8 +127,8 @@ always @(posedge clk) begin
             DOUT_ADDR   : dout_addr <= wdata;
             STRIDE_ADDR : stride    <= wdata;
             Q_ADDR      : q         <= wdata;
-            MU_ADDR_LOW : mu[31:0]  <= wdata;
-            MU_ADDR_HIGH: mu[32]    <= wdata[0];
+            MU_ADDR_LOW : mu[31: 0] <= wdata;
+            MU_ADDR_HIGH: mu[63:32] <= wdata;
             INV2_ADDR   : inv2      <= wdata;
             default: ;
         endcase
@@ -145,7 +145,7 @@ always @(posedge clk) begin
                 rdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB] <= logn;
                 rdata[CTRL_MODE_MSB:CTRL_MODE_LSB] <= mode;
                 rdata[CTRL_OTF_BIT]                <= otf;
-                rdata[CTRL_LOGQ_MSB:CTRL_LOGQ_LSB] <= k;
+                rdata[CTRL_K_MSB   :CTRL_K_LSB   ] <= k;
                 rdata[CTRL_BUSY_BIT]               <= busy;
                 rdata[CTRL_DONE_BIT]               <= done_q | done;
             end
