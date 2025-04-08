@@ -773,8 +773,10 @@ always @(*) begin
         ST_PWM1: begin
 
             busy = 1;
-            if (((otf == 1) && (ctr1 == logn_m1_shft_m1)) || (ctr1 == n_m1)) begin
-                next_state = ST_POLY_OUT;
+            if ((sr_x && op == `OP_DECOMPRESS) || sr_o) begin
+                if (((otf == 1) && (ctr1 == logn_m1_shft_m1)) || (ctr1 == n_m1)) begin
+                    next_state = ST_POLY_OUT;
+                end
             end
 
             pwm_rcv_bu = 1;

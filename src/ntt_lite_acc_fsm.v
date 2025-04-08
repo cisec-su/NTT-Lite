@@ -82,14 +82,14 @@ begin
             else if(fsm_o_valid)
             begin
                 cstate <= ST_PUT;
-                LIMIT <= (1 << ctrl_logn);
+                // LIMIT <= (1 << ctrl_logn);
             end
         end
         ST_GET0:
             cstate <= ST_GET;
         ST_GET:
         begin
-            if(cnt == (LIMIT-1))
+            if(cnt >= (LIMIT-1))
                 cstate <= ST_GET2; 
         end
         ST_GET2:
@@ -131,15 +131,14 @@ begin
     end
     ST_GET:
     begin
+        fsm_i_data = mem_i_data;
         if(fsm_i_ready)
         begin  
             mem_addr = ctrl_din_addr + (cnt << 2);
-            fsm_i_data = mem_i_data;
             cnt_up = 1;
         end
-        if(cnt == (LIMIT-1))
+        if(cnt >= (LIMIT-1))
             cnt_rst = 1;
-       
     end
     ST_GET2:
     begin
