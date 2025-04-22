@@ -67,17 +67,18 @@ wire [LOGN+LOGWB-1:0] fsm_io_word;
 // CTRL & NTT
 wire [3:0] ctrl_cmd;
 wire [LOGLOGN-1:0] ctrl_logn;
-wire [LOGLOGQ-1:0] ctrl_logq;
+wire [LOGLOGQ-1:0] ctrl_k;
 wire [LOGLOGQ-1:0] ctrl_d;
 wire [1:0] ctrl_mode;
 wire [3:0] ctrl_op;
 wire [LOGQ-1:0] ctrl_q;
-wire [LOGQ  :0] ctrl_mu;
+wire [LOGQ*2-1:0] ctrl_mu;
 wire [LOGQ-1:0] ctrl_inv2;
 wire ctrl_otf;
 wire ctrl_done;
 wire ctrl_busy;
 wire ctrl_o_dis;
+wire ctrl_floor;
 
 // CTRL & FSM
 wire [31:0] ctrl_din_addr;
@@ -89,31 +90,31 @@ ntt_lite #(
     .LOGQ(LOGQ),
     .B(B)
 ) ntt_lite (
-    .clk(clk),
-    .rst(rst),
+    .clk        (clk        ),
+    .rst        (rst        ),
     // ntt <-> fsm
-    .i_data(fsm_i_data),//
-    .i_ready(fsm_i_ready),//
-    .i_valid(fsm_i_valid),//
-    .o_data(fsm_o_data),//
-    .o_valid(fsm_o_valid),//
-    .o_read(fsm_o_read),//
-    .io_word(fsm_io_word),//
+    .i_data     (fsm_i_data ),
+    .i_ready    (fsm_i_ready),
+    .i_valid    (fsm_i_valid),
+    .o_data     (fsm_o_data ),
+    .o_valid    (fsm_o_valid),
+    .o_read     (fsm_o_read ),
+    .io_word    (fsm_io_word),
     // ntt <-> ctrl
-    .cmd(ctrl_cmd),//
-    .logn(ctrl_logn),//
-    .logq(ctrl_logq),//
-    .d(ctrl_d),//
-    .o_dis(ctrl_o_dis),//
-    .q(ctrl_q),//
-    .mu({1'b0, ctrl_mu}),
-    .inv2(ctrl_inv2), 
-    .op(ctrl_op),  
-    .mode(ctrl_mode),//
-    .otf(ctrl_otf),//
-    .done(ctrl_done),//
-    .busy(ctrl_busy),//
-    
+    .cmd        (ctrl_cmd   ),
+    .logn       (ctrl_logn  ),
+    .k          (ctrl_k     ),
+    .d          (ctrl_d     ),
+    .o_dis      (ctrl_o_dis ),
+    .floor      (ctrl_floor ),
+    .q          (ctrl_q     ),
+    .mu         (ctrl_mu    ),
+    .inv2       (ctrl_inv2  ),
+    .op         (ctrl_op    ),
+    .mode       (ctrl_mode  ),
+    .otf        (ctrl_otf   ),
+    .done       (ctrl_done  ),
+    .busy       (ctrl_busy  ),
     
     .error()
 );
@@ -122,86 +123,86 @@ ntt_lite #(
 ntt_lite_ctrl #(
     .BASE_ADDR(BASE_ADDR)
 ) ntt_lite_ctrl(
-    .clk(clk),
-    .rst(rst),
+    .clk        (clk        ),
+    .rst        (rst        ),
     // wb <-> ctrl
-    .addr(ctrl_addr),//
-    .wdata(ctrl_wdata),//
-    .we(ctrl_we),//
-    .re(ctrl_re),//
-    .rdata(ctrl_rdata),//
+    .addr       (ctrl_addr  ),
+    .wdata      (ctrl_wdata ),
+    .we         (ctrl_we    ),
+    .re         (ctrl_re    ),
+    .rdata      (ctrl_rdata ),
     // ntt <-> ctrl
-    .cmd(ctrl_cmd),//
-    .logn(ctrl_logn),//
-    .logq(ctrl_logq),//
-    .d(ctrl_d),//
-    .o_dis(ctrl_o_dis),
-    .mode(ctrl_mode),//
-    .op(ctrl_op),//
-    .mu(ctrl_mu),//
-    .inv2(ctrl_inv2),//
-    .q(ctrl_q),//
-    .otf(ctrl_otf),//
-    .done(ctrl_done),//
-    .busy(ctrl_busy),//
+    .cmd        (ctrl_cmd   ),
+    .logn       (ctrl_logn  ),
+    .k          (ctrl_k     ),
+    .d          (ctrl_d     ),
+    .o_dis      (ctrl_o_dis ),
+    .floor      (ctrl_floor ),
+    .mode       (ctrl_mode  ),
+    .op         (ctrl_op    ),
+    .mu         (ctrl_mu    ),
+    .inv2       (ctrl_inv2  ),
+    .q          (ctrl_q     ),
+    .otf        (ctrl_otf   ),
+    .done       (ctrl_done  ),
+    .busy       (ctrl_busy  ),
     // fsm <-> ctrl
-    .din_addr(ctrl_din_addr),//
-    .dout_addr(ctrl_dout_addr),//
-    
-    .stride()
+    .din_addr   (ctrl_din_addr ),
+    .dout_addr  (ctrl_dout_addr),
+    .stride     ()
 );
 
 
 ntt_lite_acc_dma ntt_lite_acc_dma_inst 
 (
     .clk         (clk        ),
-    .rst         (rst      ),
+    .rst         (rst        ),
     // dma <-> fsm
-    .addr        (mem_addr),//
-    .re          (mem_re),//
-    .we          (mem_we),//
-    .i_data      (mem_i_data),//
-    .i_valid     (mem_i_valid),//
-    .i_ready     (mem_i_ready),//
-    .o_ready     (mem_o_ready),//
-    .o_data      (mem_o_data),//
+    .addr        (mem_addr   ),
+    .re          (mem_re     ),
+    .we          (mem_we     ),
+    .i_data      (mem_i_data ),
+    .i_valid     (mem_i_valid),
+    .i_ready     (mem_i_ready),
+    .o_ready     (mem_o_ready),
+    .o_data      (mem_o_data ),
     // dma connections
-    .dma_cyc_i   (dma_cyc_i  ),//
-    .dma_stb_i   (dma_stb_i  ),//
-    .dma_we_i    (dma_we_i   ),//
-    .dma_adr_i   (dma_adr_i  ),//
-    .dma_dat_i   (dma_dat_i  ),//
-    .dma_sel_i   (dma_sel_i  ),//
-    .dma_stall_o (dma_stall_o),//
-    .dma_ack_o   (dma_ack_o  ),//
-    .dma_dat_o   (dma_dat_o  ),//
-    .dma_err_o   (dma_err_o  ),//
-    .dma_rst_i   (dma_rst_i  )//
+    .dma_cyc_i   (dma_cyc_i  ),
+    .dma_stb_i   (dma_stb_i  ),
+    .dma_we_i    (dma_we_i   ),
+    .dma_adr_i   (dma_adr_i  ),
+    .dma_dat_i   (dma_dat_i  ),
+    .dma_sel_i   (dma_sel_i  ),
+    .dma_stall_o (dma_stall_o),
+    .dma_ack_o   (dma_ack_o  ),
+    .dma_dat_o   (dma_dat_o  ),
+    .dma_err_o   (dma_err_o  ),
+    .dma_rst_i   (dma_rst_i  )
 );
 
 
 ntt_lite_acc_wb ntt_lite_acc_wb_inst (
     // wb <-> ctrl
-    .addr       (ctrl_addr  ),//
-    .wdata      (ctrl_wdata ),//
-    .we         (ctrl_we    ),//
-    .re         (ctrl_re    ),//
-    .rdata      (ctrl_rdata ),//
+    .addr       (ctrl_addr  ),
+    .wdata      (ctrl_wdata ),
+    .we         (ctrl_we    ),
+    .re         (ctrl_re    ),
+    .rdata      (ctrl_rdata ),
     .clk        (clk        ),
     .rst        (rst        ),
     // wishbone connections
-    .wb_clk_i   (wb_clk_i   ),//
-    .wb_cyc_i   (wb_cyc_i   ),//
-    .wb_stb_i   (wb_stb_i   ),//
-    .wb_we_i    (wb_we_i    ),//
-    .wb_adr_i   (wb_adr_i   ),//
-    .wb_dat_i   (wb_dat_i   ),//
-    .wb_sel_i   (wb_sel_i   ),//
-    .wb_stall_o (wb_stall_o ),//
-    .wb_ack_o   (wb_ack_o   ),//
-    .wb_dat_o   (wb_dat_o   ),//
-    .wb_err_o   (wb_err_o   ),//
-    .wb_rst_i   (wb_rst_i   )//
+    .wb_clk_i   (wb_clk_i   ),
+    .wb_cyc_i   (wb_cyc_i   ),
+    .wb_stb_i   (wb_stb_i   ),
+    .wb_we_i    (wb_we_i    ),
+    .wb_adr_i   (wb_adr_i   ),
+    .wb_dat_i   (wb_dat_i   ),
+    .wb_sel_i   (wb_sel_i   ),
+    .wb_stall_o (wb_stall_o ),
+    .wb_ack_o   (wb_ack_o   ),
+    .wb_dat_o   (wb_dat_o   ),
+    .wb_err_o   (wb_err_o   ),
+    .wb_rst_i   (wb_rst_i   )
 );
 
 
@@ -210,33 +211,31 @@ ntt_lite_acc_fsm #(
     .LOGQ(LOGQ),
     .LOGN(LOGN)
 ) ntt_lite_acc_fsm_inst (
-    .clk       (clk),
-    .rst       (rst) ,
+    .clk            (clk            ),
+    .rst            (rst            ),
     // dma <-> fsm
-    .mem_addr        (mem_addr),//
-    .mem_re          (mem_re),//
-    .mem_we          (mem_we),//
-    .mem_i_data      (mem_i_data),//
-    .mem_i_valid     (mem_i_valid),//
-    .mem_i_ready     (mem_i_ready),//
-    .mem_o_ready     (mem_o_ready),//
-    .mem_o_data      (mem_o_data),//
-    
+    .mem_addr       (mem_addr       ),
+    .mem_re         (mem_re         ),
+    .mem_we         (mem_we         ),
+    .mem_i_data     (mem_i_data     ),
+    .mem_i_valid    (mem_i_valid    ),
+    .mem_i_ready    (mem_i_ready    ),
+    .mem_o_ready    (mem_o_ready    ),
+    .mem_o_data     (mem_o_data     ),
     // ntt <-> fsm
-    .fsm_i_data(fsm_i_data),//
-    .fsm_i_ready(fsm_i_ready),//
-    .fsm_i_valid(fsm_i_valid),//
-    .fsm_o_data(fsm_o_data),//
-    .fsm_o_valid(fsm_o_valid),//
-    .fsm_o_read(fsm_o_read),//
-    .fsm_io_word(fsm_io_word),//
-    .fsm_o_done(ctrl_done),//
+    .fsm_i_data     (fsm_i_data     ),
+    .fsm_i_ready    (fsm_i_ready    ),
+    .fsm_i_valid    (fsm_i_valid    ),
+    .fsm_o_data     (fsm_o_data     ),
+    .fsm_o_valid    (fsm_o_valid    ),
+    .fsm_o_read     (fsm_o_read     ),
+    .fsm_io_word    (fsm_io_word    ),
+    .fsm_o_done     (ctrl_done      ),    
     // fsm <-> ctrl
-    .ctrl_din_addr(ctrl_din_addr),//
-    .ctrl_dout_addr(ctrl_dout_addr),//
-    .ctrl_logn(ctrl_logn),//
-    .ctrl_logq(ctrl_logq),//
-    .ctrl_cmd(ctrl_cmd)//
+    .ctrl_din_addr  (ctrl_din_addr  ),
+    .ctrl_dout_addr (ctrl_dout_addr ),
+    .ctrl_logn      (ctrl_logn      ),
+    .ctrl_cmd       (ctrl_cmd       )
 );
 
 

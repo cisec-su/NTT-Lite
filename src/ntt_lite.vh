@@ -18,7 +18,7 @@
 `define OP_DECOMPRESS         4'd6
 `define OP_ENCODE             4'd7
 `define OP_DECODE             4'd8
-
+`define OP_SUM                4'd9
 
 `define MODE_SINGLE           2'd0
 `define MODE_DUAL             2'd2

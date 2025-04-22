@@ -10,29 +10,30 @@ module ntt_lite
         parameter EN_NTT_OTF = 0
     )
     (
-        input                       clk    ,
-        input                       rst    ,
-        input      [           3:0] cmd    ,
-        input      [           3:0] op     ,
-        input                       otf    ,
-        input      [   LOGLOGN-1:0] logn   ,
-        input      [   LOGLOGQ-1:0] logq   ,
-        input      [   LOGLOGQ-1:0] d      ,        
-        input      [      LOGQ-1:0] q      ,
-        input      [      LOGQ-1:0] inv2   ,
-        input      [      LOGQ+1:0] mu     ,
-        input      [           1:0] mode   ,
-        input      [         B-1:0] i_data ,
-        output reg                  i_ready,
-        input                       i_valid,
-        input                       o_dis  ,
-        output reg [         B-1:0] o_data ,
-        input                       o_read ,
+        input                       clk      ,
+        input                       rst      ,
+        input      [           3:0] cmd      ,
+        input      [           3:0] op       ,
+        input                       otf      ,
+        input      [   LOGLOGN-1:0] logn     ,
+        input      [   LOGLOGQ-1:0] k        ,
+        input      [   LOGLOGQ-1:0] d        ,        
+        input      [      LOGQ-1:0] q        ,
+        input      [      LOGQ-1:0] inv2     ,
+        input      [    LOGQ*2-1:0] mu       ,
+        input      [           1:0] mode     ,
+        input      [         B-1:0] i_data   ,
+        output reg                  i_ready  ,
+        input                       i_valid  ,
+        input                       o_dis    ,
+        input                       floor    ,
+        output reg [         B-1:0] o_data   ,
+        input                       o_read   ,
 
-        output reg                  o_valid,
-        output reg [LOGN+LOGWB-1:0] io_word,
-        output reg                  done   ,
-        output reg                  busy   ,
+        output reg                  o_valid  ,
+        output reg [LOGN+LOGWB-1:0] io_word  ,
+        output reg                  done     ,
+        output reg                  busy     ,
         output reg                  error
    );
 
@@ -71,6 +72,8 @@ localparam ST_ADDSUB       = 5'd12;
 localparam ST_ENCODE0      = 5'd13;
 localparam ST_ENCODE1      = 5'd14;
 localparam ST_DECODE       = 5'd15;
+localparam ST_SUM0         = 5'd16;
+localparam ST_SUM1         = 5'd17;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -103,7 +106,7 @@ wire [LOGN+LOGWB :0] ctr0_p1;
 reg [LOGN-1:0] ctr2_d;
 reg ctr2_d_set;
 reg wpoly, upoly_ntt, upoly_intt, upoly_mul, wpsi, wpsi_delta, upsi, wq, pwm_idx, upoly_encode;
-reg ntt_rcv_bu, pwm_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu;
+reg ntt_rcv_bu, pwm_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu, sum_rcv_bu;
 reg ctr_all_rst;
 reg done_set, done_int;
 reg o_valid_int;
@@ -117,6 +120,7 @@ wire [LOGLOGN-1:0] logn_m1;
 wire [LOGN   -1:0] n_over2;
 wire [LOGN   -2:0] n_over4;
 wire [LOGN   -1:0] logn_m1_shft_m1;
+wire [LOGN   -1:0] logn_m1_shft_m1_ctr2;
 wire [LOGN+LOGWB  :0] num_words;
 wire [LOGN+LOGWB-1:0] num_words_m1;
 wire [LOGN+LOGWB-1:0] num_words_over2;
@@ -192,6 +196,7 @@ assign logn_m1 = logn - 1;
 assign n_over2 = 1 << logn_m1;
 assign n_over4 = n_over2 >> 1;
 assign logn_m1_shft_m1 = n_over2 - 1;
+assign logn_m1_shft_m1_ctr2 = logn_m1_shft_m1 >> ctr2;
 assign num_words = ((LOGQ/B) << logn);
 assign num_words_m1 = num_words - 1;
 assign num_words_over2 = num_words >> 1;
@@ -239,16 +244,16 @@ assign coeff_ram_p0_din   = (wpoly                   ) ?   i_data      :
                             (upoly_mul               ) ?   M_o         : 
                             (upoly_encode            ) ?   encode_out  : 
                           /*(upoly_ntt | upoly_intt  ) ?*/ A_o  /*: 0*/;
-assign coeff_ram_p0_raddr = (op == `OP_INTT && !pwm_idx) ? (ctr0 << 1)  : 
-                                                            ctr0        ;
+assign coeff_ram_p0_raddr = ((op == `OP_INTT || op == `OP_SUM) && !pwm_idx) ? (ctr0 << 1)  : 
+                                                                               ctr0        ;
 
 assign coeff_ram_p1_wen   =  upoly_ntt | upoly_intt;
 assign coeff_ram_p1_waddr = (upoly_ntt ) ?  (ctr1 << 1) + 1   : 
                           /*(upoly_intt) ?*/ ctr1 + n_over2 /*: 0*/;
 assign coeff_ram_p1_din   =  B_o;
-assign coeff_ram_p1_raddr = (pwm_idx             ) ?  ctr0             : 
-                            (op == `OP_INTT      ) ? ((ctr0 << 1) + 1) :  
-                                                     (ctr0 + n_over2)  ;
+assign coeff_ram_p1_raddr = (pwm_idx                        ) ?  ctr0             : 
+                            (op == `OP_INTT || op == `OP_SUM) ? ((ctr0 << 1) + 1) :  
+                                                                (ctr0 + n_over2)  ;
 // todo: check pwm_idx, use `OP_PWM if posslbe
 
 assign maskS    = (1 << ctr2) - 1 ;
@@ -446,13 +451,14 @@ butterfly #(
     .clk (clk  ),
     .op  (op   ),
     .mode(mode ),
+    .floor(floor),
     .A   (A_i  ),
     .B   (B_i  ),
     .PSI (psi_i),
     .Q   (q    ),
     .MU  (mu   ),
     .inv2(inv2 ),
-    .logq(logq ),
+    .k   (k    ),
     .d   (d    ),
     .E   (A_o  ),
     .O   (B_o  ),
@@ -577,6 +583,7 @@ always @(*) begin
     o_valid_int = 0;
     pwm_idx = 0;
     ntt_rcv_bu = 0;
+    sum_rcv_bu = 0;
     ntt_otf_feed_bu = 0;
     ntt_otf_rcv_bu = 0;
     pwm_rcv_bu = 0;
@@ -766,8 +773,10 @@ always @(*) begin
         ST_PWM1: begin
 
             busy = 1;
-            if (((otf == 1) && (ctr1 == logn_m1_shft_m1)) || (ctr1 == n_m1)) begin
-                next_state = ST_POLY_OUT;
+            if ((sr_x && op == `OP_DECOMPRESS) || sr_o) begin
+                if (((otf == 1) && (ctr1 == logn_m1_shft_m1)) || (ctr1 == n_m1)) begin
+                    next_state = ST_POLY_OUT;
+                end
             end
 
             pwm_rcv_bu = 1;
@@ -800,7 +809,7 @@ always @(*) begin
                 ctr2_inc = 1; // go to next stage
             end
             else if (/*!PRLLOUT && */(ctr1 == logn_m1_shft_m1)) begin
-                    next_state = ST_POLY_OUT;
+                next_state = ST_POLY_OUT;
             end
 
             if (otf == 1 && (ctr2_d == logn_m1))begin
@@ -809,7 +818,38 @@ always @(*) begin
             ntt_rcv_bu = 1;
 
         end
-        
+        ST_SUM0: begin
+
+            busy = 1;
+            sr_i = 1;
+            if (ctr0 == (logn_m1_shft_m1_ctr2)) begin
+                ctr0_rst = 1;
+                next_state = ST_SUM1;
+                ctr2_d_set = 1;
+            end
+            else begin
+                ctr0_inc = 1;                
+            end
+
+            sum_rcv_bu = 1;
+
+        end
+        ST_SUM1: begin
+
+            busy = 1;
+            if ((ctr1 == logn_m1_shft_m1_ctr2)) begin
+                if (ctr2_d != logn_m1) begin
+                    next_state = ST_SUM0;
+                    ctr2_inc = 1; // go to next stage                        
+                end
+                else begin
+                    next_state = ST_POLY_OUT;                    
+                end
+            end
+
+            sum_rcv_bu = 1;
+
+        end        
         ST_POLY_OUT: begin
 
             if (!o_dis) begin
@@ -818,7 +858,7 @@ always @(*) begin
                 coeff_ram_p0_rsel = (op == `OP_NTT || op == `OP_INTT) ? logn & 1'b1 : 1'b0;
                 busy = 1;
                 if (o_read) begin
-                    if (ctr0 == num_words_m1 || ((op == `OP_ENCODE) && (ctr0_p1 == ctr1))) begin
+                    if (ctr0 == num_words_m1 || ((op == `OP_ENCODE) && (ctr0_p1 == ctr1)) || (op == `OP_SUM)) begin
                         if (ntt_otf) begin
                             if (ctr1 == n_m1) begin
                                 next_state = ST_IDLE;
@@ -913,6 +953,16 @@ always @(*) begin
             end
         end
     end
+    else if (sum_rcv_bu) begin
+        if (sr_t) begin
+            if (ctr1 == (logn_m1_shft_m1_ctr2)) begin
+                ctr1_rst = 1;
+            end
+            else
+                ctr1_inc = 1;
+            upoly_mul = 1;
+        end
+    end
 
 
 end
@@ -927,6 +977,7 @@ always @(*) begin
         `OP_PWM        : next_state_op = ST_PWM0;
         `OP_ADD        : next_state_op = ST_ADDSUB;
         `OP_SUB        : next_state_op = ST_ADDSUB;
+        `OP_SUM        : next_state_op = ST_SUM0;
         `OP_COMPRESS   : next_state_op = ST_PWM0;
         `OP_DECOMPRESS : next_state_op = ST_PWM0;
         `OP_ENCODE     : next_state_op = ST_ENCODE0;

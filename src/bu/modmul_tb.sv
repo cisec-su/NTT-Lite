@@ -26,8 +26,9 @@ integer j    = 0;
 reg                       clk ;
 mode_mul_t                mode;
 reg         [LOGQ-1:0]    Q   ;
-reg         [LOGQ-1:0]    Q_dual;
-reg         [LOGQ+1:0]    MU  ;
+wire        [LOGQ-1:0]    Q_dual;
+reg         [LOGQ*2-1:0]    MU  ;
+wire        [LOGQ*2-1:0]    MU  ;
 reg         [LOGLOGQ-1:0] logq;
 reg         [LOGQ-1:0]    A   ;
 reg         [LOGQ-1:0]    B   ;
@@ -64,7 +65,8 @@ else begin
     assign D_mx = D;
 end
 
-assign Q_dual = (mode == MUL_SINGLE) ? Q : {Q[LOGQ0-1:0], Q[LOGQ0-1:0]};
+assign Q_dual  = (mode == MUL_SINGLE) ? Q  : {Q[LOGQ0-1:0], Q[LOGQ0-1:0]};
+assign MU_dual = (mode == MUL_SINGLE) ? MU : {MU[LOGQ0-1:0], MU[LOGQ0-1:0]};
 
 
 modmul #(
@@ -72,9 +74,8 @@ modmul #(
 ) modmul_inst (
     .clk (clk ),
     .mode(mode),
-    .Q   (Q   ),
-    .MU  (MU  ),
-    .logq(logq),
+    .Q   (Q_dual),
+    .MU  (MU_dual),
     .A   (A   ),
     .B   (B   ),
     .E   (0   ),
@@ -100,7 +101,7 @@ initial begin
         for (j = 0; j < TEST_NUM_OUTER; j = j + 1) begin
             #0.1
             Q  = ({$urandom(2*j ),$urandom(2*j  + 1)} % ((1 << logq) - 1)) | (1 << (logq - 1));
-            MU = (1 << ({{(LOGQ+1){1'b0}},logq} << 1)) / {{(LOGQ+1){1'b0}},Q};
+            MU = (1 << ({{(LOGQ+1){1'b0}},LOGQ} << 1)) / {{(LOGQ+1){1'b0}},Q};
             for (i = 0; i < TEST_NUM + L; i = i + 1) begin
                 #0.1
 
@@ -146,7 +147,7 @@ initial begin
         for (j = 0; j < TEST_NUM_OUTER; j = j + 1) begin
             #0.1
             Q  = ({$urandom(2*j ),$urandom(2*j  + 1)} % ((1 << logq) - 1)) | (1 << (logq - 1));
-            MU = (1 << ({{(LOGQ+1){1'b0}},logq} << 1)) / {{(LOGQ+1){1'b0}},Q};
+            MU = (1 << ({{(LOGQ+1){1'b0}},LOGQ0} << 1)) / {{(LOGQ+1){1'b0}},Q};
             for (i = 0; i < TEST_NUM + L; i = i + 1) begin
                 #0.1
 
@@ -198,7 +199,7 @@ initial begin
         for (j = 0; j < TEST_NUM_OUTER; j = j + 1) begin
             #0.1
             Q  = ({$urandom(2*j ),$urandom(2*j  + 1)} % ((1 << logq) - 1)) | (1 << (logq - 1));
-            MU = (1 << ({{(LOGQ+1){1'b0}},logq} << 1)) / {{(LOGQ+1){1'b0}},Q};
+            MU = (1 << ({{(LOGQ+1){1'b0}},LOGQ0} << 1)) / {{(LOGQ+1){1'b0}},Q};
             for (i = 0; i < TEST_NUM + L; i = i + 1) begin
                 #0.1
 

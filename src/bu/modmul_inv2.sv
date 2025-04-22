@@ -5,7 +5,7 @@ module modmul_inv2
     (
         input  [LOGQ    -1:0] A   ,
         input  [LOGQ    -1:0] inv2,
-        input  [LOGQ    -1:0] q   ,        
+        input  [LOGQ    -1:0] Q   ,        
         input                 dual,
         output [LOGQ    -1:0] C
     );
@@ -65,7 +65,7 @@ modadd  #(
     .A   (asr_out  ),
     .B   (inv2_dual),
     .dual(dual     ),
-    .q   (q        ),
+    .Q   (Q        ),
     .C   (add_out  ) 
 );
 

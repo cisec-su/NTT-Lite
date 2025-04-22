@@ -38,7 +38,7 @@ endfunction
 
 function int mac_std_dual_32x34_loge0(input mac_std_dual_32x34_params_t params);
     if (params.MODE_E == SUB_E) begin
-        mac_std_dual_32x34_loge0 = 18;
+        mac_std_dual_32x34_loge0 = 17;
     end
     else begin
         mac_std_dual_32x34_loge0 = 16;

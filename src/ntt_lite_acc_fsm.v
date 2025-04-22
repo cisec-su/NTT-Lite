@@ -30,8 +30,7 @@ module ntt_lite_acc_fsm
         input      [31:0]          ctrl_dout_addr,
         
         input      [3:0]           ctrl_cmd,
-        input      [LOGLOGN-1:0]   ctrl_logn,
-        input      [1:0]           ctrl_logq
+        input      [LOGLOGN-1:0]   ctrl_logn
     );
 
 
@@ -70,12 +69,7 @@ begin
         case(cstate)
         ST_IDLE:
         begin
-            /*if(ctrl_cmd == 2)
-            begin
-                LIMIT <= (1 << ctrl_logq);
-                cstate <= ST_GET0;
-            end
-            else */if(ctrl_cmd == 3)
+            if(ctrl_cmd == 3)
             begin
                 LIMIT <= (1 << ctrl_logn);
                 cstate <= ST_GET0;
@@ -88,14 +82,14 @@ begin
             else if(fsm_o_valid)
             begin
                 cstate <= ST_PUT;
-                LIMIT <= (1 << ctrl_logn);
+                // LIMIT <= (1 << ctrl_logn);
             end
         end
         ST_GET0:
             cstate <= ST_GET;
         ST_GET:
         begin
-            if(cnt == (LIMIT-1))
+            if(cnt >= (LIMIT-1))
                 cstate <= ST_GET2; 
         end
         ST_GET2:
@@ -137,15 +131,14 @@ begin
     end
     ST_GET:
     begin
+        fsm_i_data = mem_i_data;
         if(fsm_i_ready)
         begin  
             mem_addr = ctrl_din_addr + (cnt << 2);
-            fsm_i_data = mem_i_data;
             cnt_up = 1;
         end
-        if(cnt == (LIMIT-1))
+        if(cnt >= (LIMIT-1))
             cnt_rst = 1;
-       
     end
     ST_GET2:
     begin
@@ -158,9 +151,6 @@ begin
             mem_addr = ctrl_dout_addr + (fsm_io_word << 2);
             mem_we = fsm_o_valid;
             fsm_o_read = mem_o_ready;
-            // cnt_up = mem_o_ready;
-            // if(fsm_io_word == (LIMIT-1))
-            //     cnt_rst = 1;
         end
     end
     endcase    

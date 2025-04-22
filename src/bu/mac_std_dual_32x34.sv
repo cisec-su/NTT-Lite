@@ -2,13 +2,14 @@
 
 module mac_std_dual_32x34
    #(  
-        parameter          LOGB    = 34    ,
-        parameter mode_e_t MODE_E  = DIS_E ,
-        parameter          FF_IN_A = 1     ,
-        parameter          FF_IN_B = 1     ,
-        parameter          FF_IN_E = 0     ,
-        parameter          FF_MUL  = 1     ,
-        parameter          FF_OUT  = 1
+        parameter          LOGB     = 34    ,
+        parameter mode_e_t MODE_E   = DIS_E ,
+        parameter          FF_IN_A  = 1     ,
+        parameter          FF_IN_B  = 1     ,
+        parameter          FF_IN_E  = 0     ,
+        parameter          FF_MUL   = 1     ,
+        parameter          FF_OUT   = 1     ,
+        parameter          OPT_HIGH = 0
     )
     (
         input               clk     ,
@@ -21,14 +22,9 @@ module mac_std_dual_32x34
 
 ///////////////////////////// input check ///////////////////////////////
 
-generate
-    if (LOGB > 34) begin
-        LOGB_CANT_BE_GREATER_THAN_34();
-    end
-    else if (LOGB % 2) begin
-        LOGB_MUST_BE_EVEN();
-    end
-endgenerate
+if (LOGB != 34 && LOGB != 32) begin
+    LOGB_MUST_BE_32_OR_34();
+end
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -74,6 +70,7 @@ wire [DSP_B_U-1:0] B_i_mx[0:N_B-1];
 wire [LOGE-1:0] E_mx_0;
 reg  [LOGE-1:0] E_q_0;
 wire [LOGE-1:0] E_mx_1;
+wire [LOGE0-1:0] E_mx_1_H;
 reg  [LOGE-1:0] E_q_1;
 
 (* use_dsp = "yes" *) wire [DSP_M_U-1:0] P [0:N_A-1][0:N_B-1];
@@ -88,6 +85,11 @@ reg  [LOGC-1:0] S_q;
 
 wire [LOGD0+1:0] T;
 reg  [LOGC-1:0] S_int;
+wire dual;
+
+wire c;
+reg  c_q;
+wire c_mx;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -135,8 +137,14 @@ end
 
 for (genvar i = 0; i < N_A; i = i + 1) begin
     for (genvar j = 0; j < N_B; j = j + 1) begin
-        assign P_mx[i][j] = (FF_MUL) ? P_q[i][j] : P[i][j];
+        if (!(OPT_HIGH && (i == N_A - 1) && j == (N_B - 1))) begin
+            assign P_mx[i][j] = (FF_MUL) ? P_q[i][j] : P[i][j];
+        end
     end
+end
+
+if (OPT_HIGH) begin
+    assign c_mx = (FF_MUL) ? c_q : c;
 end
 
 if (MODE_E != DIS_E) begin
@@ -152,10 +160,21 @@ assign C = (FF_OUT) ? S_q : S;
 
 ///////////////////////////// multiplication ////////////////////////////
 
-for (genvar i = 0; i < N_A; i = i + 1) begin
-    for (genvar j = 0; j < N_B; j = j + 1) begin
-        assign P[i][j] = A_i_mx[i] * B_i_mx[j];
-    end
+assign P[0][0] = A_i_mx[0] * B_i_mx[0];
+// when OPT_HIGH is enabled, P[1][1] is not calculated. As P[1][1] is required for dual mode, we place its computation to P[0][1]
+if (OPT_HIGH) begin
+    assign P[0][1] = ((mode_mul == MUL_SINGLE) ? A_i_mx[0] : A_i_mx[1]) * B_i_mx[1];    
+end
+else begin
+    assign P[0][1] = A_i_mx[0] * B_i_mx[1]; 
+end
+assign P[1][0] = A_i_mx[1] * B_i_mx[0];
+if (!OPT_HIGH) begin
+    assign P[1][1] = A_i_mx[1] * B_i_mx[1];
+end
+
+if (OPT_HIGH) begin
+    assign c = A_i_mx[N_A - 1] & B_i_mx[N_B - 1];
 end
 
 /////////////////////////////////////////////////////////////////////////
@@ -173,17 +192,19 @@ always @(*) begin
     case (mode_mul)
         MUL_SINGLE:
         begin
-            S_int = (T << (DSP_A_U)) + {P_mx[1][1],P_mx[0][0]};
+            S_int = (T << (DSP_A_U)) + ((OPT_HIGH) ? {c_mx, P_mx[0][0]} : {P_mx[1][1], P_mx[0][0]});
         end
         MUL_DUAL:
         begin
             S_int[LOGC0-1:    0] = P_mx[0][0];
-            S_int[LOGC -1:LOGC0] = P_mx[1][1];
+            S_int[LOGC -1:LOGC0] = (OPT_HIGH) ? P_mx[0][1] : P_mx[1][1];
         end
         MUL_POLY:
         begin
-            S_int[LOGC0-1:    0] = P_mx[0][0] + P_mx[1][1];
-            S_int[LOGC -1:LOGC0] = T;
+            if (OPT_HIGH == 0) begin
+                S_int[LOGC0-1:    0] = P_mx[0][0] + P_mx[1][1];
+                S_int[LOGC -1:LOGC0] = T;                    
+            end
         end
     endcase
 end
@@ -191,15 +212,19 @@ end
 if (MODE_E == DIS_E) begin
     assign S = S_int;
 end
-else if (MODE_E == ADD_E) begin
-    assign S0 = S_int[LOGC0-1:    0] + ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGC0-1:0] : E_mx_1[LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
-    assign S1 = S_int[LOGC -1:LOGC0] + ((mode_mul == MUL_SINGLE) ? S0[LOGC0]         : E_mx_1[LOGE -1:LOGE0]);
-    assign S = {S1[LOGC0-1:0], S0[LOGC0-1:0]};
-end
-else if (MODE_E == SUB_E) begin
-    assign S0 = S_int[LOGC0-1:    0] - ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGC0-1:0]                 : E_mx_1[LOGE0-1:    0]); // S[LOGC0] is the borrow-bit
-    assign S1 = S_int[LOGC -1:LOGC0] - ((mode_mul == MUL_SINGLE) ? E_mx_1[LOGE -1:LOGC0] + S0[LOGC0] : E_mx_1[LOGE -1:LOGE0]);
-    assign S = {S1[LOGC0-1:0], S0[LOGC0-1:0]};
+else begin
+    localparam MODE = (MODE_E == ADD_E) ? 0 : 1;
+    assign dual = mode_mul != MUL_SINGLE;
+    addsub_dual #(
+        .MODE (MODE ),
+        .LOGA0(LOGC0),
+        .LOGB0(LOGE0)
+    ) addsub_inst (
+        .A   (S_int ),
+        .B   (E_mx_1),
+        .dual(dual  ),
+        .C   (S     )
+    );
 end
 
 /////////////////////////////////////////////////////////////////////////
@@ -233,10 +258,18 @@ end
 if (FF_MUL) begin
     for (genvar i = 0; i < N_A; i = i + 1) begin
         for (genvar j = 0; j < N_B; j = j + 1) begin
-            always @(posedge clk) begin
-                P_q[i][j] <= P[i][j];
+            if (!(OPT_HIGH && (i == N_A - 1) && j == (N_B - 1))) begin
+                always @(posedge clk) begin
+                    P_q[i][j] <= P[i][j];
+                end
             end
         end
+    end
+end
+
+if (FF_MUL && OPT_HIGH) begin
+    always @(posedge clk) begin
+        c_q <= c;
     end
 end
 
