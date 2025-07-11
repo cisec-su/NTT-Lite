@@ -24,6 +24,8 @@ module ntt_lite
         input      [           1:0] mode     ,
         input      [         B-1:0] i_data   ,
         output reg                  i_ready  ,
+        input                       op_switch,
+        input                       rhs_const,
         input                       i_valid  ,
         input                       o_dis    ,
         input                       floor    ,
@@ -260,9 +262,10 @@ assign maskS    = (1 << ctr2) - 1 ;
 assign maskIS   = ((1 << (logn_m1 - ctr2)) - 1);
 
 assign twiddle_ram_wen   =  wpsi | upsi;
-assign twiddle_ram_waddr = (wpsi) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
+assign twiddle_ram_waddr = (wpsi & rhs_const) ? num_words_m1 : (wpsi) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
 assign twiddle_ram_din   = (wpsi) ? i_data : /*(upsi) ?*/ M_o/* : 0*/;
 assign twiddle_ram_raddr = (EN_NTT_OTF && ntt_otf_feed_bu) ?                    ctr2            : 
+                           (pwm_idx & rhs_const          ) ?                    num_words_m1    :                            
                            (pwm_idx                      ) ?                    ctr0            : 
                            (op == `OP_INTT               ) ? (  maskIS       + (ctr0 & maskIS)) : 
                                                              (  maskS        + (ctr0 & maskS )) ; 
@@ -639,7 +642,7 @@ always @(*) begin
             i_ready = 1;
             if (i_valid) begin
                 wpsi = 1;
-                if (ctr0 == num_words_m1) begin
+                if ((ctr0 == num_words_m1) || rhs_const) begin
                     if (EN_NTT_OTF && otf) begin
                         next_state = ST_TWIDDLE_OTF;
                     end

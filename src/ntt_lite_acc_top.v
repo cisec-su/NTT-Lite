@@ -79,6 +79,7 @@ wire ctrl_done;
 wire ctrl_busy;
 wire ctrl_o_dis;
 wire ctrl_floor;
+wire ctrl_rhs_const;
 
 // CTRL & FSM
 wire [31:0] ctrl_din_addr;
@@ -107,6 +108,7 @@ ntt_lite #(
     .d          (ctrl_d     ),
     .o_dis      (ctrl_o_dis ),
     .floor      (ctrl_floor ),
+    .rhs_const  (ctrl_rhs_const),
     .q          (ctrl_q     ),
     .mu         (ctrl_mu    ),
     .inv2       (ctrl_inv2  ),
@@ -137,6 +139,7 @@ ntt_lite_ctrl #(
     .k          (ctrl_k     ),
     .d          (ctrl_d     ),
     .o_dis      (ctrl_o_dis ),
+    .rhs_const  (ctrl_rhs_const),
     .floor      (ctrl_floor ),
     .mode       (ctrl_mode  ),
     .op         (ctrl_op    ),
@@ -235,7 +238,8 @@ ntt_lite_acc_fsm #(
     .ctrl_din_addr  (ctrl_din_addr  ),
     .ctrl_dout_addr (ctrl_dout_addr ),
     .ctrl_logn      (ctrl_logn      ),
-    .ctrl_cmd       (ctrl_cmd       )
+    .ctrl_cmd       (ctrl_cmd       ),
+    .ctrl_rhs_const (ctrl_rhs_const )
 );
 
 

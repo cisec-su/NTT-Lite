@@ -6,22 +6,22 @@
       <db_ref path="ntt_lite_tb_behav.wdb" id="1">
          <top_modules>
             <top_module name="\$unit_asr_sv_321071272 " />
-            <top_module name="\$unit_intmul_std_dual_64x64_sv_2464139454 " />
+            <top_module name="\$unit_mac_std_dual_32x34_tb_sv_3672836782 " />
             <top_module name="glbl" />
             <top_module name="ntt_lite_tb" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="91,721.416 ns"></ZoomStartTime>
-      <ZoomEndTime time="92,146.917 ns"></ZoomEndTime>
-      <Cursor1Time time="92,076.000 ns"></Cursor1Time>
+      <ZoomStartTime time="184.385000 us"></ZoomStartTime>
+      <ZoomEndTime time="201.485001 us"></ZoomEndTime>
+      <Cursor1Time time="187.235000 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="176"></NameColumnWidth>
-      <ValueColumnWidth column_width="160"></ValueColumnWidth>
+      <ValueColumnWidth column_width="156"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="33" />
+   <WVObjectSize size="38" />
    <wave_markers>
       <marker label="" time="4538310" />
       <marker label="" time="5150000" />
@@ -119,6 +119,22 @@
       <obj_property name="ElementShortName">coeff_ram_p1_dout[31:0]</obj_property>
       <obj_property name="ObjectShortName">coeff_ram_p1_dout[31:0]</obj_property>
    </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_ram_raddr">
+      <obj_property name="ElementShortName">twiddle_ram_raddr[7:0]</obj_property>
+      <obj_property name="ObjectShortName">twiddle_ram_raddr[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_ram_waddr">
+      <obj_property name="ElementShortName">twiddle_ram_waddr[7:0]</obj_property>
+      <obj_property name="ObjectShortName">twiddle_ram_waddr[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_ram_din">
+      <obj_property name="ElementShortName">twiddle_ram_din[31:0]</obj_property>
+      <obj_property name="ObjectShortName">twiddle_ram_din[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_ram_wen">
+      <obj_property name="ElementShortName">twiddle_ram_wen</obj_property>
+      <obj_property name="ObjectShortName">twiddle_ram_wen</obj_property>
+   </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/A">
       <obj_property name="ElementShortName">A[31:0]</obj_property>
       <obj_property name="ObjectShortName">A[31:0]</obj_property>
@@ -136,6 +152,10 @@
       <obj_property name="ObjectShortName">M[31:0]</obj_property>
       <obj_property name="CustomSignalColor">#FF00FF</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/psi_i">
+      <obj_property name="ElementShortName">psi_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">psi_i[31:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_i">
       <obj_property name="ElementShortName">sr_i</obj_property>

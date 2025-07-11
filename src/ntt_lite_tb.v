@@ -39,6 +39,7 @@ reg [LOGQ-1:0] poly_out [0:N-1];
 reg  [3  :0] cmd;
 reg  [3  :0] op;
 reg          otf;
+reg          rhs_const;
 reg          dual;
 reg  [1  :0] mode;
 reg  [LOGLOGN-1:0] logn;
@@ -79,6 +80,7 @@ ntt_lite #(
     .inv2(inv2),
     .d(d),
     .o_dis(1'b0),
+    .rhs_const(rhs_const),
     .mu(mu),
     .i_data(i_data),
     .i_valid(i_valid),
@@ -114,6 +116,7 @@ initial begin
 
     otf = 1'b0;
     o_read = 1'b0;
+    rhs_const = 1'b0;
 
     q = meta[0];
     mu_64 = meta[1];
@@ -1062,6 +1065,126 @@ initial begin
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+    $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
+    $readmemh("../../../../../test/add_out_dual_const.txt" , poly_out);
+
+    op = `OP_ADD;
+    mode = `MODE_DUAL;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+    rhs_const = 1'b1;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS DUAL ADD CONST)");
+    else begin
+        $display("(FAIL DUAL ADD CONST)");
+        flag1 = 1;
+    end
+
+    rhs_const = 1'b0;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    $readmemh("../../../../../test/poly_in_single.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
+    $readmemh("../../../../../test/add_out_single_const.txt" , poly_out);
+
+    op = `OP_ADD;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+    rhs_const = 1'b1;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS DUAL SINGLE CONST)");
+    else begin
+        $display("(FAIL DUAL SINGLE CONST)");
+        flag1 = 1;
+    end
+
+    rhs_const = 1'b0;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     if (flag1 == 0)

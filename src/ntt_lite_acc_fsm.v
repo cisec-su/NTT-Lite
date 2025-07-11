@@ -28,7 +28,8 @@ module ntt_lite_acc_fsm
         
         input      [31:0]          ctrl_din_addr,
         input      [31:0]          ctrl_dout_addr,
-        
+
+        input                      ctrl_rhs_const,
         input      [3:0]           ctrl_cmd,
         input      [LOGLOGN-1:0]   ctrl_logn
     );
@@ -69,12 +70,12 @@ begin
         case(cstate)
         ST_IDLE:
         begin
-            if(ctrl_cmd == 3)
+            if(ctrl_cmd == `CMD_LOAD_TWIDDLE)
             begin
-                LIMIT <= (1 << ctrl_logn);
+                LIMIT <= (ctrl_rhs_const) ? 1 : (1 << ctrl_logn);
                 cstate <= ST_GET0;
             end
-            else if(ctrl_cmd == 4)
+            else if(ctrl_cmd == `CMD_LOAD_POLY)
             begin
                 LIMIT <= (1 << ctrl_logn);
                 cstate <= ST_GET0;

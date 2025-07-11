@@ -18,7 +18,7 @@ logn = 7
 n = 1 << logn
 mu_64 = (1 << 64) // q
 mu_32 = (1 << 32) // q
-log = 12
+log = 23
 b = 32
 d = 10
 inv2 = pow(2, -1, q)
@@ -107,6 +107,19 @@ with open("add_out_dual.txt", "w") as f:
         t0 = (A_0[i] + B_0[i]) % q
         t1 = (A_1[i] + B_1[i]) % q
         f.write(hex((t1 << (b // 2)) + t0)[2:] + "\n")
+
+
+with open("add_out_dual_const.txt", "w") as f:
+    for i in range(n):
+        t0 = (A_0[i] + B_0[0]) % q
+        t1 = (A_1[i] + B_1[0]) % q
+        f.write(hex((t1 << (b // 2)) + t0)[2:] + "\n")
+
+
+with open("add_out_single_const.txt", "w") as f:
+    for i in range(n):
+        t0 = (A_0[i] + B_0[0]) % q
+        f.write(hex(t0)[2:] + "\n")
 
 
 with open("sub_out_single.txt", "w") as f:

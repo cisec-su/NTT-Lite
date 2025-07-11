@@ -21,6 +21,7 @@ module ntt_lite_ctrl
         output reg [ 5:0]  d,            // (Write)
         output reg         floor,        // (Write)        
         output reg         o_dis,        // (Write)        
+        output reg         rhs_const,    // (Write)        
         output reg [31:0]  q,            // (Read/Write)
         output reg [31:0]  inv2,            // (Read/Write)        
         output reg [63:0]  mu,           // (Read/Write)
@@ -63,7 +64,8 @@ localparam CTRL_MODE_LEN      = CTRL_MODE_MSB - CTRL_MODE_LSB + 1;
 localparam CTRL_D_LSB         = 21;
 localparam CTRL_D_MSB         = 26;
 localparam CTRL_D_LEN         = CTRL_D_MSB - CTRL_D_LSB + 1;
-localparam CTRL_FLOOR_BIT = 28;
+localparam CTRL_RHS_CONST_BIT = 27;
+localparam CTRL_FLOOR_BIT     = 28;
 localparam CTRL_O_DIS_BIT     = 29;
 localparam CTRL_BUSY_BIT      = 30;
 localparam CTRL_DONE_BIT      = 31;
@@ -109,7 +111,8 @@ always @(posedge clk) begin
         din_addr  <= 32'd0;
         dout_addr <= 32'd0;
         stride    <= 32'd0;
-        floor <= 1'b0;
+        floor     <= 1'b0;
+        rhs_const <= 1'b0;
         o_dis     <= 1'b0;
     end else if (we) begin
         case (addr - BASE_ADDR)
@@ -121,6 +124,7 @@ always @(posedge clk) begin
                 op        <= wdata[CTRL_OP_MSB  :CTRL_OP_LSB  ];
                 d         <= wdata[CTRL_D_MSB   :CTRL_D_LSB   ];
                 floor     <= wdata[CTRL_FLOOR_BIT];
+                rhs_const <= wdata[CTRL_RHS_CONST_BIT];
                 o_dis     <= wdata[CTRL_O_DIS_BIT];
             end
             DIN_ADDR    : din_addr  <= wdata;
