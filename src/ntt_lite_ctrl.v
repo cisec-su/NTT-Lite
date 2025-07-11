@@ -22,6 +22,7 @@ module ntt_lite_ctrl
         output reg         floor,        // (Write)        
         output reg         o_dis,        // (Write)        
         output reg         rhs_const,    // (Write)        
+        output reg         op_switch,    // (Write)        
         output reg [31:0]  q,            // (Read/Write)
         output reg [31:0]  inv2,            // (Read/Write)        
         output reg [63:0]  mu,           // (Read/Write)
@@ -54,7 +55,7 @@ localparam CTRL_LOGN_LEN      = CTRL_LOGN_MSB - CTRL_LOGN_LSB + 1;
 localparam CTRL_OP_LSB        = 8;
 localparam CTRL_OP_MSB        = 11;
 localparam CTRL_OP_LEN        = CTRL_OP_MSB - CTRL_OP_LSB + 1;
-localparam CTRL_OTF_BIT       = 12;
+localparam CTRL_OP_SWITCH_BIT = 12;
 localparam CTRL_K_LSB         = 13;
 localparam CTRL_K_MSB         = 18;
 localparam CTRL_K_LEN         = CTRL_K_MSB - CTRL_K_LSB + 1;
@@ -113,13 +114,14 @@ always @(posedge clk) begin
         stride    <= 32'd0;
         floor     <= 1'b0;
         rhs_const <= 1'b0;
+        op_switch <= 1'b0;
         o_dis     <= 1'b0;
     end else if (we) begin
         case (addr - BASE_ADDR)
             CTRL_ADDR: begin
                 logn      <= wdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB];
                 mode      <= wdata[CTRL_MODE_MSB:CTRL_MODE_LSB];
-                otf       <= wdata[CTRL_OTF_BIT];
+                op_switch <= wdata[CTRL_OP_SWITCH_BIT];
                 k         <= wdata[CTRL_K_MSB   :CTRL_K_LSB   ];
                 op        <= wdata[CTRL_OP_MSB  :CTRL_OP_LSB  ];
                 d         <= wdata[CTRL_D_MSB   :CTRL_D_LSB   ];
@@ -148,7 +150,6 @@ always @(posedge clk) begin
             CTRL_ADDR: begin
                 rdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB] <= logn;
                 rdata[CTRL_MODE_MSB:CTRL_MODE_LSB] <= mode;
-                rdata[CTRL_OTF_BIT]                <= otf;
                 rdata[CTRL_K_MSB   :CTRL_K_LSB   ] <= k;
                 rdata[CTRL_BUSY_BIT]               <= busy;
                 rdata[CTRL_DONE_BIT]               <= done_q | done;

@@ -73,7 +73,7 @@ begin
             if(ctrl_cmd == `CMD_LOAD_TWIDDLE)
             begin
                 LIMIT <= (ctrl_rhs_const) ? 1 : (1 << ctrl_logn);
-                cstate <= ST_GET0;
+                cstate <=  ST_GET0;
             end
             else if(ctrl_cmd == `CMD_LOAD_POLY)
             begin

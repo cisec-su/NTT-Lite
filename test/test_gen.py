@@ -122,6 +122,12 @@ with open("add_out_single_const.txt", "w") as f:
         f.write(hex(t0)[2:] + "\n")
 
 
+with open("sub_out_single_const_switched.txt", "w") as f:
+    for i in range(n):
+        t0 = (B_0[0] - A_0[i]) % q
+        f.write(hex(t0)[2:] + "\n")
+
+
 with open("sub_out_single.txt", "w") as f:
     for i in range(n):
         f.write(hex((A_0[i] - B_0[i]) % q )[2:] + "\n")

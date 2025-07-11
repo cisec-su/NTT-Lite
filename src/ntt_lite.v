@@ -212,9 +212,9 @@ assign ctr0_p1 = ctr0 + 1;
 
 ///////////////////// BU inputs /////////////////////////////////////////
 
-assign A_i      = coeff_ram_p0_dout;
+assign A_i      = (op_switch) ? twiddle_ram_dout  : coeff_ram_p0_dout;
 assign B_i      = (ntt_otf_feed_bu && EN_NTT_OTF) ? psi_delta[ctr3] : coeff_ram_p1_dout;
-assign psi_i    = twiddle_ram_dout;
+assign psi_i    = (op_switch) ? coeff_ram_p0_dout : twiddle_ram_dout;
 
 /////////////////////////////////////////////////////////////////////////
 
