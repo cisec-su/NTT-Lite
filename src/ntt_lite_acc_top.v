@@ -72,9 +72,9 @@ wire [LOGLOGQ-1:0] ctrl_d;
 wire [1:0] ctrl_mode;
 wire [3:0] ctrl_op;
 wire [LOGQ-1:0] ctrl_q;
-wire [LOGQ-1:0] ctrl_bound;
 wire [LOGQ*2-1:0] ctrl_mu;
 wire [LOGQ-1:0] ctrl_inv2;
+wire [LOGQ-1:0] ctrl_bound;
 wire ctrl_otf;
 wire ctrl_done;
 wire ctrl_busy;
@@ -157,7 +157,7 @@ ntt_lite_ctrl #(
     // fsm <-> ctrl
     .din_addr   (ctrl_din_addr ),
     .dout_addr  (ctrl_dout_addr),
-    .bound      (ctrl_bound)
+    .bound      (ctrl_bound )
 );
 
 

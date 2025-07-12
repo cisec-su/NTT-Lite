@@ -24,7 +24,7 @@ module ntt_lite_ctrl
         output reg         rhs_const,    // (Write)        
         output reg         op_switch,    // (Write)        
         output reg [31:0]  q,            // (Read/Write)
-        output reg [31:0]  inv2,            // (Read/Write)        
+        output reg [31:0]  inv2,         // (Read/Write)        
         output reg [63:0]  mu,           // (Read/Write)
         //data address registers
         output reg [31:0]  din_addr,     // (Write)

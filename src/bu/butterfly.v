@@ -43,12 +43,10 @@ wire [LOGT -1:0] mm_out_D;
 wire [LOGQ -1:0] add_in_A;
 wire [LOGQ -1:0] add_in_B;
 wire [LOGQ -1:0] add_out_C;
-wire [LOGQ -1:0] add_out_T;
 wire [LOGQ -1:0] sub_in_A;
 wire [LOGQ -1:0] sub_in_B;
 wire [LOGQ -1:0] sub_in_Q;
 wire [LOGQ -1:0] sub_out_C;
-wire [LOGQ -1:0] sub_out_Tq;
 wire [LOGQ -1:0] shift_in_0;
 wire [LOGQ -1:0] shift_out_0;
 wire [LOGQ -1:0] shift_in_1;
@@ -83,9 +81,6 @@ wire [LOGQ -1:0] decompose_pp_in_A1;
 wire [LOGQ -1:0] decompose_pp_in_T;
 wire [LOGQ -1:0] decompose_pp_out_B0;
 wire [LOGQ -1:0] decompose_pp_out_B1;
-wire [LOGQ -1:0] decompose_pp_add_in_A;
-wire [LOGQ -1:0] decompose_pp_add_in_B;
-wire [LOGQ -1:0] decompose_pp_add_out_C;
 
 
 assign mode_mul    = (mode == `MODE_POLY && op != `OP_PWM) ? `MODE_DUAL : 
@@ -144,12 +139,10 @@ assign mm_in_Q     = (op == `OP_DECOMPOSE                     ) ? inv2          
                                                                   Q_dual             ;
 assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A              :
                      (op == `OP_SUM                  ) ? A              :
-                     (op == `OP_DECOMPOSE            ) ? decompose_pp_add_in_A :                      
                                                          shift_out_1    ;
 assign add_in_B    = (op == `OP_INTT                 ) ? B              :
                      (op == `OP_SUM                  ) ? B              : 
                      (op == `OP_ADD                  ) ? PSI            :
-                     (op == `OP_DECOMPOSE            ) ? decompose_pp_add_in_B :
                                                          mm_out_C       ;
 assign sub_in_A    = (op == `OP_INTT || op == `OP_SUB) ? A              :
                      (op == `OP_DECOMPOSE            ) ? mm_out_C      : 
@@ -168,7 +161,7 @@ assign shift_in_1  = (op == `OP_INTT                 ) ? mm_inv2_out    :
 assign decompose_pp_in_A0 = sub_out_C;
 assign decompose_pp_in_A1 = mm_out_D;
 assign decompose_pp_in_T  = inv2;
-assign decompose_pp_add_out_C = add_out_T;
+
 
 assign mm_inv2_in  = shift_out_0;
 
@@ -235,7 +228,6 @@ modadd  #(
     .B   (add_in_B ),
     .dual(dual     ),
     .Q   (Q_dual   ),
-    .T   (add_out_T),
     .C   (add_out_C) 
 );
 
@@ -280,9 +272,6 @@ decompose_pp #(
     .T   (decompose_pp_in_T  ),
     .bound(bound             ),
     .q   (Q_dual             ),
-    .add_in_A(decompose_pp_add_in_A),
-    .add_in_B(decompose_pp_add_in_B),
-    .add_out_C(decompose_pp_add_out_C),
     .B0  (decompose_pp_out_B0),
     .B1  (decompose_pp_out_B1)
 );
