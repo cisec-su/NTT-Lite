@@ -29,7 +29,7 @@ module ntt_lite_ctrl
         //data address registers
         output reg [31:0]  din_addr,     // (Write)
         output reg [31:0]  dout_addr,    // (Write)
-        output reg [31:0]  stride,       // (Read/Write)
+        output reg [31:0]  bound,       // (Read/Write)
 
         input              busy,         // Busy status input
         input              done          // Done status input
@@ -39,7 +39,7 @@ module ntt_lite_ctrl
 localparam CTRL_ADDR      = 8'h00; // Offset for ctrl register
 localparam DIN_ADDR       = 8'h04; // Offset for din_addr register
 localparam DOUT_ADDR      = 8'h08; // Offset for dout_addr register
-localparam STRIDE_ADDR    = 8'h0C; // Offset for stride register
+localparam BOUND_ADDR     = 8'h0C; // Offset for bound register
 localparam Q_ADDR         = 8'h10; // Offset for coefficient modulus register
 localparam MU_ADDR_LOW    = 8'h14; // Offset for mu register lsb 32-bits
 localparam MU_ADDR_HIGH   = 8'h18; // Offset for mu register msb 2-bit
@@ -111,7 +111,7 @@ always @(posedge clk) begin
         mu    <= 64'd0;
         din_addr  <= 32'd0;
         dout_addr <= 32'd0;
-        stride    <= 32'd0;
+        bound     <= 32'd0;
         floor     <= 1'b0;
         rhs_const <= 1'b0;
         op_switch <= 1'b0;
@@ -131,7 +131,7 @@ always @(posedge clk) begin
             end
             DIN_ADDR    : din_addr  <= wdata;
             DOUT_ADDR   : dout_addr <= wdata;
-            STRIDE_ADDR : stride    <= wdata;
+            BOUND_ADDR  : bound     <= wdata;
             Q_ADDR      : q         <= wdata;
             MU_ADDR_LOW : mu[31: 0] <= wdata;
             MU_ADDR_HIGH: mu[63:32] <= wdata;
@@ -156,7 +156,7 @@ always @(posedge clk) begin
             end
             DIN_ADDR    : rdata <= 32'd0;
             DOUT_ADDR   : rdata <= 32'd0;
-            STRIDE_ADDR : rdata <= stride;
+            BOUND_ADDR  : rdata <= bound;
             Q_ADDR      : rdata <= q;
             MU_ADDR_LOW : rdata <= mu[31: 0];
             MU_ADDR_HIGH: rdata <= mu[63:32];

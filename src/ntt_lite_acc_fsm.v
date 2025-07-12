@@ -83,7 +83,6 @@ begin
             else if(fsm_o_valid)
             begin
                 cstate <= ST_PUT;
-                // LIMIT <= (1 << ctrl_logn);
             end
         end
         ST_GET0:
@@ -150,7 +149,7 @@ begin
         if(fsm_o_valid)
         begin  
             mem_addr = ctrl_dout_addr + (fsm_io_word << 2);
-            mem_we = fsm_o_valid;
+            mem_we = 1'b1;
             fsm_o_read = mem_o_ready;
         end
     end

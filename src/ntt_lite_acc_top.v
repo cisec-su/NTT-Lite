@@ -72,6 +72,7 @@ wire [LOGLOGQ-1:0] ctrl_d;
 wire [1:0] ctrl_mode;
 wire [3:0] ctrl_op;
 wire [LOGQ-1:0] ctrl_q;
+wire [LOGQ-1:0] ctrl_bound;
 wire [LOGQ*2-1:0] ctrl_mu;
 wire [LOGQ-1:0] ctrl_inv2;
 wire ctrl_otf;
@@ -114,6 +115,7 @@ ntt_lite #(
     .q          (ctrl_q     ),
     .mu         (ctrl_mu    ),
     .inv2       (ctrl_inv2  ),
+    .bound      (ctrl_bound ),
     .op         (ctrl_op    ),
     .mode       (ctrl_mode  ),
     .otf        (ctrl_otf   ),
@@ -155,7 +157,7 @@ ntt_lite_ctrl #(
     // fsm <-> ctrl
     .din_addr   (ctrl_din_addr ),
     .dout_addr  (ctrl_dout_addr),
-    .stride     ()
+    .bound      (ctrl_bound)
 );
 
 

@@ -10,8 +10,11 @@ module decompose_pp
         input  [LOGQ    -1:0] q   ,
         input  [LOGQ    -1:0] bound,
         input  [LOGQ    -1:0] T   ,
-        input  [LOGQ    -1:0] B0  ,
-        input  [LOGQ    -1:0] B1
+        output [LOGQ    -1:0] add_in_A,
+        output [LOGQ    -1:0] add_in_B,
+        output [LOGQ    -1:0] add_out_C,
+        output [LOGQ    -1:0] B0  ,
+        output [LOGQ    -1:0] B1
     );
 
 
@@ -37,7 +40,12 @@ assign check1 = (A1 == bound);
 assign check0 = (A0 == 0);
 assign check2 = (A0 > (T_half)) || ((T_half[0] == 1'b0) && A0 == (T_half));
 
-assign A0_center = (check2) ? A0 + q - T : A0;
+assign add_in_A = A0;
+assign add_in_B = q;
+// add_out_C = A0 + q
+
+
+assign A0_center = (check2) ? add_out_C - T : A0;
 
 assign B1 = (~check1) ? A1 : 0;
 assign B0 = (~check1) ? A0_center : (((~check0) ? A0_center : q) - 1'b1);

@@ -13,15 +13,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="107,726.041 ns"></ZoomStartTime>
-      <ZoomEndTime time="107,773.992 ns"></ZoomEndTime>
-      <Cursor1Time time="107,766.000 ns"></Cursor1Time>
+      <ZoomStartTime time="74.237666 us"></ZoomStartTime>
+      <ZoomEndTime time="122.187667 us"></ZoomEndTime>
+      <Cursor1Time time="114.196000 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="205"></NameColumnWidth>
       <ValueColumnWidth column_width="123"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="62" />
+   <WVObjectSize size="66" />
    <wave_markers>
       <marker label="" time="4538310" />
       <marker label="" time="5150000" />
@@ -31,6 +31,22 @@
       <marker label="" time="86511833" />
       <marker label="" time="105140000" />
    </wave_markers>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/o_valid">
+      <obj_property name="ElementShortName">o_valid</obj_property>
+      <obj_property name="ObjectShortName">o_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/io_word">
+      <obj_property name="ElementShortName">io_word[7:0]</obj_property>
+      <obj_property name="ObjectShortName">io_word[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/o_data">
+      <obj_property name="ElementShortName">o_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">o_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/o_read">
+      <obj_property name="ElementShortName">o_read</obj_property>
+      <obj_property name="ObjectShortName">o_read</obj_property>
+   </wvobject>
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_out_q">
       <obj_property name="ElementShortName">twiddle_out_q</obj_property>
       <obj_property name="ObjectShortName">twiddle_out_q</obj_property>
