@@ -20,6 +20,7 @@ module ntt_lite
         input      [   LOGLOGQ-1:0] d        ,        
         input      [      LOGQ-1:0] q        ,
         input      [      LOGQ-1:0] inv2     ,
+        input      [      LOGQ-1:0] bound    ,
         input      [    LOGQ*2-1:0] mu       ,
         input      [           1:0] mode     ,
         input      [         B-1:0] i_data   ,
@@ -76,6 +77,7 @@ localparam ST_ENCODE1      = 5'd14;
 localparam ST_DECODE       = 5'd15;
 localparam ST_SUM0         = 5'd16;
 localparam ST_SUM1         = 5'd17;
+localparam ST_TWIDDLE_OUT  = 5'd18;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -113,6 +115,7 @@ reg ctr_all_rst;
 reg done_set, done_int;
 reg o_valid_int;
 
+reg twiddle_out_q, twiddle_out_set;
 
 // logn register
 wire [LOGN  :0] n;
@@ -263,7 +266,7 @@ assign maskIS   = ((1 << (logn_m1 - ctr2)) - 1);
 
 assign twiddle_ram_wen   =  wpsi | upsi;
 assign twiddle_ram_waddr = (wpsi & rhs_const) ? num_words_m1 : (wpsi) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
-assign twiddle_ram_din   = (wpsi) ? i_data : /*(upsi) ?*/ M_o/* : 0*/;
+assign twiddle_ram_din   = (wpsi) ? i_data : /*(upsi) ?*/ A_o/* : 0*/;
 assign twiddle_ram_raddr = (EN_NTT_OTF && ntt_otf_feed_bu) ?                    ctr2            : 
                            (pwm_idx & rhs_const          ) ?                    num_words_m1    :                            
                            (pwm_idx                      ) ?                    ctr0            : 
@@ -392,6 +395,17 @@ always @(posedge clk) begin
         o_valid <= o_valid_int;
 end
 
+
+always @(posedge clk) begin
+    if (rst)
+        twiddle_out_q <= 0;
+    else if (twiddle_out_set)
+        twiddle_out_q <= 1;
+    else if (twiddle_out_q)
+        twiddle_out_q <= 0;
+end
+
+
 ////////////////////////// coefficient ram //////////////////////////////
 
 
@@ -460,6 +474,7 @@ butterfly #(
     .PSI (psi_i),
     .Q   (q    ),
     .MU  (mu   ),
+    .bound(bound),
     .inv2(inv2 ),
     .k   (k    ),
     .d   (d    ),
@@ -582,7 +597,6 @@ always @(*) begin
     wq = 0;
     sr_i = 0;
     busy = 0;
-    o_data = {B{1'b0}};
     o_valid_int = 0;
     pwm_idx = 0;
     ntt_rcv_bu = 0;
@@ -599,11 +613,13 @@ always @(*) begin
     coeff_ram_p0_rsel = 0;
     coeff_ram_p0_wsel = 0;
 
-    o_data = coeff_ram_p0_dout; // will change
+    o_data = (twiddle_out_q) ? twiddle_ram_dout : coeff_ram_p0_dout; // will change
     io_word = ctr0_d; // will change
 
     encode_rst = 0;
     upoly_encode = 0;
+
+    twiddle_out_set = 0;
 
     case (state)
         ST_IDLE: begin
@@ -625,6 +641,15 @@ always @(*) begin
                     next_state = ST_POLY_IN;
                 end
             end
+            else if (cmd == `CMD_READ_TWIDDLE) begin
+                if (logn > LOGN) begin
+                    error_set = 1;
+                    next_state = ST_IDLE;
+                end
+                else begin
+                    next_state = ST_TWIDDLE_OUT;
+                end
+            end            
             else if (cmd == `CMD_RST) begin
                 next_state = ST_IDLE;
                 ctr_all_rst = 1;
@@ -895,6 +920,22 @@ always @(*) begin
             end
 
         end
+        ST_TWIDDLE_OUT: begin
+                pwm_idx = 1;
+                o_valid_int = 1;
+                busy = 1;
+                o_data = twiddle_ram_dout;
+                if (o_read) begin
+                    if (ctr0 == num_words_m1) begin
+                        next_state = ST_IDLE;
+                        ctr_all_rst = 1;
+                        done_set = 1;
+                        twiddle_out_set = 1;
+                    end
+                    else
+                        ctr0_inc = 1;
+                end
+        end        
         ST_NTT_OTF: begin
         // we do not feed the twiddles in this stage. because, it is mathematically guaratneed that all the twiddles are fed for OTF in the ST_POLY_OUT state.
         // note that at least N read will be done, while N/2 twiddles will be fed to BU.
@@ -946,6 +987,9 @@ always @(*) begin
         else if (sr_o) begin
             ctr1_inc = 1;
             upoly_mul = 1;
+            if (op == `OP_DECOMPOSE) begin
+                upsi = 1;
+            end
         end
     end
     else if (EN_NTT_OTF && ntt_otf_rcv_bu) begin
@@ -983,6 +1027,7 @@ always @(*) begin
         `OP_SUM        : next_state_op = ST_SUM0;
         `OP_COMPRESS   : next_state_op = ST_PWM0;
         `OP_DECOMPRESS : next_state_op = ST_PWM0;
+        `OP_DECOMPOSE  : next_state_op = ST_PWM0;
         `OP_ENCODE     : next_state_op = ST_ENCODE0;
         `OP_DECODE     : next_state_op = ST_DECODE;
         default        : next_state_op = ST_IDLE;

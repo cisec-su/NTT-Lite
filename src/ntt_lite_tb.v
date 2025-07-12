@@ -31,7 +31,8 @@ wire [LOGQ*2-1:0] mu;
 reg [LOGQ*2-1:0] mu_64;
 reg [LOGQ*2-1:0] mu_32;
 reg [LOGQ-1:0] inv2;
-reg [LOGQ*2-1:0] meta   [0:  6];
+reg [LOGQ-1:0] bound;
+reg [LOGQ*2-1:0] meta   [0:  7];
 reg [LOGQ-1:0] psi      [0:N-1];
 reg [LOGQ-1:0] poly_in  [0:N-1];
 reg [LOGQ-1:0] poly_out [0:N-1];
@@ -78,6 +79,7 @@ ntt_lite #(
     .mode(mode),
     .q(q),
     .floor(0),
+    .bound(bound),
     .inv2(inv2),
     .d(d),
     .o_dis(1'b0),
@@ -128,6 +130,7 @@ initial begin
     d = meta[4];
     inv2 = meta[5];
     mu_32 = meta[6];
+    bound = 0;
 
     op = `OP_NTT;
     mode = `MODE_SINGLE;
@@ -1248,6 +1251,98 @@ initial begin
 
     rhs_const = 1'b0;
     op_switch = 1'b0;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/decompose_in.txt" , poly_in);
+    $readmemh("../../../../../test/decompose_out_low.txt" , poly_out);
+    $readmemh("../../../../../test/decompose_meta.txt" , meta);
+
+    op = `OP_DECOMPOSE;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_POLY;
+    q = meta[0];
+    mu_64 = meta[1];
+    logn = meta[2];
+    k = meta[3];
+    d = meta[4];
+    inv2 = meta[5];
+    mu_32 = meta[6];
+    bound = meta[7];
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS DECOMPOSE OUT LOW)");
+    else begin
+        $display("(FAIL DECOMPOSE OUT LOW)");
+        flag1 = 1;
+    end
+
+    $readmemh("../../../../../test/decompose_out_high.txt" , poly_out);
+    cmd = `CMD_READ_TWIDDLE;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS DECOMPOSE OUT HIGH)");
+    else begin
+        $display("(FAIL DECOMPOSE OUT HIGH)");
+        flag1 = 1;
+    end
+
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -279,3 +279,86 @@ sum1 %= q
 
 with open("sum_out_dual.txt", "w") as f:
     f.write(hex((sum1 << (b // 2)) + sum0)[2:] + "\n")
+
+
+
+############################# DECOMPOSE TEST ###########################
+
+def reduce_mod_pm(r, a):
+    """
+    Reduces r modulo a, such that the result is in the range
+    -(a >> 1) < r <= (a >> 1)
+    """
+    r = r % a
+    if r > (a >> 1):
+        r -= a
+    return r
+
+def decompose(r, a, q):
+    """
+    Takes an element r and represents
+    it as:
+
+    r = r1*a + r0
+
+    With r0 in the range
+
+    -(a << 1) < r0 <= (a << 1)
+    """
+    rp = r % q
+    r0 = reduce_mod_pm(rp, a)
+    t = rp - r0
+    if t == q - 1:
+        r1 = 0
+        r0 = r0 - 1
+    else:
+        r1 = (t) // a
+    # assert r0 > -(a >> 1)
+    # assert r0 <= (a >> 1)
+    # assert r % q == (r0 + r1 * a) % q
+    return r1, r0 % q
+
+
+q = 8380417
+bound = 16
+inv2 = (q - 1) // (bound)
+logq = math.ceil(math.log2(q))
+logn = 8
+n = 1 << logn
+mu_64 = (1 << 64) // inv2
+mu_32 = (1 << 32) // inv2
+
+with open("decompose_meta.txt", "w") as f:
+    f.write(hex(q)[2:] + "\n")
+    f.write(hex(mu_64)[2:] + "\n")
+    f.write(hex(logn)[2:] + "\n")
+    f.write(hex(logq)[2:] + "\n")
+    f.write(hex(d)[2:] + "\n")
+    f.write(hex(inv2)[2:] + "\n")
+    f.write(hex(mu_32)[2:] + "\n")
+    f.write(hex(bound)[2:] + "\n")
+
+
+A =  [random.randint(0, q) for _ in range(n)]
+
+with open("decompose_in.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A[i])[2:] + "\n")
+
+
+A0 = []
+A1 = []
+
+for A_i in A:
+    r1, r0 = decompose(A_i, inv2, q)
+    A0.append(r0)
+    A1.append(r1)
+
+
+with open("decompose_out_low.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A0[i])[2:] + "\n")
+
+with open("decompose_out_high.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A1[i])[2:] + "\n")
