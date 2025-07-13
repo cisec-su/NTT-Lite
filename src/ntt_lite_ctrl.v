@@ -31,6 +31,7 @@ module ntt_lite_ctrl
         output reg [31:0]  dout_addr,    // (Write)
         output reg [31:0]  bound,       // (Read/Write)
 
+        input              chknorm,      // Check norm input
         input              busy,         // Busy status input
         input              done          // Done status input
     );
@@ -65,6 +66,7 @@ localparam CTRL_MODE_LEN      = CTRL_MODE_MSB - CTRL_MODE_LSB + 1;
 localparam CTRL_D_LSB         = 21;
 localparam CTRL_D_MSB         = 25;
 localparam CTRL_D_LEN         = CTRL_D_MSB - CTRL_D_LSB + 1;
+localparam CTRL_CHKNORM_BIT   = 26;
 localparam CTRL_RHS_CONST_BIT = 27;
 localparam CTRL_FLOOR_BIT     = 28;
 localparam CTRL_O_DIS_BIT     = 29;
@@ -73,6 +75,7 @@ localparam CTRL_DONE_BIT      = 31;
 
 
 reg done_q;
+reg chknorm_q;
 
 // DONE flag (Clear on Read)
 always @(posedge clk) begin
@@ -84,6 +87,19 @@ always @(posedge clk) begin
         done_q <= 1'b0;
     end
 end
+
+
+// CHKNORM flag (Clear on Read)
+always @(posedge clk) begin
+    if (rst) begin
+        chknorm_q <= 1'b0;
+    end else if (chknorm) begin
+        chknorm_q <= 1'b1;
+    end else if (re && (addr == (BASE_ADDR + CTRL_ADDR)) && chknorm_q) begin
+        chknorm_q <= 1'b0;
+    end
+end
+
 
 // CMD (Self-Clear)
 always @(posedge clk) begin
@@ -151,6 +167,7 @@ always @(posedge clk) begin
                 rdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB] <= logn;
                 rdata[CTRL_MODE_MSB:CTRL_MODE_LSB] <= mode;
                 rdata[CTRL_K_MSB   :CTRL_K_LSB   ] <= k;
+                rdata[CTRL_CHKNORM_BIT]            <= chknorm_q | chknorm;
                 rdata[CTRL_BUSY_BIT]               <= busy;
                 rdata[CTRL_DONE_BIT]               <= done_q | done;
             end

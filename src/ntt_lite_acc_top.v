@@ -82,10 +82,12 @@ wire ctrl_o_dis;
 wire ctrl_floor;
 wire ctrl_rhs_const;
 wire ctrl_op_switch;
+wire ctrl_chknorm;
 
 // CTRL & FSM
 wire [31:0] ctrl_din_addr;
 wire [31:0] ctrl_dout_addr;
+
 
 
 ntt_lite #(
@@ -121,6 +123,7 @@ ntt_lite #(
     .otf        (ctrl_otf   ),
     .done       (ctrl_done  ),
     .busy       (ctrl_busy  ),
+    .chknorm    (ctrl_chknorm),
     
     .error()
 );
@@ -153,6 +156,7 @@ ntt_lite_ctrl #(
     .q          (ctrl_q     ),
     .otf        (ctrl_otf   ),
     .done       (ctrl_done  ),
+    .chknorm    (ctrl_chknorm),
     .busy       (ctrl_busy  ),
     // fsm <-> ctrl
     .din_addr   (ctrl_din_addr ),

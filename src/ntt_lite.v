@@ -809,10 +809,6 @@ always @(*) begin
             busy = 1;
             sr_i = 1;
 
-            if (ctr0 != n_m1) begin
-                ctr0_inc = 1;
-            end
-            
             if (sr_t) begin
                 if (chknorm_bu) begin
                     chknorm_set = 1;
@@ -826,7 +822,15 @@ always @(*) begin
                     next_state = ST_IDLE;
                 end
                 else begin
+                    if (ctr0 != n_m1) begin
+                        ctr0_inc = 1;
+                    end                    
                     ctr1_inc = 1;
+                end
+            end
+            else begin
+                if (ctr0 != n_m1) begin
+                    ctr0_inc = 1;
                 end
             end
 
