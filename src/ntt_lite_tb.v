@@ -57,6 +57,7 @@ wire         busy;
 wire         done;
 wire [LOGN+LOGQB-1:0] io_word;
 
+wire chknorm;
 
 always #HP clk = ~clk;
 
@@ -86,6 +87,7 @@ ntt_lite #(
     .rhs_const(rhs_const),
     .op_switch(op_switch),
     .mu(mu),
+    .chknorm(chknorm),
     .i_data(i_data),
     .i_valid(i_valid),
     .i_ready(i_ready),
@@ -1342,9 +1344,134 @@ initial begin
         flag1 = 1;
     end
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+    $readmemh("../../../../../test/chknorm_in_succ.txt" , poly_in);
+    $readmemh("../../../../../test/chknorm_makehint_meta.txt" , meta);
+
+    op = `OP_CHKNORM;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_POLY;
+    q = meta[0];
+    mu_64 = meta[1];
+    logn = meta[2];
+    k = meta[3];
+    d = meta[4];
+    inv2 = meta[5];
+    mu_32 = meta[6];
+    bound = meta[7];
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        #FP;
+    end
+    if (chknorm == 0) begin
+        $display("(SUCCESS CHKNORM CORRECT CASE)");
+    end
+    else begin
+        $display("(FAIL CHKNORM CORRECT CASE)");
+        flag1 = 1;
+    end
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/chknorm_in_fail.txt" , poly_in);
+
+    op = `OP_CHKNORM;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        #FP;
+    end
+    if (chknorm == 1) begin
+        $display("(SUCCESS CHKNORM INCORRECT CASE)");
+    end
+    else begin
+        $display("(FAIL CHKNORM INCORRECT CASE)");
+        flag1 = 1;
+    end
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    $readmemh("../../../../../test/makehint_in_low.txt" , poly_in);
+    $readmemh("../../../../../test/makehint_in_high.txt" , psi);
+    $readmemh("../../../../../test/makehint_out.txt" , poly_out);
+
+    op = `OP_MAKEHINT;
+    mode = `MODE_SINGLE;
+
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
+    i_valid = 1'b0;
+
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+
+    flag = 0;
+    flag1 = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0)
+        $display("(SUCCESS MAKEHINT)");
+    else begin
+        $display("(FAIL MAKEHINT)");
+        flag1 = 1;
+    end
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
     if (flag1 == 0)

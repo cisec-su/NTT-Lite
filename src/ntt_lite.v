@@ -32,7 +32,7 @@ module ntt_lite
         input                       floor    ,
         output reg [         B-1:0] o_data   ,
         input                       o_read   ,
-
+        output reg                  chknorm  ,
         output reg                  o_valid  ,
         output reg [LOGN+LOGWB-1:0] io_word  ,
         output reg                  done     ,
@@ -78,6 +78,7 @@ localparam ST_DECODE       = 5'd15;
 localparam ST_SUM0         = 5'd16;
 localparam ST_SUM1         = 5'd17;
 localparam ST_TWIDDLE_OUT  = 5'd18;
+localparam ST_CHKNORM      = 5'd19;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -145,6 +146,10 @@ wire [LOGQ-1:0] psi_i;
 wire [LOGQ-1:0] A_o;
 wire [LOGQ-1:0] B_o;
 wire [LOGQ-1:0] M_o;
+
+// chk norm
+wire chknorm_bu;
+reg chknorm_int, chknorm_set;
 
 reg  sr_i;
 wire sr_o;
@@ -406,6 +411,18 @@ always @(posedge clk) begin
 end
 
 
+always @(posedge clk) begin
+    if (rst)
+        {chknorm, chknorm_int} <= 0;
+    else if (chknorm_set)
+        {chknorm, chknorm_int} <= 2'b01;
+    else if (chknorm_int)
+        {chknorm, chknorm_int} <= 2'b10;
+    else if (chknorm)
+        {chknorm, chknorm_int} <= 2'b00;
+end
+
+
 ////////////////////////// coefficient ram //////////////////////////////
 
 
@@ -476,6 +493,7 @@ butterfly #(
     .MU  (mu   ),
     .bound(bound),
     .inv2(inv2 ),
+    .chknorm(chknorm_bu),
     .k   (k    ),
     .d   (d    ),
     .E   (A_o  ),
@@ -620,6 +638,8 @@ always @(*) begin
     upoly_encode = 0;
 
     twiddle_out_set = 0;
+
+    chknorm_set = 0;
 
     case (state)
         ST_IDLE: begin
@@ -783,6 +803,34 @@ always @(*) begin
             end
             
         end
+        ST_CHKNORM: begin
+
+            pwm_idx = 1;
+            busy = 1;
+            sr_i = 1;
+
+            if (ctr0 != n_m1) begin
+                ctr0_inc = 1;
+            end
+            
+            if (sr_t) begin
+                if (chknorm_bu) begin
+                    chknorm_set = 1;
+                    done_set   = 1;
+                    next_state = ST_IDLE;
+                    ctr_all_rst = 1;
+                end                
+                else if (ctr1 == n_m1) begin
+                    ctr_all_rst = 1;
+                    done_set   = 1;
+                    next_state = ST_IDLE;
+                end
+                else begin
+                    ctr1_inc = 1;
+                end
+            end
+
+        end     
         ST_PWM0: begin
 
             pwm_idx = 1;
@@ -1028,6 +1076,8 @@ always @(*) begin
         `OP_COMPRESS   : next_state_op = ST_PWM0;
         `OP_DECOMPRESS : next_state_op = ST_PWM0;
         `OP_DECOMPOSE  : next_state_op = ST_PWM0;
+        `OP_CHKNORM    : next_state_op = ST_CHKNORM;
+        `OP_MAKEHINT   : next_state_op = ST_ADDSUB;
         `OP_ENCODE     : next_state_op = ST_ENCODE0;
         `OP_DECODE     : next_state_op = ST_DECODE;
         default        : next_state_op = ST_IDLE;

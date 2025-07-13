@@ -11,8 +11,6 @@ module butterfly
         input  [        3:0] op       ,
         input  [        1:0] mode     ,
         input                floor    ,
-        input                central_in,
-        input                central_out,
         input  [LOGQ   -1:0] A        ,
         input  [LOGQ   -1:0] B        ,
         input  [LOGQ   -1:0] PSI      ,
@@ -23,6 +21,7 @@ module butterfly
         input  [LOGLOGQ-1:0] k        ,
         input  [LOGLOGQ-1:0] d        ,
         output [LOGQ   -1:0] E        ,
+        output               chknorm  ,
         output [LOGQ   -1:0] O        ,
         output [LOGQ   -1:0] M
     );
@@ -74,13 +73,16 @@ wire [LOGQ -1:0] mask_k_dual;
 wire [LOGQ -1:0] D_dual;
 wire [LOGQ -1:0] D_dual_masked;
 wire [LOGQ -1:0] one_dual;
-
+wire             sub_out_corr;
 
 wire [LOGQ -1:0] decompose_pp_in_A0;
 wire [LOGQ -1:0] decompose_pp_in_A1;
 wire [LOGQ -1:0] decompose_pp_in_T;
 wire [LOGQ -1:0] decompose_pp_out_B0;
 wire [LOGQ -1:0] decompose_pp_out_B1;
+
+wire makehint_specialcase;
+wire hint;
 
 
 assign mode_mul    = (mode == `MODE_POLY && op != `OP_PWM) ? `MODE_DUAL : 
@@ -139,16 +141,24 @@ assign mm_in_Q     = (op == `OP_DECOMPOSE                     ) ? inv2          
                                                                   Q_dual             ;
 assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A              :
                      (op == `OP_SUM                  ) ? A              :
+                     (op == `OP_CHKNORM              ) ? A              :
+                     (op == `OP_MAKEHINT             ) ? A              :
                                                          shift_out_1    ;
 assign add_in_B    = (op == `OP_INTT                 ) ? B              :
                      (op == `OP_SUM                  ) ? B              : 
                      (op == `OP_ADD                  ) ? PSI            :
+                     (op == `OP_CHKNORM              ) ? bound          :
+                     (op == `OP_MAKEHINT             ) ? bound          :
                                                          mm_out_C       ;
 assign sub_in_A    = (op == `OP_INTT || op == `OP_SUB) ? A              :
-                     (op == `OP_DECOMPOSE            ) ? mm_out_C      : 
+                     (op == `OP_DECOMPOSE            ) ? mm_out_C       :
+                     (op == `OP_CHKNORM              ) ? bound << 1     :
+                     (op == `OP_MAKEHINT             ) ? bound << 1     :
                                                          shift_out_1    ;
 assign sub_in_B    = (op == `OP_INTT                 ) ? B              : 
                      (op == `OP_DECOMPOSE            ) ? inv2_half      : 
+                     (op == `OP_CHKNORM              ) ? add_out_C      :
+                     (op == `OP_MAKEHINT             ) ? add_out_C      :
                      (op == `OP_SUB                  ) ? PSI            : 
                                                          mm_out_C       ;
 assign sub_in_Q    = (op == `OP_DECOMPOSE            ) ? inv2           : 
@@ -162,6 +172,9 @@ assign decompose_pp_in_A0 = sub_out_C;
 assign decompose_pp_in_A1 = mm_out_D;
 assign decompose_pp_in_T  = inv2;
 
+assign chknorm = sub_out_corr;
+assign makehint_specialcase = (A == inv2 && PSI != 0);
+assign hint = chknorm | makehint_specialcase;
 
 assign mm_inv2_in  = shift_out_0;
 
@@ -179,7 +192,8 @@ assign M           = (op == `OP_ADD       ) ? add_out_C            :
                      (op == `OP_SUB       ) ? sub_out_C            :
                      (op == `OP_COMPRESS  ) ? D_dual_masked        :
                      (op == `OP_DECOMPRESS) ? asr_out_dual_masked  :
-                     (op == `OP_DECOMPOSE ) ? decompose_pp_out_B0  :                     
+                     (op == `OP_DECOMPOSE ) ? decompose_pp_out_B0  :
+                     (op == `OP_MAKEHINT  ) ? hint                 :
                      /*                  */   mm_out_C             ;
 
 
@@ -239,6 +253,7 @@ modsub #(
     .B   (sub_in_B ),
     .dual(dual     ),
     .Q   (sub_in_Q ),
+    .corr(sub_out_corr),
     .C   (sub_out_C)
 );
 
@@ -275,8 +290,6 @@ decompose_pp #(
     .B0  (decompose_pp_out_B0),
     .B1  (decompose_pp_out_B1)
 );
-
-
 
 
 endmodule

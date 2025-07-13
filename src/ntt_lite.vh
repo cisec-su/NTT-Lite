@@ -20,7 +20,10 @@
 `define OP_ENCODE             4'd7
 `define OP_DECODE             4'd8
 `define OP_SUM                4'd9
+// below OPs are only valid for MODE_SINGLE
 `define OP_DECOMPOSE          4'd10
+`define OP_CHKNORM            4'd11
+`define OP_MAKEHINT           4'd12
 
 
 `define MODE_SINGLE           2'd0

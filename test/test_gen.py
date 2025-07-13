@@ -362,3 +362,84 @@ with open("decompose_out_low.txt", "w") as f:
 with open("decompose_out_high.txt", "w") as f:
     for i in range(n):
         f.write(hex(A1[i])[2:] + "\n")
+
+
+q = 8380417
+bound =  (q - 1) // (16)
+inv2 = q - bound
+logq = math.ceil(math.log2(q))
+logn = 8
+n = 1 << logn
+mu_64 = (1 << 64) // inv2
+mu_32 = (1 << 32) // inv2
+
+with open("chknorm_makehint_meta.txt", "w") as f:
+    f.write(hex(q)[2:] + "\n")
+    f.write(hex(mu_64)[2:] + "\n")
+    f.write(hex(logn)[2:] + "\n")
+    f.write(hex(logq)[2:] + "\n")
+    f.write(hex(d)[2:] + "\n")
+    f.write(hex(inv2)[2:] + "\n")
+    f.write(hex(mu_32)[2:] + "\n")
+    f.write(hex(bound)[2:] + "\n")
+
+
+A =  [random.randint(-bound, bound) % q for _ in range(n)]
+A[0] = bound
+A[1] = q - bound
+
+with open("chknorm_in_succ.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A[i])[2:] + "\n")
+
+
+A =  [random.randint(-bound, bound + 1) % q for _ in range(n)]
+A[n-2] = bound + 1
+A[n-1] = q - bound - 1
+
+with open("chknorm_in_fail.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A[i])[2:] + "\n")
+
+
+A =  [random.randint(0, q) % q for _ in range(n)]
+
+
+A0 = []
+A1 = []
+
+for A_i in A:
+    r1, r0 = decompose(A_i, bound, q)
+    A0.append(r0)
+    A1.append(r1)
+
+print(hex(2*bound), hex(bound))
+A0[0 % n] = 2*bound
+A0[10 % n] = 2*bound
+A0[100 % n] = q-bound
+A1[100 % n] = 1
+A0[200 % n] = bound + 1
+
+with open("makehint_in_low.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A0[i])[2:] + "\n")
+
+with open("makehint_in_high.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A1[i])[2:] + "\n")
+
+def make_hint(a0, a1, q, bound):
+    if(((a0 > bound) and (a0 < (q-bound))) or (a0 == (q-bound) and a1 != 0)):
+        return 1
+    else:
+        return 0
+
+
+hints = []
+
+for i in range(n):
+    hints.append(make_hint(A0[i], A1[i], q, bound))
+
+with open("makehint_out.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(hints[i])[2:] + "\n")
