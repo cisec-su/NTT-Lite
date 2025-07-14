@@ -234,6 +234,7 @@ initial begin
     else begin
         $display("(FAIL DUAL NTT)");
         flag1 = 1;
+        $stop;
     end
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -286,8 +287,9 @@ initial begin
     o_read = 1'b0;
     i_valid = 1'b0;
 
-    if (flag == 0)
+    if (flag == 0) begin
         $display("(SUCCESS SINGLE PWM)");
+    end
     else begin
         $display("(FAIL SINGLE PWM)");
         flag1 = 1;
@@ -554,8 +556,10 @@ initial begin
     o_read = 1'b0;
     i_valid = 1'b0;
 
-    if (flag == 0)
+    if (flag == 0) begin
         $display("(SUCCESS SINGLE ADD)");
+        $stop;
+    end
     else begin
         $display("(FAIL SINGLE ADD)");
         flag1 = 1;
@@ -1437,7 +1441,6 @@ initial begin
     cmd = 0;
 
     flag = 0;
-    flag1 = 0;
 
     while(!done) begin
         if (i_ready) begin

@@ -79,6 +79,7 @@ localparam ST_SUM0         = 5'd16;
 localparam ST_SUM1         = 5'd17;
 localparam ST_TWIDDLE_OUT  = 5'd18;
 localparam ST_CHKNORM      = 5'd19;
+localparam ST_POLY_FORWARD = 5'd20;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -111,7 +112,7 @@ wire [LOGN+LOGWB :0] ctr0_p1;
 reg [LOGN-1:0] ctr2_d;
 reg ctr2_d_set;
 reg wpoly, upoly_ntt, upoly_intt, upoly_mul, wpsi, wpsi_delta, upsi, wq, pwm_idx, upoly_encode;
-reg ntt_rcv_bu, pwm_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu, sum_rcv_bu;
+reg ntt_rcv_bu, pwm_rcv_bu, ntt_otf_rcv_bu, ntt_otf_feed_bu, sum_rcv_bu, addsub_rcv_bu;
 reg ctr_all_rst;
 reg done_set, done_int;
 reg o_valid_int;
@@ -192,6 +193,13 @@ wire encode_i_ready;
 wire encode_o_valid;
 
 
+// parallel input and point-op
+reg [B-1:0] i_data_q;
+reg poly_in_frwrd_A, poly_in_frwrd_A_q;
+reg poly_in_frwrd_B, poly_in_frwrd_B_q;
+wire [LOGQ-1:0] poly_in_mx_A;
+wire [LOGQ-1:0] poly_in_mx_B;
+
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -220,9 +228,12 @@ assign ctr0_p1 = ctr0 + 1;
 
 ///////////////////// BU inputs /////////////////////////////////////////
 
-assign A_i      = (op_switch) ? twiddle_ram_dout  : coeff_ram_p0_dout;
-assign B_i      = (ntt_otf_feed_bu && EN_NTT_OTF) ? psi_delta[ctr3] : coeff_ram_p1_dout;
-assign psi_i    = (op_switch) ? coeff_ram_p0_dout : twiddle_ram_dout;
+assign poly_in_mx_A = (poly_in_frwrd_A_q) ? i_data_q : coeff_ram_p0_dout;
+assign poly_in_mx_B = (poly_in_frwrd_B_q) ? i_data_q : coeff_ram_p1_dout;
+
+assign A_i      = (op_switch) ? twiddle_ram_dout  : poly_in_mx_A;
+assign B_i      = (ntt_otf_feed_bu && EN_NTT_OTF) ? psi_delta[ctr3] : poly_in_mx_B;
+assign psi_i    = (op_switch) ? poly_in_mx_A : twiddle_ram_dout;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -423,6 +434,19 @@ always @(posedge clk) begin
 end
 
 
+always @(posedge clk) begin
+    i_data_q <= i_data;
+end
+
+always @(posedge clk) begin
+    poly_in_frwrd_A_q <= poly_in_frwrd_A;
+end
+
+always @(posedge clk) begin
+    poly_in_frwrd_B_q <= poly_in_frwrd_B;
+end
+
+
 ////////////////////////// coefficient ram //////////////////////////////
 
 
@@ -619,6 +643,7 @@ always @(*) begin
     pwm_idx = 0;
     ntt_rcv_bu = 0;
     sum_rcv_bu = 0;
+    addsub_rcv_bu = 0;
     ntt_otf_feed_bu = 0;
     ntt_otf_rcv_bu = 0;
     pwm_rcv_bu = 0;
@@ -641,6 +666,9 @@ always @(*) begin
 
     chknorm_set = 0;
 
+    poly_in_frwrd_A = 0;
+    poly_in_frwrd_B = 0;
+
     case (state)
         ST_IDLE: begin
             if (cmd == `CMD_LOAD_TWIDDLE) begin
@@ -658,7 +686,12 @@ always @(*) begin
                     next_state = ST_IDLE;
                 end
                 else begin
-                    next_state = ST_POLY_IN;
+                    if (next_state_op == ST_PWM0 ||  next_state_op == ST_ADDSUB) begin
+                        next_state = ST_POLY_FORWARD;
+                    end
+                    else begin
+                        next_state = ST_POLY_IN;
+                    end
                 end
             end
             else if (cmd == `CMD_READ_TWIDDLE) begin
@@ -728,10 +761,60 @@ always @(*) begin
                     next_state = next_state_op;
                     ctr1_rst = 1;
                 end
+                else if (op == `OP_NTT && ctr1 == num_words_over2_m1) begin
+                    next_state = ST_POLY_FORWARD;
+                    ctr1_rst = 1;
+                end
                 else
                     ctr1_inc = 1;
             end
 
+        end
+        ST_POLY_FORWARD: begin
+
+            io_word = (op == `OP_NTT) ? (ctr0 + n_over2) : ctr0;
+            i_ready = 1;
+
+            if (i_valid) begin
+                sr_i = 1;
+
+                if (ctr0 == n_m1) begin
+                    if (next_state_op == ST_PWM0) begin
+                        next_state = ST_PWM1;
+                        ctr0_rst = 1;
+                    end                    
+                    else if (next_state_op == ST_ADDSUB) begin
+                        next_state = ST_ADDSUB;
+                    end
+                end
+                else if (op == `OP_NTT && ctr0 == logn_m1_shft_m1) begin
+                    next_state = ST_NTT1;
+                    ctr0_rst = 1;
+                    ctr2_d_set = 1;                
+                end
+                else begin
+                    ctr0_inc = 1;
+                end
+            end
+
+            case (next_state_op)
+                ST_PWM0: begin
+                    poly_in_frwrd_A = 1;
+                    poly_in_frwrd_B = 1;
+                    pwm_idx = 1;
+                    pwm_rcv_bu = 1;
+                end
+                ST_ADDSUB: begin
+                    poly_in_frwrd_A = 1;
+                    poly_in_frwrd_B = 1;
+                    pwm_idx = 1;
+                    addsub_rcv_bu = 1;
+                end
+                ST_NTT0: begin
+                    poly_in_frwrd_B = 1;
+                    ntt_rcv_bu = 1;
+                end
+            endcase
         end
         ST_ENCODE0: begin
 
@@ -792,15 +875,13 @@ always @(*) begin
             end
 
             if (sr_t) begin
-                upoly_mul = 1;
                 if (ctr1 == n_m1) begin
                     ctr0_rst = 1;
-                    ctr1_rst = 1;
                     next_state = ST_POLY_OUT;
                 end
-                else
-                    ctr1_inc = 1;
             end
+
+            addsub_rcv_bu = 1;
             
         end
         ST_CHKNORM: begin
@@ -1060,6 +1141,18 @@ always @(*) begin
             else
                 ctr1_inc = 1;
             upoly_mul = 1;
+        end
+    end
+    else if (addsub_rcv_bu) begin
+        if (sr_t) begin
+            upoly_mul = 1;
+            if (ctr1 == n_m1) begin
+                // ctr0_rst = 1;
+                ctr1_rst = 1;
+            end
+            else begin
+                ctr1_inc = 1;
+            end
         end
     end
 

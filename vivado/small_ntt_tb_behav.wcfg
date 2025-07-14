@@ -13,15 +13,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="66.344837 us"></ZoomStartTime>
-      <ZoomEndTime time="173.944838 us"></ZoomEndTime>
-      <Cursor1Time time="116.344837 us"></Cursor1Time>
+      <ZoomStartTime time="17,061.400 ns"></ZoomStartTime>
+      <ZoomEndTime time="17,234.001 ns"></ZoomEndTime>
+      <Cursor1Time time="17,209.800 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="205"></NameColumnWidth>
-      <ValueColumnWidth column_width="123"></ValueColumnWidth>
+      <ValueColumnWidth column_width="119"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="83" />
+   <WVObjectSize size="89" />
    <wave_markers>
       <marker label="" time="4538310" />
       <marker label="" time="5150000" />
@@ -131,19 +131,8 @@
       <obj_property name="ElementShortName">state[4:0]</obj_property>
       <obj_property name="ObjectShortName">state[4:0]</obj_property>
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/inv2">
-      <obj_property name="ElementShortName">inv2[31:0]</obj_property>
-      <obj_property name="ObjectShortName">inv2[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/bound">
-      <obj_property name="ElementShortName">bound[31:0]</obj_property>
-      <obj_property name="ObjectShortName">bound[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/logn_m1_shft_m1_ctr2">
-      <obj_property name="ElementShortName">logn_m1_shft_m1_ctr2[7:0]</obj_property>
-      <obj_property name="ObjectShortName">logn_m1_shft_m1_ctr2[7:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      <obj_property name="CustomSignalColor">#FF0080</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0">
       <obj_property name="ElementShortName">ctr0[7:0]</obj_property>
@@ -163,6 +152,43 @@
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr2_d">
       <obj_property name="ElementShortName">ctr2_d[7:0]</obj_property>
       <obj_property name="ObjectShortName">ctr2_d[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/B_i">
+      <obj_property name="ElementShortName">B_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">B_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/A_i">
+      <obj_property name="ElementShortName">A_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">A_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/psi_i">
+      <obj_property name="ElementShortName">psi_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">psi_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/M_o">
+      <obj_property name="ElementShortName">M_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">M_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_i">
+      <obj_property name="ElementShortName">sr_i</obj_property>
+      <obj_property name="ObjectShortName">sr_i</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_o">
+      <obj_property name="ElementShortName">sr_o</obj_property>
+      <obj_property name="ObjectShortName">sr_o</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/inv2">
+      <obj_property name="ElementShortName">inv2[31:0]</obj_property>
+      <obj_property name="ObjectShortName">inv2[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/bound">
+      <obj_property name="ElementShortName">bound[31:0]</obj_property>
+      <obj_property name="ObjectShortName">bound[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/logn_m1_shft_m1_ctr2">
+      <obj_property name="ElementShortName">logn_m1_shft_m1_ctr2[7:0]</obj_property>
+      <obj_property name="ObjectShortName">logn_m1_shft_m1_ctr2[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0_d">
       <obj_property name="ElementShortName">ctr0_d[7:0]</obj_property>
