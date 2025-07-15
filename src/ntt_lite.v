@@ -62,7 +62,7 @@ localparam L       = L_MUL + L_RED;
 
 // states, todo: add glitch protection as HW codes
 localparam ST_IDLE         = 5'd0;
-localparam ST_TWIDDLE      = 5'd2;
+localparam ST_TWIDDLE_IN   = 5'd2;
 localparam ST_POLY_IN      = 5'd3;
 localparam ST_NTT0         = 5'd4;
 localparam ST_NTT1         = 5'd5;
@@ -199,6 +199,7 @@ reg poly_in_frwrd_A, poly_in_frwrd_A_q;
 reg poly_in_frwrd_B, poly_in_frwrd_B_q;
 wire [LOGQ-1:0] poly_in_mx_A;
 wire [LOGQ-1:0] poly_in_mx_B;
+wire [LOGQ-1:0] twiddle_in_mx;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -230,10 +231,11 @@ assign ctr0_p1 = ctr0 + 1;
 
 assign poly_in_mx_A = (poly_in_frwrd_A_q) ? i_data_q : coeff_ram_p0_dout;
 assign poly_in_mx_B = (poly_in_frwrd_B_q) ? i_data_q : coeff_ram_p1_dout;
+assign twiddle_in_mx = (rhs_const) ? bound : twiddle_ram_dout;
 
-assign A_i      = (op_switch) ? twiddle_ram_dout  : poly_in_mx_A;
-assign B_i      = (ntt_otf_feed_bu && EN_NTT_OTF) ? psi_delta[ctr3] : poly_in_mx_B;
-assign psi_i    = (op_switch) ? poly_in_mx_A : twiddle_ram_dout;
+assign A_i      = (op_switch) ? twiddle_in_mx  : poly_in_mx_A;
+assign B_i      = poly_in_mx_B;
+assign psi_i    = (op_switch) ? poly_in_mx_A : twiddle_in_mx;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -281,10 +283,9 @@ assign maskS    = (1 << ctr2) - 1 ;
 assign maskIS   = ((1 << (logn_m1 - ctr2)) - 1);
 
 assign twiddle_ram_wen   =  wpsi | upsi;
-assign twiddle_ram_waddr = (wpsi & rhs_const) ? num_words_m1 : (wpsi) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
+assign twiddle_ram_waddr = (wpsi) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
 assign twiddle_ram_din   = (wpsi) ? i_data : /*(upsi) ?*/ A_o/* : 0*/;
 assign twiddle_ram_raddr = (EN_NTT_OTF && ntt_otf_feed_bu) ?                    ctr2            : 
-                           (pwm_idx & rhs_const          ) ?                    num_words_m1    :                            
                            (pwm_idx                      ) ?                    ctr0            : 
                            (op == `OP_INTT               ) ? (  maskIS       + (ctr0 & maskIS)) : 
                                                              (  maskS        + (ctr0 & maskS )) ; 
@@ -677,7 +678,7 @@ always @(*) begin
                     next_state = ST_IDLE;
                 end
                 else begin
-                    next_state = ST_TWIDDLE;
+                    next_state = ST_TWIDDLE_IN;
                 end
             end
             else if (cmd == `CMD_LOAD_POLY) begin
@@ -714,13 +715,13 @@ always @(*) begin
 
             encode_rst = 1;
         end
-        ST_TWIDDLE: begin
+        ST_TWIDDLE_IN: begin
 
             io_word = ctr0;
             i_ready = 1;
             if (i_valid) begin
                 wpsi = 1;
-                if ((ctr0 == num_words_m1) || rhs_const) begin
+                if (ctr0 == num_words_m1) begin
                     if (EN_NTT_OTF && otf) begin
                         next_state = ST_TWIDDLE_OTF;
                     end
