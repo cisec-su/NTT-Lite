@@ -69,7 +69,6 @@ localparam CTRL_D_LEN         = CTRL_D_MSB - CTRL_D_LSB + 1;
 localparam CTRL_CHKNORM_BIT   = 26;
 localparam CTRL_RHS_CONST_BIT = 27;
 localparam CTRL_FLOOR_BIT     = 28;
-localparam CTRL_O_DIS_BIT     = 29;
 localparam CTRL_BUSY_BIT      = 30;
 localparam CTRL_DONE_BIT      = 31;
 
@@ -143,7 +142,7 @@ always @(posedge clk) begin
                 d         <= {1'b0, wdata[CTRL_D_MSB:CTRL_D_LSB]};
                 floor     <= wdata[CTRL_FLOOR_BIT];
                 rhs_const <= wdata[CTRL_RHS_CONST_BIT];
-                o_dis     <= wdata[CTRL_O_DIS_BIT];
+                o_dis     <= (dout_addr == 32'd0) ? 1'b1 : 1'b0;
             end
             DIN_ADDR    : din_addr  <= wdata;
             DOUT_ADDR   : dout_addr <= wdata;
