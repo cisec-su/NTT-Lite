@@ -1084,18 +1084,19 @@ initial begin
 
     op = `OP_ADD;
     mode = `MODE_DUAL;
-    cmd = `CMD_LOAD_TWIDDLE;
+    // cmd = `CMD_LOAD_TWIDDLE;
     #FP;
     cmd = 0;
     rhs_const = 1'b1;
+    bound = psi[0];
 
-    while (!done) begin
-        if (i_ready) begin
-            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
-            i_valid = 1'b1;
-        end
-        #FP;
-    end
+    // while (!done) begin
+    //     if (i_ready) begin
+    //         i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+    //         i_valid = 1'b1;
+    //     end
+    //     #FP;
+    // end
 
     cmd = `CMD_LOAD_POLY;
     #FP;
@@ -1145,18 +1146,19 @@ initial begin
 
     op = `OP_ADD;
     mode = `MODE_SINGLE;
-    cmd = `CMD_LOAD_TWIDDLE;
+    // cmd = `CMD_LOAD_TWIDDLE;
     #FP;
     cmd = 0;
     rhs_const = 1'b1;
+    bound = psi[0];
 
-    while (!done) begin
-        if (i_ready) begin
-            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
-            i_valid = 1'b1;
-        end
-        #FP;
-    end
+    // while (!done) begin
+    //     if (i_ready) begin
+    //         i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+    //         i_valid = 1'b1;
+    //     end
+    //     #FP;
+    // end
 
     cmd = `CMD_LOAD_POLY;
     #FP;
@@ -1205,19 +1207,20 @@ initial begin
 
     op = `OP_SUB;
     mode = `MODE_SINGLE;
-    cmd = `CMD_LOAD_TWIDDLE;
+    // cmd = `CMD_LOAD_TWIDDLE;
     #FP;
     cmd = 0;
     rhs_const = 1'b1;
     op_switch = 1'b1;
+    bound = psi[0];
 
-    while (!done) begin
-        if (i_ready) begin
-            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
-            i_valid = 1'b1;
-        end
-        #FP;
-    end
+    // while (!done) begin
+    //     if (i_ready) begin
+    //         i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+    //         i_valid = 1'b1;
+    //     end
+    //     #FP;
+    // end
 
     cmd = `CMD_LOAD_POLY;
     #FP;

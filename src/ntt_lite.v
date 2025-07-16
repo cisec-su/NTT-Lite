@@ -79,7 +79,12 @@ localparam ST_SUM0         = 5'd16;
 localparam ST_SUM1         = 5'd17;
 localparam ST_TWIDDLE_OUT  = 5'd18;
 localparam ST_CHKNORM      = 5'd19;
-localparam ST_POLY_FORWARD = 5'd20;
+// localparam ST_POLY_FORWARD = 5'd20;
+localparam ST_POLY_FORWARD_PWM    = 5'd21;
+localparam ST_POLY_FORWARD_ADDSUB = 5'd22;
+localparam ST_POLY_FORWARD_NTT    = 5'd23;
+
+
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -687,8 +692,11 @@ always @(*) begin
                     next_state = ST_IDLE;
                 end
                 else begin
-                    if (next_state_op == ST_PWM0 ||  next_state_op == ST_ADDSUB) begin
-                        next_state = ST_POLY_FORWARD;
+                    if (next_state_op == ST_PWM0) begin
+                        next_state = ST_POLY_FORWARD_PWM;
+                    end
+                    else if (next_state_op == ST_ADDSUB) begin
+                        next_state = ST_POLY_FORWARD_ADDSUB;
                     end
                     else begin
                         next_state = ST_POLY_IN;
@@ -763,7 +771,7 @@ always @(*) begin
                     ctr1_rst = 1;
                 end
                 else if (op == `OP_NTT && ctr1 == num_words_over2_m1) begin
-                    next_state = ST_POLY_FORWARD;
+                    next_state = ST_POLY_FORWARD_NTT;
                     ctr1_rst = 1;
                 end
                 else
@@ -771,24 +779,71 @@ always @(*) begin
             end
 
         end
-        ST_POLY_FORWARD: begin
+        ST_POLY_FORWARD_PWM: begin
 
-            io_word = (op == `OP_NTT) ? (ctr0 + n_over2) : ctr0;
+            io_word = ctr0;
             i_ready = 1;
 
             if (i_valid) begin
                 sr_i = 1;
 
                 if (ctr0 == n_m1) begin
-                    if (next_state_op == ST_PWM0) begin
-                        next_state = ST_PWM1;
-                        ctr0_rst = 1;
-                    end                    
-                    else if (next_state_op == ST_ADDSUB) begin
-                        next_state = ST_ADDSUB;
-                    end
+                    next_state = ST_PWM1;
+                    ctr0_rst = 1;
+
                 end
-                else if (op == `OP_NTT && ctr0 == logn_m1_shft_m1) begin
+                else begin
+                    ctr0_inc = 1;
+                end
+            end
+
+            poly_in_frwrd_B = 1;
+            pwm_idx = 1;
+            pwm_rcv_bu = 1;
+
+        end
+        ST_POLY_FORWARD_ADDSUB: begin
+
+            io_word = ctr0;
+            i_ready = 1;
+
+            if (i_valid) begin
+                sr_i = 1;
+
+                if (ctr0 == n_m1) begin
+                    next_state = ST_ADDSUB;
+                end
+                else begin
+                    ctr0_inc = 1;
+                end
+            end
+
+            poly_in_frwrd_A = 1;
+            pwm_idx = 1;
+            addsub_rcv_bu = 1;
+
+        end
+        ST_POLY_FORWARD_NTT: begin
+
+            io_word = ctr0 + n_over2;
+            i_ready = 1;
+
+            if (i_valid) begin
+                sr_i = 1;
+
+                if (ctr0 == n_m1) begin
+                    // there is a sim x real_device mismatch if this branch does not exist
+                    // which is completely inactive
+                    // next_state = ST_IDLE;
+                    // if (next_state_op == ST_PWM0) begin
+                    //     next_state = ST_PWM1;
+                    //     ctr0_rst = 1;
+                    // end                    
+                    // else if (next_state_op == ST_ADDSUB) begin
+                    //     next_state = ST_ADDSUB;
+                    // end
+                end
+                else if (ctr0 == logn_m1_shft_m1) begin
                     next_state = ST_NTT1;
                     ctr0_rst = 1;
                     ctr2_d_set = 1;                
@@ -798,24 +853,9 @@ always @(*) begin
                 end
             end
 
-            case (next_state_op)
-                ST_PWM0: begin
-                    poly_in_frwrd_A = 1;
-                    poly_in_frwrd_B = 1;
-                    pwm_idx = 1;
-                    pwm_rcv_bu = 1;
-                end
-                ST_ADDSUB: begin
-                    poly_in_frwrd_A = 1;
-                    poly_in_frwrd_B = 1;
-                    pwm_idx = 1;
-                    addsub_rcv_bu = 1;
-                end
-                ST_NTT0: begin
-                    poly_in_frwrd_B = 1;
-                    ntt_rcv_bu = 1;
-                end
-            endcase
+            poly_in_frwrd_B = 1;
+            ntt_rcv_bu = 1;
+
         end
         ST_ENCODE0: begin
 

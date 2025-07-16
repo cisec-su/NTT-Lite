@@ -320,13 +320,13 @@ def decompose(r, a, q):
 
 
 q = 8380417
-bound = 16
-inv2 = (q - 1) // (bound)
+inv2 = 16
+bound = (q - 1) // (inv2)
 logq = math.ceil(math.log2(q))
 logn = 8
 n = 1 << logn
-mu_64 = (1 << 64) // inv2
-mu_32 = (1 << 32) // inv2
+mu_64 = (1 << 64) // bound
+mu_32 = (1 << 32) // bound
 
 with open("decompose_meta.txt", "w") as f:
     f.write(hex(q)[2:] + "\n")
@@ -350,7 +350,7 @@ A0 = []
 A1 = []
 
 for A_i in A:
-    r1, r0 = decompose(A_i, inv2, q)
+    r1, r0 = decompose(A_i, bound, q)
     A0.append(r0)
     A1.append(r1)
 
