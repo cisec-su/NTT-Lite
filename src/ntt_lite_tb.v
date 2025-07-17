@@ -134,7 +134,7 @@ initial begin
     mu_32 = meta[6];
     bound = 0;
 
-    op = `OP_NTT;
+    op = 0;
     mode = `MODE_SINGLE;
 
     cmd = `CMD_LOAD_TWIDDLE;
@@ -150,7 +150,7 @@ initial begin
     end
 
     i_valid = 1'b0;
-
+    op = `OP_NTT;
     cmd = `CMD_LOAD_POLY;
     #FP;
     cmd = 0;
@@ -244,7 +244,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
     $readmemh("../../../../../test/mul_out_single.txt" , poly_out);
 
-    op = `OP_PWM;
+    op = 0;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_TWIDDLE;
     #FP;
@@ -258,6 +258,7 @@ initial begin
         #FP;
     end
 
+    op = `OP_PWM;
     cmd = `CMD_LOAD_POLY;
     #FP;
     cmd = 0;
@@ -303,7 +304,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
     $readmemh("../../../../../test/mul_out_dual.txt" , poly_out);
 
-    op = `OP_PWM;
+    op = 0;
     mode = `MODE_DUAL;
     cmd = `CMD_LOAD_TWIDDLE;
     #FP;
@@ -317,6 +318,7 @@ initial begin
         #FP;
     end
 
+    op = `OP_PWM;
     cmd = `CMD_LOAD_POLY;
     #FP;
     cmd = 0;
@@ -408,7 +410,7 @@ initial begin
     $readmemh("../../../../../test/psi_inv.txt" , psi);
     $readmemh("../../../../../test/poly_in_single.txt" , poly_out);
 
-    op = `OP_INTT;
+    op = 0;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_TWIDDLE;
     #FP;
@@ -422,6 +424,7 @@ initial begin
         #FP;
     end
 
+    op = `OP_INTT;
     cmd = `CMD_LOAD_POLY;
     #FP;
     cmd = 0;
@@ -513,7 +516,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
     $readmemh("../../../../../test/add_out_single.txt" , poly_out);
 
-    op = `OP_ADD;
+    op = 0;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_TWIDDLE;
     #FP;
@@ -527,6 +530,7 @@ initial begin
         #FP;
     end
 
+    op = `OP_ADD;
     cmd = `CMD_LOAD_POLY;
     #FP;
     cmd = 0;
@@ -573,7 +577,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
     $readmemh("../../../../../test/sub_out_single.txt" , poly_out);
 
-    op = `OP_SUB;
+    op = 0;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_TWIDDLE;
     #FP;
@@ -587,6 +591,7 @@ initial begin
         #FP;
     end
 
+    op = `OP_SUB;
     cmd = `CMD_LOAD_POLY;
     #FP;
     cmd = 0;
@@ -632,7 +637,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
     $readmemh("../../../../../test/add_out_dual.txt" , poly_out);
 
-    op = `OP_ADD;
+    op = 0;
     mode = `MODE_DUAL;
     cmd = `CMD_LOAD_TWIDDLE;
     #FP;
@@ -646,6 +651,7 @@ initial begin
         #FP;
     end
 
+    op = `OP_ADD;
     cmd = `CMD_LOAD_POLY;
     #FP;
     cmd = 0;
@@ -690,7 +696,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
     $readmemh("../../../../../test/sub_out_dual.txt" , poly_out);
 
-    op = `OP_SUB;
+    op = 0;
     mode = `MODE_DUAL;
     cmd = `CMD_LOAD_TWIDDLE;
     #FP;
@@ -704,6 +710,7 @@ initial begin
         #FP;
     end
 
+    op = `OP_SUB;
     cmd = `CMD_LOAD_POLY;
     #FP;
     cmd = 0;
@@ -974,6 +981,7 @@ initial begin
     $readmemh("../../../../../test/encode_out_poly.txt", psi);
     $readmemh("../../../../../test/comp_out_dual.txt", poly_out);
 
+    op = 0;
     mode = `MODE_POLY;
     cmd = `CMD_LOAD_TWIDDLE;
     #FP;
