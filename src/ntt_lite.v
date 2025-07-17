@@ -83,7 +83,8 @@ localparam ST_CHKNORM      = 5'd19;
 localparam ST_POLY_FORWARD_PWM    = 5'd21;
 localparam ST_POLY_FORWARD_ADDSUB = 5'd22;
 localparam ST_POLY_FORWARD_NTT    = 5'd23;
-
+localparam ST_TWIDDLE_FORWARD_ADDSUB = 5'd24;
+localparam ST_TWIDDLE_FORWARD_PWM    = 5'd25;
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -202,6 +203,7 @@ wire encode_o_valid;
 reg [B-1:0] i_data_q;
 reg poly_in_frwrd_A, poly_in_frwrd_A_q;
 reg poly_in_frwrd_B, poly_in_frwrd_B_q;
+reg twiddle_frwrd  , twiddle_frwrd_q;
 wire [LOGQ-1:0] poly_in_mx_A;
 wire [LOGQ-1:0] poly_in_mx_B;
 wire [LOGQ-1:0] twiddle_in_mx;
@@ -236,7 +238,7 @@ assign ctr0_p1 = ctr0 + 1;
 
 assign poly_in_mx_A = (poly_in_frwrd_A_q) ? i_data_q : coeff_ram_p0_dout;
 assign poly_in_mx_B = (poly_in_frwrd_B_q) ? i_data_q : coeff_ram_p1_dout;
-assign twiddle_in_mx = (rhs_const) ? bound : twiddle_ram_dout;
+assign twiddle_in_mx = (rhs_const) ? bound : (twiddle_frwrd_q) ? i_data_q : twiddle_ram_dout;
 
 assign A_i      = (op_switch) ? twiddle_in_mx  : poly_in_mx_A;
 assign B_i      = poly_in_mx_B;
@@ -450,6 +452,10 @@ end
 
 always @(posedge clk) begin
     poly_in_frwrd_B_q <= poly_in_frwrd_B;
+end
+
+always @(posedge clk) begin
+    twiddle_frwrd_q <= twiddle_frwrd;
 end
 
 
@@ -674,6 +680,7 @@ always @(*) begin
 
     poly_in_frwrd_A = 0;
     poly_in_frwrd_B = 0;
+    twiddle_frwrd = 0;
 
     case (state)
         ST_IDLE: begin
@@ -683,7 +690,15 @@ always @(*) begin
                     next_state = ST_IDLE;
                 end
                 else begin
-                    next_state = ST_TWIDDLE_IN;
+                    if (op == `OP_ADD || (op == `OP_SUB)) begin
+                        next_state = ST_TWIDDLE_FORWARD_ADDSUB;
+                    end
+                    else if (op == `OP_PWM) begin
+                        next_state = ST_TWIDDLE_FORWARD_PWM;
+                    end
+                    else begin
+                        next_state = ST_TWIDDLE_IN;                        
+                    end
                 end
             end
             else if (cmd == `CMD_LOAD_POLY) begin
@@ -744,20 +759,47 @@ always @(*) begin
             end
 
         end
-        ST_TWIDDLE_OTF: begin // todo: check here
+        ST_TWIDDLE_FORWARD_ADDSUB: begin
 
-            io_word = ctr0 + num_words;
+            io_word = ctr0;
             i_ready = 1;
             if (i_valid) begin
-                wpsi_delta = 1;
-                if (ctr0 == num_words_m1) begin
-                    next_state = ST_IDLE;
+                wpsi = 1;
+                sr_i = 1;
+
+                if (ctr0 == n_m1) begin
+                    next_state = ST_ADDSUB;
+                end
+                else begin
+                    ctr0_inc = 1;
+                end
+            end
+
+            twiddle_frwrd = 1;
+            pwm_idx = 1;
+            addsub_rcv_bu = 1;
+
+        end
+        ST_TWIDDLE_FORWARD_PWM: begin
+
+            io_word = ctr0;
+            i_ready = 1;
+            if (i_valid) begin
+                wpsi = 1;
+                sr_i = 1;
+
+                if (ctr0 == n_m1) begin
+                    next_state = ST_PWM1;
                     ctr0_rst = 1;
-                    done_set = 1;
                 end
                 else
                     ctr0_inc = 1;
             end
+
+
+            twiddle_frwrd = 1;
+            pwm_idx = 1;
+            pwm_rcv_bu = 1;
 
         end
         ST_POLY_IN: begin
@@ -1131,16 +1173,6 @@ always @(*) begin
 
     // common logic for background BU input/output below
 
-    if (EN_NTT_OTF && ntt_otf_feed_bu) begin
-        if (ctr2 <= n_m2) begin
-            ctr2_inc = 1;
-            sr_i = 1;
-        end
-        if ((((ctr2 + 2) >> (ctr3 + 1)) & 1'b1) && ctr2 < n_m2) begin
-            ctr3_inc = 1;
-        end
-    end
-
     if (ntt_rcv_bu) begin
         if (sr_o) begin
             if (ctr1 == logn_m1_shft_m1) begin
@@ -1163,14 +1195,6 @@ always @(*) begin
             upoly_mul = 1;
             if (op == `OP_DECOMPOSE) begin
                 upsi = 1;
-            end
-        end
-    end
-    else if (EN_NTT_OTF && ntt_otf_rcv_bu) begin
-        if (sr_o) begin
-            upsi = 1;
-            if (ctr1 <= n_m2) begin
-                ctr1_inc = 1;
             end
         end
     end
