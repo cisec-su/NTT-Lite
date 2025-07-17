@@ -63,6 +63,8 @@ wire [B-1:0] fsm_o_data;
 wire fsm_o_read;
 wire fsm_o_valid;
 wire [LOGN+LOGWB-1:0] fsm_io_word;
+wire [LOGN+LOGWB-1:0] fsm_io_limit;
+
 
 // CTRL & NTT
 wire [3:0] ctrl_cmd;
@@ -105,6 +107,7 @@ ntt_lite #(
     .o_valid    (fsm_o_valid),
     .o_read     (fsm_o_read ),
     .io_word    (fsm_io_word),
+    .io_limit   (fsm_io_limit),
     // ntt <-> ctrl
     .cmd        (ctrl_cmd   ),
     .logn       (ctrl_logn  ),
@@ -242,13 +245,13 @@ ntt_lite_acc_fsm #(
     .fsm_o_valid    (fsm_o_valid    ),
     .fsm_o_read     (fsm_o_read     ),
     .fsm_io_word    (fsm_io_word    ),
+    .fsm_io_limit   (fsm_io_limit   ),
     .fsm_o_done     (ctrl_done      ),    
     // fsm <-> ctrl
     .ctrl_din_addr  (ctrl_din_addr  ),
     .ctrl_dout_addr (ctrl_dout_addr ),
     .ctrl_logn      (ctrl_logn      ),
-    .ctrl_cmd       (ctrl_cmd       ),
-    .ctrl_rhs_const (ctrl_rhs_const )
+    .ctrl_cmd       (ctrl_cmd       )
 );
 
 

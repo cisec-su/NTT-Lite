@@ -984,6 +984,7 @@ initial begin
     op = 0;
     mode = `MODE_POLY;
     cmd = `CMD_LOAD_TWIDDLE;
+    op_switch = 1;
     #FP;
     cmd = 0;
 
@@ -1000,6 +1001,7 @@ initial begin
     #FP;
     cmd = 0;
     flag = 0;
+    op_switch = 0;
 
     while(!done) begin
         if (i_ready) begin
@@ -1025,11 +1027,14 @@ initial begin
     o_read = 1'b0;
     i_valid = 1'b0;
 
-    if (flag == 0)
+    if (flag == 0) begin
         $display("(SUCCESS POLY DECODE)");
+        $stop;
+    end
     else begin
         $display("(FAIL POLY DECODE)");
         flag1 = 1;
+        $stop;
     end
 
     d = meta[4];

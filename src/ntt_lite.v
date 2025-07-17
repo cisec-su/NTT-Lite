@@ -35,6 +35,7 @@ module ntt_lite
         output reg                  chknorm  ,
         output reg                  o_valid  ,
         output reg [LOGN+LOGWB-1:0] io_word  ,
+        output reg [LOGN+LOGWB-1:0] io_limit ,
         output reg                  done     ,
         output reg                  busy     ,
         output reg                  error
@@ -139,6 +140,9 @@ wire [LOGN+LOGWB-1:0] num_words_m1;
 wire [LOGN+LOGWB-1:0] num_words_over2;
 wire [LOGN+LOGWB-1:0] num_words_over2_m1;
 
+wire [LOGN-1:0] decode_num_words_;
+wire [LOGN-1:0] decode_num_words;
+
 
 // error register
 reg error_set;
@@ -226,6 +230,8 @@ assign num_words_m1 = num_words - 1;
 assign num_words_over2 = num_words >> 1;
 assign num_words_over2_m1 = num_words_over2 - 1;
 assign ctr0_p1 = ctr0 + 1;
+assign decode_num_words_ = d << (logn - (LOGLOGQ - 1));
+assign decode_num_words  = ((mode == `MODE_SINGLE) ? decode_num_words_ : decode_num_words_ << 1) - 1'b1;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -648,6 +654,8 @@ always @(*) begin
     poly_in_frwrd_B = 0;
     twiddle_frwrd = 0;
 
+    io_limit = n_m1;
+
     case (state)
         ST_IDLE: begin
             if (cmd == `CMD_LOAD_TWIDDLE) begin
@@ -709,11 +717,15 @@ always @(*) begin
         end
         ST_TWIDDLE_IN: begin
 
+            if (op_switch) begin
+                io_limit = decode_num_words;
+            end
+
             io_word = ctr0;
             i_ready = 1;
             if (i_valid) begin
                 wpsi = 1;
-                if (ctr0 == num_words_m1) begin
+                if (((ctr0 == decode_num_words) && op_switch) || (ctr0 == num_words_m1)) begin
                     next_state = ST_IDLE;
                     done_set = 1;
                     ctr0_rst = 1;

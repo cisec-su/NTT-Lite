@@ -1,3 +1,5 @@
+`include "ntt_lite.vh"
+
 module ntt_lite_acc_fsm
    #(
         parameter B = 32,
@@ -25,12 +27,13 @@ module ntt_lite_acc_fsm
         input                      fsm_o_valid,
         input      [LOGN+LOGWB-1:0]fsm_io_word,
         input                      fsm_o_done,
-        
+        input      [LOGN+LOGWB-1:0]fsm_io_limit,
+
         input      [31:0]          ctrl_din_addr,
         input      [31:0]          ctrl_dout_addr,
 
-        input                      ctrl_rhs_const,
         input      [3:0]           ctrl_cmd,
+
         input      [LOGLOGN-1:0]   ctrl_logn
     );
 
@@ -47,7 +50,6 @@ localparam [31:0] ST_GET2 = 5;
 
 reg [31:0] cnt;
 reg cnt_up, cnt_rst;
-reg [31:0] LIMIT;
 reg [31:0] cstate;
 
 always @(posedge clk or posedge rst)
@@ -55,7 +57,6 @@ begin
     if(rst)
     begin
         cnt <= 0;
-        LIMIT <= 0;
         cstate <= ST_IDLE;
     end
     else
@@ -72,25 +73,22 @@ begin
         begin
             if(ctrl_cmd == `CMD_LOAD_TWIDDLE)
             begin
-                LIMIT <= (ctrl_rhs_const) ? 1 : (1 << ctrl_logn);
                 cstate <=  ST_GET0;
             end
             else if(ctrl_cmd == `CMD_LOAD_POLY)
             begin
-                LIMIT <= (1 << ctrl_logn);
                 cstate <= ST_GET0;
             end
             else if(fsm_o_valid)
             begin
                 cstate <= ST_PUT;
-                // LIMIT <= (1 << ctrl_logn);
             end
         end
         ST_GET0:
             cstate <= ST_GET;
         ST_GET:
         begin
-            if(cnt >= (LIMIT-1))
+            if(cnt >= (fsm_io_limit))
                 cstate <= ST_GET2; 
         end
         ST_GET2:
@@ -138,7 +136,7 @@ begin
             mem_addr = ctrl_din_addr + (cnt << 2);
             cnt_up = 1;
         end
-        if(cnt >= (LIMIT-1))
+        if(cnt >= (fsm_io_limit))
             cnt_rst = 1;
     end
     ST_GET2:
