@@ -6,22 +6,22 @@
       <db_ref path="ntt_lite_tb_behav.wdb" id="1">
          <top_modules>
             <top_module name="\$unit_asr_sv_321071272 " />
-            <top_module name="\$unit_intmul_std_dual_64x64_sv_2464139454 " />
+            <top_module name="\$unit_mac_std_dual_32x34_tb_sv_126076221 " />
             <top_module name="glbl" />
             <top_module name="ntt_lite_tb" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="91,721.416 ns"></ZoomStartTime>
-      <ZoomEndTime time="92,146.917 ns"></ZoomEndTime>
-      <Cursor1Time time="92,076.000 ns"></Cursor1Time>
+      <ZoomStartTime time="17,061.400 ns"></ZoomStartTime>
+      <ZoomEndTime time="17,234.001 ns"></ZoomEndTime>
+      <Cursor1Time time="17,209.800 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="176"></NameColumnWidth>
-      <ValueColumnWidth column_width="160"></ValueColumnWidth>
+      <NameColumnWidth column_width="205"></NameColumnWidth>
+      <ValueColumnWidth column_width="119"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="33" />
+   <WVObjectSize size="89" />
    <wave_markers>
       <marker label="" time="4538310" />
       <marker label="" time="5150000" />
@@ -29,15 +29,110 @@
       <marker label="" time="1869500" />
       <marker label="" time="9889500" />
       <marker label="" time="86511833" />
+      <marker label="" time="105140000" />
    </wave_markers>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/o_valid">
+      <obj_property name="ElementShortName">o_valid</obj_property>
+      <obj_property name="ObjectShortName">o_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0">
+      <obj_property name="ElementShortName">ctr0[7:0]</obj_property>
+      <obj_property name="ObjectShortName">ctr0[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr1">
+      <obj_property name="ElementShortName">ctr1[7:0]</obj_property>
+      <obj_property name="ObjectShortName">ctr1[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr2">
+      <obj_property name="ElementShortName">ctr2[7:0]</obj_property>
+      <obj_property name="ObjectShortName">ctr2[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr3">
+      <obj_property name="ElementShortName">ctr3[3:0]</obj_property>
+      <obj_property name="ObjectShortName">ctr3[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/chknorm">
+      <obj_property name="ElementShortName">chknorm</obj_property>
+      <obj_property name="ObjectShortName">chknorm</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/done">
+      <obj_property name="ElementShortName">done</obj_property>
+      <obj_property name="ObjectShortName">done</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/A">
+      <obj_property name="ElementShortName">A[31:0]</obj_property>
+      <obj_property name="ObjectShortName">A[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/B">
+      <obj_property name="ElementShortName">B[31:0]</obj_property>
+      <obj_property name="ObjectShortName">B[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/Q">
+      <obj_property name="ElementShortName">Q[31:0]</obj_property>
+      <obj_property name="ObjectShortName">Q[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/dual">
+      <obj_property name="ElementShortName">dual</obj_property>
+      <obj_property name="ObjectShortName">dual</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/corr">
+      <obj_property name="ElementShortName">corr</obj_property>
+      <obj_property name="ObjectShortName">corr</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/corr0">
+      <obj_property name="ElementShortName">corr0</obj_property>
+      <obj_property name="ObjectShortName">corr0</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/corr1">
+      <obj_property name="ElementShortName">corr1</obj_property>
+      <obj_property name="ObjectShortName">corr1</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/ms/corr">
+      <obj_property name="ElementShortName">corr</obj_property>
+      <obj_property name="ObjectShortName">corr</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/chknorm_bu">
+      <obj_property name="ElementShortName">chknorm_bu</obj_property>
+      <obj_property name="ObjectShortName">chknorm_bu</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/hint">
+      <obj_property name="ElementShortName">hint</obj_property>
+      <obj_property name="ObjectShortName">hint</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/o_valid">
+      <obj_property name="ElementShortName">o_valid</obj_property>
+      <obj_property name="ObjectShortName">o_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/io_word">
+      <obj_property name="ElementShortName">io_word[7:0]</obj_property>
+      <obj_property name="ObjectShortName">io_word[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/o_data">
+      <obj_property name="ElementShortName">o_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">o_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/o_read">
+      <obj_property name="ElementShortName">o_read</obj_property>
+      <obj_property name="ObjectShortName">o_read</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_out_q">
+      <obj_property name="ElementShortName">twiddle_out_q</obj_property>
+      <obj_property name="ObjectShortName">twiddle_out_q</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_out_set">
+      <obj_property name="ElementShortName">twiddle_out_set</obj_property>
+      <obj_property name="ObjectShortName">twiddle_out_set</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_ram_dout">
+      <obj_property name="ElementShortName">twiddle_ram_dout[31:0]</obj_property>
+      <obj_property name="ObjectShortName">twiddle_ram_dout[31:0]</obj_property>
+   </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/state">
       <obj_property name="ElementShortName">state[4:0]</obj_property>
       <obj_property name="ObjectShortName">state[4:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/logn_m1_shft_m1_ctr2">
-      <obj_property name="ElementShortName">logn_m1_shft_m1_ctr2[7:0]</obj_property>
-      <obj_property name="ObjectShortName">logn_m1_shft_m1_ctr2[7:0]</obj_property>
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      <obj_property name="CustomSignalColor">#FF0080</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0">
       <obj_property name="ElementShortName">ctr0[7:0]</obj_property>
@@ -57,6 +152,43 @@
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr2_d">
       <obj_property name="ElementShortName">ctr2_d[7:0]</obj_property>
       <obj_property name="ObjectShortName">ctr2_d[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/B_i">
+      <obj_property name="ElementShortName">B_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">B_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/A_i">
+      <obj_property name="ElementShortName">A_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">A_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/psi_i">
+      <obj_property name="ElementShortName">psi_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">psi_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/M_o">
+      <obj_property name="ElementShortName">M_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">M_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_i">
+      <obj_property name="ElementShortName">sr_i</obj_property>
+      <obj_property name="ObjectShortName">sr_i</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_o">
+      <obj_property name="ElementShortName">sr_o</obj_property>
+      <obj_property name="ObjectShortName">sr_o</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/inv2">
+      <obj_property name="ElementShortName">inv2[31:0]</obj_property>
+      <obj_property name="ObjectShortName">inv2[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/bound">
+      <obj_property name="ElementShortName">bound[31:0]</obj_property>
+      <obj_property name="ObjectShortName">bound[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/logn_m1_shft_m1_ctr2">
+      <obj_property name="ElementShortName">logn_m1_shft_m1_ctr2[7:0]</obj_property>
+      <obj_property name="ObjectShortName">logn_m1_shft_m1_ctr2[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0_d">
       <obj_property name="ElementShortName">ctr0_d[7:0]</obj_property>
@@ -119,6 +251,98 @@
       <obj_property name="ElementShortName">coeff_ram_p1_dout[31:0]</obj_property>
       <obj_property name="ObjectShortName">coeff_ram_p1_dout[31:0]</obj_property>
    </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_ram_raddr">
+      <obj_property name="ElementShortName">twiddle_ram_raddr[7:0]</obj_property>
+      <obj_property name="ObjectShortName">twiddle_ram_raddr[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_ram_waddr">
+      <obj_property name="ElementShortName">twiddle_ram_waddr[7:0]</obj_property>
+      <obj_property name="ObjectShortName">twiddle_ram_waddr[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_ram_din">
+      <obj_property name="ElementShortName">twiddle_ram_din[31:0]</obj_property>
+      <obj_property name="ObjectShortName">twiddle_ram_din[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/twiddle_ram_wen">
+      <obj_property name="ElementShortName">twiddle_ram_wen</obj_property>
+      <obj_property name="ObjectShortName">twiddle_ram_wen</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm/barrett_inst/C">
+      <obj_property name="ElementShortName">C[63:0]</obj_property>
+      <obj_property name="ObjectShortName">C[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm/barrett_inst/T">
+      <obj_property name="ElementShortName">T[31:0]</obj_property>
+      <obj_property name="ObjectShortName">T[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm/barrett_inst/MU">
+      <obj_property name="ElementShortName">MU[63:0]</obj_property>
+      <obj_property name="ObjectShortName">MU[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm/barrett_inst/Q">
+      <obj_property name="ElementShortName">Q[31:0]</obj_property>
+      <obj_property name="ObjectShortName">Q[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm_in_A">
+      <obj_property name="ElementShortName">mm_in_A[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mm_in_A[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm_in_B">
+      <obj_property name="ElementShortName">mm_in_B[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mm_in_B[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm_in_E">
+      <obj_property name="ElementShortName">mm_in_E[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mm_in_E[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm_in_Q">
+      <obj_property name="ElementShortName">mm_in_Q[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mm_in_Q[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm_out_T">
+      <obj_property name="ElementShortName">mm_out_T[63:0]</obj_property>
+      <obj_property name="ObjectShortName">mm_out_T[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mm_out_D">
+      <obj_property name="ElementShortName">mm_out_D[63:0]</obj_property>
+      <obj_property name="ObjectShortName">mm_out_D[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/dual">
+      <obj_property name="ElementShortName">dual</obj_property>
+      <obj_property name="ObjectShortName">dual</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/decompose_pp_0/check0">
+      <obj_property name="ElementShortName">check0</obj_property>
+      <obj_property name="ObjectShortName">check0</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/decompose_pp_0/check1">
+      <obj_property name="ElementShortName">check1</obj_property>
+      <obj_property name="ObjectShortName">check1</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/decompose_pp_0/check2">
+      <obj_property name="ElementShortName">check2</obj_property>
+      <obj_property name="ObjectShortName">check2</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/decompose_pp_in_A0">
+      <obj_property name="ElementShortName">decompose_pp_in_A0[31:0]</obj_property>
+      <obj_property name="ObjectShortName">decompose_pp_in_A0[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/decompose_pp_in_A1">
+      <obj_property name="ElementShortName">decompose_pp_in_A1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">decompose_pp_in_A1[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/decompose_pp_in_T">
+      <obj_property name="ElementShortName">decompose_pp_in_T[31:0]</obj_property>
+      <obj_property name="ObjectShortName">decompose_pp_in_T[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/decompose_pp_out_B0">
+      <obj_property name="ElementShortName">decompose_pp_out_B0[31:0]</obj_property>
+      <obj_property name="ObjectShortName">decompose_pp_out_B0[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/decompose_pp_out_B1">
+      <obj_property name="ElementShortName">decompose_pp_out_B1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">decompose_pp_out_B1[31:0]</obj_property>
+   </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/A">
       <obj_property name="ElementShortName">A[31:0]</obj_property>
       <obj_property name="ObjectShortName">A[31:0]</obj_property>
@@ -136,6 +360,10 @@
       <obj_property name="ObjectShortName">M[31:0]</obj_property>
       <obj_property name="CustomSignalColor">#FF00FF</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/psi_i">
+      <obj_property name="ElementShortName">psi_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">psi_i[31:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_i">
       <obj_property name="ElementShortName">sr_i</obj_property>

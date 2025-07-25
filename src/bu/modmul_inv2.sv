@@ -40,8 +40,8 @@ assign inv2_dual = (dual) ? {inv2[LOGQ0-1:0], inv2[LOGQ0-1:0]} :
 assign C[LOGQ0-1:    0] = (                 A[0]                 ) ? add_out[LOGQ0-1:    0] : 
                                                                      asr_out[LOGQ0-1:    0] ;
 
-assign C[LOGQ -1:LOGQ0] = ((dual & A[LOGQ0]) | (~dual & A[LOGQ0])) ? add_out[LOGQ -1:LOGQ0] : 
-                                                                     asr_out[LOGQ -1:LOGQ0] ;
+assign C[LOGQ -1:LOGQ0] = ((dual & A[LOGQ0]) | (~dual & A[0])) ? add_out[LOGQ -1:LOGQ0] : 
+                                                                 asr_out[LOGQ -1:LOGQ0] ;
 
 
 /////////////////////////////////////////////////////////////////////////

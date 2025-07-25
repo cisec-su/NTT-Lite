@@ -7,6 +7,7 @@
 `define CMD_START             4'd2
 `define CMD_LOAD_TWIDDLE      4'd3
 `define CMD_LOAD_POLY         4'd4
+`define CMD_READ_TWIDDLE      4'd5
 
 
 `define OP_NTT                4'd0
@@ -19,6 +20,11 @@
 `define OP_ENCODE             4'd7
 `define OP_DECODE             4'd8
 `define OP_SUM                4'd9
+// below OPs are only valid for MODE_SINGLE
+`define OP_DECOMPOSE          4'd10
+`define OP_CHKNORM            4'd11
+`define OP_MAKEHINT           4'd12
+
 
 `define MODE_SINGLE           2'd0
 `define MODE_DUAL             2'd2

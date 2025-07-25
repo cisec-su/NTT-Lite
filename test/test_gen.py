@@ -18,7 +18,7 @@ logn = 7
 n = 1 << logn
 mu_64 = (1 << 64) // q
 mu_32 = (1 << 32) // q
-log = 12
+log = 23
 b = 32
 d = 10
 inv2 = pow(2, -1, q)
@@ -107,6 +107,25 @@ with open("add_out_dual.txt", "w") as f:
         t0 = (A_0[i] + B_0[i]) % q
         t1 = (A_1[i] + B_1[i]) % q
         f.write(hex((t1 << (b // 2)) + t0)[2:] + "\n")
+
+
+with open("add_out_dual_const.txt", "w") as f:
+    for i in range(n):
+        t0 = (A_0[i] + B_0[0]) % q
+        t1 = (A_1[i] + B_1[0]) % q
+        f.write(hex((t1 << (b // 2)) + t0)[2:] + "\n")
+
+
+with open("add_out_single_const.txt", "w") as f:
+    for i in range(n):
+        t0 = (A_0[i] + B_0[0]) % q
+        f.write(hex(t0)[2:] + "\n")
+
+
+with open("sub_out_single_const_switched.txt", "w") as f:
+    for i in range(n):
+        t0 = (B_0[0] - A_0[i]) % q
+        f.write(hex(t0)[2:] + "\n")
 
 
 with open("sub_out_single.txt", "w") as f:
@@ -260,3 +279,167 @@ sum1 %= q
 
 with open("sum_out_dual.txt", "w") as f:
     f.write(hex((sum1 << (b // 2)) + sum0)[2:] + "\n")
+
+
+
+############################# DECOMPOSE TEST ###########################
+
+def reduce_mod_pm(r, a):
+    """
+    Reduces r modulo a, such that the result is in the range
+    -(a >> 1) < r <= (a >> 1)
+    """
+    r = r % a
+    if r > (a >> 1):
+        r -= a
+    return r
+
+def decompose(r, a, q):
+    """
+    Takes an element r and represents
+    it as:
+
+    r = r1*a + r0
+
+    With r0 in the range
+
+    -(a << 1) < r0 <= (a << 1)
+    """
+    rp = r % q
+    r0 = reduce_mod_pm(rp, a)
+    t = rp - r0
+    if t == q - 1:
+        r1 = 0
+        r0 = r0 - 1
+    else:
+        r1 = (t) // a
+    # assert r0 > -(a >> 1)
+    # assert r0 <= (a >> 1)
+    # assert r % q == (r0 + r1 * a) % q
+    return r1, r0 % q
+
+
+q = 8380417
+inv2 = 16
+bound = (q - 1) // (inv2)
+logq = math.ceil(math.log2(q))
+logn = 8
+n = 1 << logn
+mu_64 = (1 << 64) // bound
+mu_32 = (1 << 32) // bound
+
+with open("decompose_meta.txt", "w") as f:
+    f.write(hex(q)[2:] + "\n")
+    f.write(hex(mu_64)[2:] + "\n")
+    f.write(hex(logn)[2:] + "\n")
+    f.write(hex(logq)[2:] + "\n")
+    f.write(hex(d)[2:] + "\n")
+    f.write(hex(inv2)[2:] + "\n")
+    f.write(hex(mu_32)[2:] + "\n")
+    f.write(hex(bound)[2:] + "\n")
+
+
+A =  [random.randint(0, q) for _ in range(n)]
+
+with open("decompose_in.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A[i])[2:] + "\n")
+
+
+A0 = []
+A1 = []
+
+for A_i in A:
+    r1, r0 = decompose(A_i, bound, q)
+    A0.append(r0)
+    A1.append(r1)
+
+
+with open("decompose_out_low.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A0[i])[2:] + "\n")
+
+with open("decompose_out_high.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A1[i])[2:] + "\n")
+
+
+q = 8380417
+bound =  (q - 1) // (16)
+inv2 = q - bound
+logq = math.ceil(math.log2(q))
+logn = 8
+n = 1 << logn
+mu_64 = (1 << 64) // inv2
+mu_32 = (1 << 32) // inv2
+
+with open("chknorm_makehint_meta.txt", "w") as f:
+    f.write(hex(q)[2:] + "\n")
+    f.write(hex(mu_64)[2:] + "\n")
+    f.write(hex(logn)[2:] + "\n")
+    f.write(hex(logq)[2:] + "\n")
+    f.write(hex(d)[2:] + "\n")
+    f.write(hex(inv2)[2:] + "\n")
+    f.write(hex(mu_32)[2:] + "\n")
+    f.write(hex(bound)[2:] + "\n")
+
+
+A =  [random.randint(-bound, bound) % q for _ in range(n)]
+A[0] = bound
+A[1] = q - bound
+
+with open("chknorm_in_succ.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A[i])[2:] + "\n")
+
+
+A =  [random.randint(-bound, bound + 1) % q for _ in range(n)]
+A[n-2] = bound + 1
+A[n-1] = q - bound - 1
+
+with open("chknorm_in_fail.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A[i])[2:] + "\n")
+
+
+A =  [random.randint(0, q) % q for _ in range(n)]
+
+
+A0 = []
+A1 = []
+
+for A_i in A:
+    r1, r0 = decompose(A_i, bound, q)
+    A0.append(r0)
+    A1.append(r1)
+
+print(hex(2*bound), hex(bound))
+A0[0 % n] = 2*bound
+A0[10 % n] = 2*bound
+A0[100 % n] = q-bound
+A1[100 % n] = 1
+A0[200 % n] = bound + 1
+
+with open("makehint_in_low.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A0[i])[2:] + "\n")
+
+with open("makehint_in_high.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A1[i])[2:] + "\n")
+
+def make_hint(a0, a1, q, bound):
+    if(((a0 > bound) and (a0 < (q-bound))) or (a0 == (q-bound) and a1 != 0)):
+        return 1
+    else:
+        return 0
+
+
+hints = []
+
+for i in range(n):
+    hints.append(make_hint(A0[i], A1[i], q, bound))
+
+with open("makehint_out.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(hints[i])[2:] + "\n")

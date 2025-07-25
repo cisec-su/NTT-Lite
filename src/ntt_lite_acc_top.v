@@ -63,6 +63,8 @@ wire [B-1:0] fsm_o_data;
 wire fsm_o_read;
 wire fsm_o_valid;
 wire [LOGN+LOGWB-1:0] fsm_io_word;
+wire [LOGN+LOGWB-1:0] fsm_io_limit;
+
 
 // CTRL & NTT
 wire [3:0] ctrl_cmd;
@@ -74,15 +76,20 @@ wire [3:0] ctrl_op;
 wire [LOGQ-1:0] ctrl_q;
 wire [LOGQ*2-1:0] ctrl_mu;
 wire [LOGQ-1:0] ctrl_inv2;
+wire [LOGQ-1:0] ctrl_bound;
 wire ctrl_otf;
 wire ctrl_done;
 wire ctrl_busy;
 wire ctrl_o_dis;
 wire ctrl_floor;
+wire ctrl_rhs_const;
+wire ctrl_op_switch;
+wire ctrl_chknorm;
 
 // CTRL & FSM
 wire [31:0] ctrl_din_addr;
 wire [31:0] ctrl_dout_addr;
+
 
 
 ntt_lite #(
@@ -100,6 +107,7 @@ ntt_lite #(
     .o_valid    (fsm_o_valid),
     .o_read     (fsm_o_read ),
     .io_word    (fsm_io_word),
+    .io_limit   (fsm_io_limit),
     // ntt <-> ctrl
     .cmd        (ctrl_cmd   ),
     .logn       (ctrl_logn  ),
@@ -107,14 +115,18 @@ ntt_lite #(
     .d          (ctrl_d     ),
     .o_dis      (ctrl_o_dis ),
     .floor      (ctrl_floor ),
+    .rhs_const  (ctrl_rhs_const),
+    .op_switch  (ctrl_op_switch),
     .q          (ctrl_q     ),
     .mu         (ctrl_mu    ),
     .inv2       (ctrl_inv2  ),
+    .bound      (ctrl_bound ),
     .op         (ctrl_op    ),
     .mode       (ctrl_mode  ),
     .otf        (ctrl_otf   ),
     .done       (ctrl_done  ),
     .busy       (ctrl_busy  ),
+    .chknorm    (ctrl_chknorm),
     
     .error()
 );
@@ -137,6 +149,8 @@ ntt_lite_ctrl #(
     .k          (ctrl_k     ),
     .d          (ctrl_d     ),
     .o_dis      (ctrl_o_dis ),
+    .rhs_const  (ctrl_rhs_const),
+    .op_switch  (ctrl_op_switch),
     .floor      (ctrl_floor ),
     .mode       (ctrl_mode  ),
     .op         (ctrl_op    ),
@@ -145,11 +159,12 @@ ntt_lite_ctrl #(
     .q          (ctrl_q     ),
     .otf        (ctrl_otf   ),
     .done       (ctrl_done  ),
+    .chknorm    (ctrl_chknorm),
     .busy       (ctrl_busy  ),
     // fsm <-> ctrl
     .din_addr   (ctrl_din_addr ),
     .dout_addr  (ctrl_dout_addr),
-    .stride     ()
+    .bound      (ctrl_bound )
 );
 
 
@@ -230,6 +245,7 @@ ntt_lite_acc_fsm #(
     .fsm_o_valid    (fsm_o_valid    ),
     .fsm_o_read     (fsm_o_read     ),
     .fsm_io_word    (fsm_io_word    ),
+    .fsm_io_limit   (fsm_io_limit   ),
     .fsm_o_done     (ctrl_done      ),    
     // fsm <-> ctrl
     .ctrl_din_addr  (ctrl_din_addr  ),
