@@ -7,6 +7,7 @@ module mac_std_dual_32x34
         parameter          FF_IN_A  = 1     ,
         parameter          FF_IN_B  = 1     ,
         parameter          FF_IN_E  = 0     ,
+        parameter          FF_IN_Z  = 0     ,
         parameter          FF_MUL   = 1     ,
         parameter          FF_OUT   = 1     ,
         parameter          OPT_HIGH = 0
@@ -14,9 +15,11 @@ module mac_std_dual_32x34
     (
         input               clk     ,
         input   mode_mul_t  mode_mul,
+        input               en_z    ,
         input   [LOGA-1:0]  A       ,
         input   [LOGB-1:0]  B       ,
         input   [LOGE-1:0]  E       ,
+        input   [LOGZ-1:0]  Z       ,
         output  [LOGC-1:0]  C
     );
 
@@ -32,7 +35,7 @@ end
 
 ///////////////////////////// parameters ////////////////////////////////
 
-localparam mac_std_dual_32x34_params_t params = {LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT};
+localparam mac_std_dual_32x34_params_t params = {LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_IN_Z, FF_MUL, FF_OUT};
 localparam LOGA = mac_std_dual_32x34_loga(params);
 localparam LOGE = mac_std_dual_32x34_loge(params);
 localparam LOGA0 = mac_std_dual_32x34_loga0(params);
@@ -42,6 +45,7 @@ localparam LOGD  = mac_std_dual_32x34_logd(params);
 localparam LOGD0 = mac_std_dual_32x34_logd0(params);
 localparam LOGC = mac_std_dual_32x34_logc(params);
 localparam LOGC0 = mac_std_dual_32x34_logc0(params);
+localparam LOGZ  = mac_std_dual_32x34_logz(params);
 localparam LAT  = mac_std_dual_32x34_lat(params);
 localparam DSP_A_U = LOGA0;
 localparam DSP_B_U = LOGB0;
@@ -65,6 +69,12 @@ wire [DSP_A_U-1:0] A_i_mx[0:N_A-1];
 wire [DSP_B_U-1:0] B_i   [0:N_B-1];
 reg  [DSP_B_U-1:0] B_i_q [0:N_B-1];
 wire [DSP_B_U-1:0] B_i_mx[0:N_B-1];
+
+wire [LOGZ-1:0] Z_i   ;
+reg  [LOGZ-1:0] Z_i_q ;
+wire [LOGZ-1:0] Z_i_mx;
+
+wire [DSP_B_U-1:0] LHS;
 
 
 wire [LOGE-1:0] E_mx_0;
@@ -135,6 +145,8 @@ if (MODE_E != DIS_E) begin
     assign E_mx_0 = (FF_IN_E) ? E_q_0 : E;
 end
 
+assign Z_i_mx = (FF_IN_Z) ? Z_i_q : Z;
+
 for (genvar i = 0; i < N_A; i = i + 1) begin
     for (genvar j = 0; j < N_B; j = j + 1) begin
         if (!(OPT_HIGH && (i == N_A - 1) && j == (N_B - 1))) begin
@@ -169,8 +181,10 @@ else begin
     assign P[0][1] = A_i_mx[0] * B_i_mx[1]; 
 end
 assign P[1][0] = A_i_mx[1] * B_i_mx[0];
+
 if (!OPT_HIGH) begin
-    assign P[1][1] = A_i_mx[1] * B_i_mx[1];
+    assign LHS = (en_z) ? Z_i_mx : A_i_mx[1];
+    assign P[1][1] = LHS * B_i_mx[1];
 end
 
 if (OPT_HIGH) begin
@@ -252,6 +266,11 @@ end
 if (FF_IN_E && MODE_E != DIS_E) begin
     always @(posedge clk) begin
         E_q_0 <= E;
+    end
+end
+if (FF_IN_Z) begin
+    always @(posedge clk) begin
+        Z_i_q <= Z;
     end
 end
 

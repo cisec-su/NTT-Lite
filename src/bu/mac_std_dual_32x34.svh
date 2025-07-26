@@ -3,7 +3,7 @@
 
 
 typedef struct packed {
-    int LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_MUL, FF_OUT;
+    int LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_IN_Z, FF_MUL, FF_OUT;
 } mac_std_dual_32x34_params_t;
 
 
@@ -22,7 +22,7 @@ typedef enum logic [1:0] {
 
 
 function int mac_std_dual_32x34_lat(input mac_std_dual_32x34_params_t params);
-    mac_std_dual_32x34_lat = (params.FF_IN_A || params.FF_IN_B || (params.FF_IN_E & (params.MODE_E != 0))) + params.FF_MUL + params.FF_OUT;
+    mac_std_dual_32x34_lat = (params.FF_IN_A || params.FF_IN_B || (params.FF_IN_E & (params.MODE_E != 0)) || params.FF_IN_Z) + params.FF_MUL + params.FF_OUT;
 endfunction
 
 
@@ -84,6 +84,12 @@ endfunction
 function int mac_std_dual_32x34_logc(input mac_std_dual_32x34_params_t params);
     mac_std_dual_32x34_logc = mac_std_dual_32x34_logc0(params) << 1;
 endfunction
+
+
+function int mac_std_dual_32x34_logz(input mac_std_dual_32x34_params_t params);
+    mac_std_dual_32x34_logz = mac_std_dual_32x34_loga0(params);
+endfunction
+
 
 
 `endif

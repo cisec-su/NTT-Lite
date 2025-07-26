@@ -7,10 +7,12 @@ module modmul
     (
         input                clk ,
         input   mode_mul_t   mode,
+        input                en_z,
         input  [LOGQ   -1:0] Q   ,
         input  [LOGT   -1:0] MU  ,
         input  [LOGQ   -1:0] A   ,
         input  [LOGQ   -1:0] E   ,
+        input  [LOGZ   -1:0] Z   ,
         input  [LOGQ   -1:0] B   ,
         output [LOGT   -1:0] T   ,        
         output [LOGT   -1:0] D   ,
@@ -34,6 +36,7 @@ endgenerate
 
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 localparam LOGT    = LOGQ << 1;
+localparam LOGZ    = LOGQ >> 1;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -48,13 +51,16 @@ mac_std_dual_32x34 #(
     .FF_IN_A(1     ),
     .FF_IN_B(1     ),
     .FF_IN_E(1     ),
+    .FF_IN_Z(1     ),
     .FF_OUT (1     ),
     .FF_MUL (1     )
 ) im_nstd (
     .clk     (clk ),
     .mode_mul(mode),
+    .en_z    (en_z),
     .A       (A   ),
     .B       (B   ),
+    .Z       (Z   ),
     .E       (E   ),
     .C       (T   )
 );
