@@ -415,7 +415,6 @@ initial begin
 
     if (flag == 0) begin
         $display("(SUCCESS POLY PWM)");
-        $stop;
     end
     else begin
         $display("(FAIL POLY PWM)");

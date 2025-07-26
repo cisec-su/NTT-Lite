@@ -140,26 +140,26 @@ assign p1_waddr_masked = (p1_waddr & addr_mask) >> 1;
 assign p1_raddr_masked = (p1_raddr & addr_mask) >> 1;
 
 
-assign bram_0_waddr = (p0_waddr_ram_0) ? p0_waddr_masked :
-                                         p1_waddr_masked ;
+assign bram_0_waddr = (p0_wen_ram_0 && p0_waddr_ram_0) ? p0_waddr_masked :
+                                                         p1_waddr_masked ;
 
 assign bram_0_raddr = (p0_raddr_ram_0) ? p0_raddr_masked :
                                          p1_raddr_masked ;
 
-assign bram_1_waddr = (p0_waddr_ram_1) ? p0_waddr_masked :
-                                         p1_waddr_masked ;
+assign bram_1_waddr = (p0_wen_ram_1 && p0_waddr_ram_1) ? p0_waddr_masked :
+                                                         p1_waddr_masked ;
 
 assign bram_1_raddr = (p0_raddr_ram_1) ? p0_raddr_masked :
                                          p1_raddr_masked ;
 
-assign bram_2_waddr = (p0_waddr_ram_2) ? p0_waddr_masked :
-                                         p1_waddr_masked ;
+assign bram_2_waddr = (p0_wen_ram_2 && p0_waddr_ram_2) ? p0_waddr_masked :
+                                                         p1_waddr_masked ;
 
 assign bram_2_raddr = (p0_raddr_ram_2) ? p0_raddr_masked :
                                          p1_raddr_masked ;
 
-assign bram_3_waddr = (p0_waddr_ram_3) ? p0_waddr_masked :
-                                         p1_waddr_masked ;
+assign bram_3_waddr = (p0_wen_ram_3 && p0_waddr_ram_3) ? p0_waddr_masked :
+                                                         p1_waddr_masked ;
 
 assign bram_3_raddr = (p0_raddr_ram_3) ? p0_raddr_masked :
                                          p1_raddr_masked ;
