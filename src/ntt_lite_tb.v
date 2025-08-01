@@ -361,7 +361,25 @@ initial begin
 
 
     $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
+    $readmemh("../../../../../test/zeta_in.txt" , psi);
     $readmemh("../../../../../test/mul_out_poly.txt" , poly_out);
+
+
+
+    op = 0;
+    mode = 0;
+    cmd = `CMD_LOAD_ZETA;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
 
     op = `OP_PWM;
     mode = `MODE_POLY;
@@ -395,11 +413,13 @@ initial begin
     o_read = 1'b0;
     i_valid = 1'b0;
 
-    if (flag == 0)
+    if (flag == 0) begin
         $display("(SUCCESS POLY PWM)");
+    end
     else begin
         $display("(FAIL POLY PWM)");
         flag1 = 1;
+        $stop;
     end
 
 
@@ -562,7 +582,6 @@ initial begin
 
     if (flag == 0) begin
         $display("(SUCCESS SINGLE ADD)");
-        $stop;
     end
     else begin
         $display("(FAIL SINGLE ADD)");
@@ -1029,7 +1048,6 @@ initial begin
 
     if (flag == 0) begin
         $display("(SUCCESS POLY DECODE)");
-        $stop;
     end
     else begin
         $display("(FAIL POLY DECODE)");

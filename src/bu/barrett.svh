@@ -33,7 +33,7 @@ endfunction
 
 function mac_std_dual_32x34_params_t barrett_mac_1_params(input barrett_params_t params);
     barrett_mac_1_params = '{LOGB : params.LOGQ + 2, MODE_E : SUB_E, FF_IN_A: params.FF_SHF,  FF_IN_B: params.FF_SHF,
-                             FF_IN_E: params.FF_SHF, FF_MUL : params.FF_MUL, FF_OUT : barrett_ff_out_1(params)};
+                             FF_IN_E: params.FF_SHF, FF_IN_Z: 0, FF_MUL : params.FF_MUL, FF_OUT : barrett_ff_out_1(params)};
 endfunction
 
 

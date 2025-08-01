@@ -263,6 +263,7 @@ mac_std_dual_32x34 #(
 ) mac_std_inst_1 (
     .clk     (clk     ),
     .mode_mul(mode_mul),
+    .en_z    (1'b0    ),
     .A       (Q_mx[0] ),
     .B       (T0HL    ),
     .E       (CL_mx   ),

@@ -75,6 +75,10 @@ begin
             begin
                 cstate <=  ST_GET0;
             end
+            else if(ctrl_cmd == `CMD_LOAD_ZETA)
+            begin
+                cstate <= ST_GET0;
+            end
             else if(ctrl_cmd == `CMD_LOAD_POLY)
             begin
                 cstate <= ST_GET0;

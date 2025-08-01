@@ -42,7 +42,7 @@ A_0 =  [random.randint(0, q-1) for _ in range(n)]
 A_1 =  [random.randint(0, q-1) for _ in range(n)]
 B_0 =  [random.randint(0, q-1) for _ in range(n)]
 B_1 =  [random.randint(0, q-1) for _ in range(n)]
-
+Z_1 =  [random.randint(0, q-1) for _ in range(n)]
 
 with open("poly_in_single.txt", "w") as f:
     for i in range(n):
@@ -62,6 +62,11 @@ with open("poly_in_dual.txt", "w") as f:
 with open("poly_in_B_dual.txt", "w") as f:
     for i in range(n):
         f.write(hex((B_1[i] << (b // 2)) + B_0[i])[2:] + "\n")
+
+
+with open("zeta_in.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((Z_1[i] << (b // 2)))[2:] + "\n")
 
 
 # %%
@@ -92,7 +97,7 @@ with open("mul_out_dual.txt", "w") as f:
 
 with open("mul_out_poly.txt", "w") as f:
     for i in range(n):
-        t0 = (A_0[i] * B_0[i] + A_1[i] * B_1[i]) % q
+        t0 = (A_0[i] * B_0[i] + A_1[i] * B_1[i] * Z_1[i]) % q
         t1 = (A_1[i] * B_0[i] + A_0[i] * B_1[i]) % q
         f.write(hex((t1 << (b // 2)) + t0)[2:] + "\n")
 

@@ -11,6 +11,8 @@ module butterfly
         input  [        3:0] op       ,
         input  [        1:0] mode     ,
         input                floor    ,
+        input                mode_p2d ,
+        input                en_z     ,
         input  [LOGQ   -1:0] A        ,
         input  [LOGQ   -1:0] B        ,
         input  [LOGQ   -1:0] PSI      ,
@@ -35,6 +37,7 @@ localparam LOGT    = LOGQ << 1;
 wire [LOGQ -1:0] mm_in_A;
 wire [LOGQ -1:0] mm_in_Q;
 wire [LOGQ -1:0] mm_in_B;
+wire [LOGQ0-1:0] mm_in_Z;
 wire [LOGQ -1:0] mm_in_E;
 wire [LOGQ -1:0] mm_out_C;
 wire [LOGT -1:0] mm_out_T;
@@ -85,7 +88,8 @@ wire makehint_specialcase;
 wire hint;
 
 
-assign mode_mul    = (mode == `MODE_POLY && op != `OP_PWM) ? `MODE_DUAL : 
+assign mode_mul    = (mode == `MODE_POLY && op != `OP_PWM) ? `MODE_DUAL :
+                     (mode_p2d                           ) ? `MODE_DUAL :
                                                               mode      ;
 assign dual        =  mode == `MODE_DUAL || mode == `MODE_POLY;
 assign Q_dual      = (dual) ? {Q[LOGQ0-1:0], Q[LOGQ0-1:0]} : 
@@ -137,6 +141,7 @@ assign mm_in_E     = (floor                                   ) ? {LOGQ{1'b0}}  
                      (op == `OP_COMPRESS                      ) ? Q_half_dual        :
                      (op == `OP_DECOMPRESS                    ) ? pow_2_d_shift_dual :
                                                                   {LOGQ{1'b0}}       ;
+assign mm_in_Z     = A[LOGQ-1:LOGQ0];
 assign mm_in_Q     = (op == `OP_DECOMPOSE                     ) ? bound              : 
                                                                   Q_dual             ;
 assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A              :
@@ -224,11 +229,13 @@ modmul #(
 ) mm (
     .clk (clk     ),
     .mode(mode_mul),
+    .en_z(en_z    ),
     .Q   (mm_in_Q ),
     .MU  (MU_dual ),
     .A   (mm_in_A ),
     .B   (mm_in_B ),
     .E   (mm_in_E ),
+    .Z   (mm_in_Z ),
     .C   (mm_out_C),
     .T   (mm_out_T),
     .D   (mm_out_D)

@@ -8,6 +8,7 @@
 `define CMD_LOAD_TWIDDLE      4'd3
 `define CMD_LOAD_POLY         4'd4
 `define CMD_READ_TWIDDLE      4'd5
+`define CMD_LOAD_ZETA         4'd6
 
 
 `define OP_NTT                4'd0
