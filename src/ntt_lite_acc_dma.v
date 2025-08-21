@@ -62,7 +62,8 @@ begin
         dma_sel_i = 4'hf; 
     end
 end
-/*
+
+
 always @ (posedge clk)
 begin
     if(rst)
@@ -71,12 +72,7 @@ begin
         i_valid <= re & ~dma_stall_o;
         
 end
-*/
-always @ (*)
-begin
-        i_valid = re & ~dma_stall_o;
-        
-end
+
   
 
 endmodule
