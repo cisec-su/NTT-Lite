@@ -143,6 +143,8 @@ def NTT(A, Psi_table, q, debug=False):
     m = 1
     counterr = 0
     pows = []
+    if debug:
+        print([(Bi, hex(B[Bi])) for Bi in range(len(B))])
     while (m < N):
         #print("----------------------",counterr, "------------------------------------")
         counterr += 1
@@ -167,7 +169,7 @@ def NTT(A, Psi_table, q, debug=False):
 
                 #print("A[{}] ve A[{}] + W^{} --> A[{}] ve A[{}] ".format(j, j + t, Psi_pow, j, j + t ))
         if debug:
-            print([hex(Bi) for Bi in B])
+            print([(Bi, hex(B[Bi])) for Bi in range(len(B))])
 
         m = 2 * m
     #print(counterr)

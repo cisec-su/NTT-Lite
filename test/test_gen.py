@@ -147,8 +147,9 @@ with open("sub_out_dual.txt", "w") as f:
 
 psi_table_ = ntt.generate_ntt_tables(n, q, psi)
 
-A_0_ntt, pows = ntt.NTT(A_0, psi_table_, q, debug=False)
+A_0_ntt, pows = ntt.NTT(A_0, psi_table_, q, debug=True)
 A_1_ntt, _    = ntt.NTT(A_1, psi_table_, q, debug=False)
+
 
 
 with open("ntt_out_single.txt", "w") as f:
@@ -166,6 +167,9 @@ with open("psi.txt", "w") as f:
         j = pows[i]
         f.write(hex(psi_table_[j])[2:] + "\n")
     f.write("0\n")
+
+while True:
+    pass
 
 print("PSI C:")
 for i in range(n - 1):
