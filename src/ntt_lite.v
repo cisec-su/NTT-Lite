@@ -119,6 +119,7 @@ reg ctr2_inc, ctr2_rst;
 reg [LOGN+LOGWB-1:0] ctr0_d;
 wire [LOGN+LOGWB :0] ctr0_p1;
 reg [LOGN-1:0] ctr2_d;
+reg [LOGN-1:0] ctr2_q;
 reg ctr2_d_set;
 reg wpoly, upoly_ntt, upoly_ntt_q, upoly_intt, upoly_mul, upoly_zetamul, wpoly_zetafrwrd, wpsi, wzeta, upsi, wq, pwm_idx, pwm_zeta_idx, pwm_poly_idx, upoly_encode, ren_ntt;
 reg ntt_rcv_bu, pwm_rcv_bu, pwm_zeta_rcv_bu, sum_rcv_bu, addsub_rcv_bu, encode_rcv_bu;
@@ -300,7 +301,7 @@ assign psi_i    = (op_switch) ? poly_in_mx_A : twiddle_in_mx;
 assign is_ntt = (state == ST_NTT0 || state == ST_NTT1 || state == ST_POLY_FORWARD_NTT) ? 1'b1 : 1'b0;
 assign is_poly_pwm = (state == ST_POLY_PWM0 || state == ST_POLY_PWM1 || state == ST_POLY_PWM2 || state == ST_POLY_PWM3 || state == ST_POLY_FORWARD_POLY_PWM) ? 1'b1 : 1'b0;
 
-assign sr_mx = (op == `OP_NTT && ctr2 != 0) ? 1'b1 : (op == `OP_INTT && ctr2 != logn_m1) ? 1'b1 : 1'b0;
+assign sr_mx = (op == `OP_NTT && ctr2 != 0) ? 1'b1 : (op == `OP_INTT && ctr2_q != logn_m1) ? 1'b1 : 1'b0;
 assign sr_ntt = (op == `OP_NTT && ctr2_d == 0) ? sr_o : (op == `OP_INTT && ctr2_d == logn_m1) ? sr_o : sr_o1;
 
 assign ntt_flag   = ctr1[0];
@@ -433,6 +434,10 @@ always @(posedge clk) begin
         ctr2_d <= 0;
     else if (ctr2_d_set) //todo: check if needed
         ctr2_d <= ctr2;
+end
+
+always @(posedge clk) begin
+    ctr2_q <= ctr2;
 end
 
 

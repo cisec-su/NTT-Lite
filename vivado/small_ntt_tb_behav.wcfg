@@ -13,9 +13,9 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="853.500 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,029.301 ns"></ZoomEndTime>
-      <Cursor1Time time="1,000.000 ns"></Cursor1Time>
+      <ZoomStartTime time="16,521.800 ns"></ZoomStartTime>
+      <ZoomEndTime time="16,961.301 ns"></ZoomEndTime>
+      <Cursor1Time time="16,699.800 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="205"></NameColumnWidth>
@@ -28,6 +28,8 @@
       <marker label="" time="23781800" />
       <marker label="" time="3195000" />
       <marker label="" time="4580134" />
+      <marker label="" time="16858772" />
+      <marker label="" time="16699800" />
    </wave_markers>
    <wvobject type="array" fp_name="/ntt_lite_tb/cmd">
       <obj_property name="ElementShortName">cmd[3:0]</obj_property>
