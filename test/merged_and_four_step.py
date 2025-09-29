@@ -190,6 +190,8 @@ def INTT(A, Psi_table, q, rev=True, flag=True, debug=True):
 
     t = 1
     m = N
+    if debug:
+        print([(Bi, hex(B[Bi])) for Bi in range(len(B))])
     while (m > 1):
         j1 = 0
         h = int(m / 2)
@@ -213,12 +215,14 @@ def INTT(A, Psi_table, q, rev=True, flag=True, debug=True):
                 B[j] = (U + V) % q
                 a = (U - V) * S
                 B[j + t] = a % q
+                if not flag:
+                    B[j]     = (B[j   ] * pow(2,-1,q)) % q
             j1 = j1 + 2 * t
         t = 2 * t
         m = int(m / 2)
 
         if debug:
-            print([hex(Bi) for Bi in B])
+            print([(Bi, hex(B[Bi])) for Bi in range(len(B))])
 
 
     if flag:

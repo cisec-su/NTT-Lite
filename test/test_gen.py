@@ -14,7 +14,7 @@ def _br(i, k):
 q = 3329
 logq = math.ceil(math.log2(q))
 psi = 17
-logn = 7
+logn = 4
 n = 1 << logn
 mu_64 = (1 << 64) // q
 mu_32 = (1 << 32) // q
@@ -168,8 +168,6 @@ with open("psi.txt", "w") as f:
         f.write(hex(psi_table_[j])[2:] + "\n")
     f.write("0\n")
 
-while True:
-    pass
 
 print("PSI C:")
 for i in range(n - 1):
@@ -190,8 +188,10 @@ print("\n\n")
 
 psi_inv_table_ = ntt.generate_ntt_tables(n, q, pow(psi, -1, q))
 psi_inv_table_ = [(x*inv2) % q for x in psi_inv_table_]
-# _, _ = ntt.INTT(A_0_ntt, psi_inv_table_, q, debug=False, flag=False)
+ntt.INTT(A_0_ntt, psi_inv_table_, q, debug=True, flag=False)
 
+while True:
+    pass
 
 with open("psi_inv.txt", "w") as f:
     for i in range(n - 1):
