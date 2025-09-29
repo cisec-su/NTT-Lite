@@ -21,8 +21,6 @@ module ntt_lite_coeff_ram_double
         input      [LOGN-2:0] p1_raddr,
         output reg [LOGQ-1:0] p1_dout ,
 
-        input                 p_st_rst,
-        input                 p_st_set,
         input                 p_wen   ,
         input      [LOGN-1:0] p_waddr ,
         input      [LOGQ-1:0] p_din   ,
@@ -61,7 +59,6 @@ wire [LOGN-1:0] logn_mask;
 
 reg rsel_q;
 
-reg p_state;
 
 assign p_waddr_shift = p_waddr >> (logn-1);
 assign p_wen_p0 = p_wen &  ~(p_waddr_shift[0]);
@@ -78,8 +75,8 @@ assign logn_mask = (1 << (logn - 1)) - 1;
 assign p0_waddr_int = p0_wen ? p0_waddr : p_waddr & logn_mask;
 assign p1_waddr_int = p1_wen ? p1_waddr : p_waddr & logn_mask;
 
-assign p0_raddr_int = p0_ren ? p0_raddr : (p_state) ? p_raddr >> 1 : p_raddr & logn_mask;
-assign p1_raddr_int = p1_ren ? p1_raddr : (p_state) ? p_raddr >> 1 : p_raddr & logn_mask;
+assign p0_raddr_int = p0_ren ? p0_raddr : p_raddr & logn_mask;
+assign p1_raddr_int = p1_ren ? p1_raddr : p_raddr & logn_mask;
 
 // assign p0_dout_int = bram0[p0_raddr_int];
 // assign p1_dout_int = bram1[p1_raddr_int];
@@ -101,16 +98,8 @@ end
 always @(posedge clk) begin
     p0_dout <= bram0[p0_raddr_int];
     p1_dout <= bram1[p1_raddr_int];
-    rsel_q <= (p_state) ? p_raddr[0] : p_raddr[logn-1];
+    rsel_q  <= p_raddr[logn-1];
 end
-
-always @(posedge clk) begin
-    if (p_st_rst)
-        p_state <= 1'b0;
-    else if (p_st_set)
-        p_state <= 1'b1;
-end
-
 
 
 endmodule
