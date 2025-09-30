@@ -87,6 +87,14 @@ wire [LOGQ -1:0] decompose_pp_out_B1;
 wire makehint_specialcase;
 wire hint;
 
+wire [LOGQ-1:0] E_int;
+wire [LOGQ-1:0] O_int;
+wire [LOGQ-1:0] M_int;
+
+reg [LOGQ-1:0] E_q;
+reg [LOGQ-1:0] O_q;
+reg [LOGQ-1:0] M_q;
+
 
 assign mode_mul    = (mode == `MODE_POLY && op != `OP_PWM) ? `MODE_DUAL :
                      (mode_p2d                           ) ? `MODE_DUAL :
@@ -187,12 +195,12 @@ assign asr_in      = mm_out_T;
 
 assign asr_out_dual_masked = asr_out_dual & mask_k_dual;
 
-assign E           = (op == `OP_INTT      ) ? shift_out_1          :
+assign E_int       = (op == `OP_INTT      ) ? shift_out_1          :
                      (op == `OP_DECOMPOSE ) ? decompose_pp_out_B1  :                     
                                               add_out_C            ;
-assign O           = (op == `OP_INTT) ? mm_out_C    :
+assign O_int       = (op == `OP_INTT) ? mm_out_C    :
                                         sub_out_C   ;
-assign M           = (op == `OP_ADD       ) ? add_out_C            :
+assign M_int       = (op == `OP_ADD       ) ? add_out_C            :
                      (op == `OP_SUM       ) ? add_out_C            :
                      (op == `OP_SUB       ) ? sub_out_C            :
                      (op == `OP_COMPRESS  ) ? D_dual_masked        :
@@ -200,6 +208,10 @@ assign M           = (op == `OP_ADD       ) ? add_out_C            :
                      (op == `OP_DECOMPOSE ) ? decompose_pp_out_B0  :
                      (op == `OP_MAKEHINT  ) ? hint                 :
                      /*                  */   mm_out_C             ;
+
+assign E = E_q;
+assign O = O_q;
+assign M = M_q;
 
 
 shiftreg #(
@@ -297,6 +309,13 @@ decompose_pp #(
     .B0  (decompose_pp_out_B0),
     .B1  (decompose_pp_out_B1)
 );
+
+
+always @(posedge clk) begin
+    E_q <= E_int;
+    O_q <= O_int;
+    M_q <= M_int;
+end
 
 
 endmodule

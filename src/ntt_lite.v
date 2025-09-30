@@ -61,6 +61,7 @@ localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1)));
 localparam LOGWB   = $clog2(LOGQ/B);
 localparam WBMASK  = (1 << LOGWB) - 1;
 localparam L       = L_MUL + L_RED;
+localparam L_REAL  = L + 2;
 
 // states, todo: add glitch protection as HW codes
 localparam ST_IDLE         = 5'd0;
@@ -240,6 +241,9 @@ wire [LOGQ-1:0] ntt_A_i;
 wire [LOGQ-1:0] ntt_B_i;
 wire [LOGQ-1:0] ntt_psi_i;
 
+wire op_is_ntt;
+
+
 // encode signals
 wire [LOGQ-1:0] encode_in;
 wire [LOGQ-1:0] encode_out;
@@ -292,13 +296,32 @@ assign decode_num_words  = ((mode == `MODE_SINGLE) ? decode_num_words_ : decode_
 
 ///////////////////// BU inputs /////////////////////////////////////////
 
-assign poly_in_mx_A = (poly_in_frwrd_A_q) ? i_data_q : (is_ntt) ? ntt_A_i : (is_poly_pwm) ? coeff_ram_px_dout : coeff_ram_p_dout;
-assign poly_in_mx_B = (poly_in_frwrd_B_q) ? i_data_q : (is_ntt) ? ntt_B_i : (is_poly_pwm) ? coeff_ram_p_dout  : coeff_ram_p_dout;
-assign twiddle_in_mx = (rhs_const) ? bound : (twiddle_frwrd_q) ? i_data_q : (is_ntt) ? ntt_psi_i : twiddle_ram_dout;
+assign poly_in_mx_A = (poly_in_frwrd_A_q) ? i_data_q          :
+                      (           is_ntt) ? ntt_A_i           : 
+                      (      is_poly_pwm) ? coeff_ram_px_dout :
+                                            coeff_ram_p_dout  ;
+assign poly_in_mx_B = (poly_in_frwrd_B_q) ? i_data_q          : 
+                      (is_ntt           ) ? ntt_B_i           :
+                      (is_poly_pwm      ) ? coeff_ram_p_dout  :
+                                            coeff_ram_p_dout  ;
+assign twiddle_in_mx = (rhs_const       ) ? bound             :
+                       (twiddle_frwrd_q ) ? i_data_q          :
+                       (is_ntt          ) ? ntt_psi_i         :
+                                            twiddle_ram_dout  ;
 
-assign A_i      = (op_switch) ? twiddle_in_mx  : poly_in_mx_A;
+assign A_i      = (op_switch) ? twiddle_in_mx : poly_in_mx_A;
 assign B_i      = poly_in_mx_B;
 assign psi_i    = (op_switch) ? poly_in_mx_A : twiddle_in_mx;
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////// op signals ///////////////////////////////////////
+
+
+//assign op_is_ntt = op == `OP_NTT;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -347,32 +370,22 @@ assign coeff_ram_px_waddr = ctr1;
 assign coeff_ram_px_din   = M_o ;
 assign coeff_ram_px_raddr = ctr0; // pwm_poly_idx
 ////////////////////////////////////////////////////////////////////////////////////
-assign coeff_ram_p0_wen   =  upoly_ntt | upoly_intt | upoly_encode;// | wpoly_zetafrwrd;
-assign coeff_ram_p0_ren   =  ren_ntt /*| pwm_poly_idx*/ | pwm_zeta_idx;
-assign coeff_ram_p0_waddr = //(wpoly_zetafrwrd) ?   ctr0[LOGN-2:0]        :
-                            (upoly_encode ) ?   ctr1       : 
-                            (upoly_ntt    ) ?   ntt_waddr  : 
-                          /*(upoly_intt) ?*/ ctr1 /*   : 0*/;
-assign coeff_ram_p0_din   = //(wpoly_zetafrwrd         ) ?       i_data  : 
-                            (upoly_encode            ) ?   encode_out  :
-                            (upoly_ntt               ) ?   ntt_p0_din  : 
-                          /*(            upoly_intt  ) ?*/ A_o  /*: 0*/;
+assign coeff_ram_p0_wen   =  upoly_ntt | upoly_encode;
+assign coeff_ram_p0_ren   =  ren_ntt;
+assign coeff_ram_p0_waddr = (upoly_encode ) ?   ctr1       : 
+                        /*  (upoly_ntt    ) ?*/ ntt_waddr  ;
+assign coeff_ram_p0_din   = (upoly_encode            ) ?   encode_out  :
+                        /*  (upoly_ntt               )*/   ntt_p0_din  ;
 assign coeff_ram_p0_raddr = ((op == `OP_SUM) && !pwm_idx) ? (ctr0 << 1)  :
-                                               //(pwm_poly_idx | pwm_zeta_idx) ? ({ctr0[LOGN-2:0]}):
-                                                             (is_ntt       ) ? ntt_raddr   :
-                                                                               ctr0        ;
+                        /*  (                    is_ntt )*/  ntt_raddr   ;
 ////////////////////////////////////////////////////////////////////////////////////
-assign coeff_ram_p1_wen   =  upoly_ntt_q | upoly_intt;// | upoly_zetamul;
-assign coeff_ram_p1_ren   =  ren_ntt /*| pwm_zeta_idx*/;// | pwm_poly_idx;
-assign coeff_ram_p1_waddr = (upoly_ntt_q) ?  ntt_waddr_q :
-                            //(upoly_zetamul) ?     {ctr1[LOGN-2:0]} :
-                          /*(upoly_intt) ?*/ ctr1 + n_over2 /*: 0*/;
-assign coeff_ram_p1_din   = /*(upoly_zetamul) ? M_o :   */(upoly_ntt_q) ? ntt_p1_din : B_o;
-assign coeff_ram_p1_raddr = //(        /*  pwm_zeta_idx |*/ pwm_poly_idx) ?  {ctr0[LOGN-2:0]} : 
-                            (                  op == `OP_SUM      ) ? ((ctr0 << 1) + 1) :  
-                            (is_ntt                               ) ? ntt_raddr         :
-                                                                     (ctr0 + n_over2)   ;
-
+assign coeff_ram_p1_wen   =  upoly_ntt_q;
+assign coeff_ram_p1_ren   =  ren_ntt;
+assign coeff_ram_p1_waddr =  ntt_waddr_q;
+assign coeff_ram_p1_din   =  ntt_p1_din;
+assign coeff_ram_p1_raddr = (                  op == `OP_SUM      ) ? ((ctr0 << 1) + 1) :  
+                        /*  (is_ntt                               )*/   ntt_raddr       ;
+////////////////////////////////////////////////////////////////////////////////////
 assign maskS    = (1 << ctr2) - 1 ;
 assign maskIS   = ((1 << (logn_m1_ctr2)) - 1);
 
@@ -416,7 +429,7 @@ always @(posedge clk) begin
     else if (ctr0_rst || ctr_all_rst)
         ctr0 <= 0;
     else if (set_ctr0_poly_tail)
-        ctr0 <= n_over2 - (L + 1);
+        ctr0 <= n_over2 - (L_REAL);
 end
 
 
@@ -428,7 +441,7 @@ always @(posedge clk) begin
     else if (ctr1_rst || ctr_all_rst)
         ctr1 <= 0;
     else if (set_ctr1_poly_tail)
-        ctr1 <= n_over2 - (L + 1);
+        ctr1 <= n_over2 - (L_REAL);
 end
 
 
@@ -674,7 +687,7 @@ butterfly #(
 
 
 shiftreg #(
-    .SHIFT(1),
+    .SHIFT(2),
     .DATA (1)
 ) shreg_addsub (
     .clk     (clk ),
@@ -1004,11 +1017,15 @@ always @(*) begin
                 wpoly_zetafrwrd = 1;
 
                 if (ctr0 == n_m1) begin
-                    next_state = ST_POLY_PWM0;
-                    set_ctr0_poly_tail = 1;
-                    poly_pwm_flag_set = 1;
-                    // ctr0_rst = 1;
-                    $stop;
+                    if (n < (L_REAL)) begin
+                        next_state = ST_POLY_PWM1;
+                        ctr0_rst = 1;
+                    end
+                    else begin
+                        next_state = ST_POLY_PWM0;
+                        set_ctr0_poly_tail = 1;
+                        poly_pwm_flag_set = 1;
+                    end
                 end
                 else begin
                     ctr0_inc = 1;
