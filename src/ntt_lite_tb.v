@@ -11,6 +11,7 @@ parameter LOGQ = 32;
 parameter LOGN = 8;
 //parameter L = 11;
 parameter EN_NTT_OTF = 1;
+parameter FORWARD_EN = 0;
 localparam N = 1 << LOGN;
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
@@ -68,6 +69,7 @@ ntt_lite #(
     .LOGN(LOGN),
     .LOGQ(LOGQ),
     .B(B),
+    .FORWARD_EN(FORWARD_EN),
     .EN_NTT_OTF(EN_NTT_OTF)
 ) ntt_lite_inst (
     .clk(clk),
@@ -419,7 +421,6 @@ initial begin
     else begin
         $display("(FAIL POLY PWM)");
         flag1 = 1;
-        $stop;
     end
     $stop;
 

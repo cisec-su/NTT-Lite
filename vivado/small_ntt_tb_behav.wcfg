@@ -13,9 +13,9 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="16,521.800 ns"></ZoomStartTime>
-      <ZoomEndTime time="16,961.301 ns"></ZoomEndTime>
-      <Cursor1Time time="16,699.800 ns"></Cursor1Time>
+      <ZoomStartTime time="24,923.117 ns"></ZoomStartTime>
+      <ZoomEndTime time="25,752.118 ns"></ZoomEndTime>
+      <Cursor1Time time="25,255.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="205"></NameColumnWidth>
@@ -24,12 +24,13 @@
    <WVObjectSize size="51" />
    <wave_markers>
       <marker label="" time="26449876" />
-      <marker label="" time="25065000" />
-      <marker label="" time="23781800" />
       <marker label="" time="3195000" />
       <marker label="" time="4580134" />
       <marker label="" time="16858772" />
       <marker label="" time="16699800" />
+      <marker label="" time="24455000" />
+      <marker label="" time="25165000" />
+      <marker label="" time="22926713" />
    </wave_markers>
    <wvobject type="array" fp_name="/ntt_lite_tb/cmd">
       <obj_property name="ElementShortName">cmd[3:0]</obj_property>
@@ -225,6 +226,7 @@
    <wvobject type="group" fp_name="group204">
       <obj_property name="label">bram</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/clk">
          <obj_property name="ElementShortName">clk</obj_property>
          <obj_property name="ObjectShortName">clk</obj_property>
@@ -292,6 +294,7 @@
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p_waddr">
          <obj_property name="ElementShortName">p_waddr[7:0]</obj_property>
          <obj_property name="ObjectShortName">p_waddr[7:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p_din">
          <obj_property name="ElementShortName">p_din[31:0]</obj_property>
@@ -316,18 +319,14 @@
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p0_wen_int">
          <obj_property name="ElementShortName">p0_wen_int</obj_property>
          <obj_property name="ObjectShortName">p0_wen_int</obj_property>
+         <obj_property name="CustomSignalColor">#FF0000</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p1_wen_int">
          <obj_property name="ElementShortName">p1_wen_int</obj_property>
          <obj_property name="ObjectShortName">p1_wen_int</obj_property>
-      </wvobject>
-      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p_wen_p0">
-         <obj_property name="ElementShortName">p_wen_p0</obj_property>
-         <obj_property name="ObjectShortName">p_wen_p0</obj_property>
-      </wvobject>
-      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p_wen_p1">
-         <obj_property name="ElementShortName">p_wen_p1</obj_property>
-         <obj_property name="ObjectShortName">p_wen_p1</obj_property>
+         <obj_property name="CustomSignalColor">#FF0000</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p0_din_int">
          <obj_property name="ElementShortName">p0_din_int[31:0]</obj_property>
@@ -340,10 +339,14 @@
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p0_waddr_int">
          <obj_property name="ElementShortName">p0_waddr_int[6:0]</obj_property>
          <obj_property name="ObjectShortName">p0_waddr_int[6:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FF0000</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p1_waddr_int">
          <obj_property name="ElementShortName">p1_waddr_int[6:0]</obj_property>
          <obj_property name="ObjectShortName">p1_waddr_int[6:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p0_raddr_int">
          <obj_property name="ElementShortName">p0_raddr_int[6:0]</obj_property>
@@ -361,9 +364,71 @@
          <obj_property name="ElementShortName">p1_dout_int[31:0]</obj_property>
          <obj_property name="ObjectShortName">p1_dout_int[31:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p_waddr_shift">
-         <obj_property name="ElementShortName">p_waddr_shift[7:0]</obj_property>
-         <obj_property name="ObjectShortName">p_waddr_shift[7:0]</obj_property>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p_waddr_shift">
+         <obj_property name="ElementShortName">p_waddr_shift</obj_property>
+         <obj_property name="ObjectShortName">p_waddr_shift</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/upoly_zetamul">
+         <obj_property name="ElementShortName">upoly_zetamul</obj_property>
+         <obj_property name="ObjectShortName">upoly_zetamul</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_wen">
+         <obj_property name="ElementShortName">px_wen</obj_property>
+         <obj_property name="ObjectShortName">px_wen</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_waddr">
+         <obj_property name="ElementShortName">px_waddr[7:0]</obj_property>
+         <obj_property name="ObjectShortName">px_waddr[7:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_din">
+         <obj_property name="ElementShortName">px_din[31:0]</obj_property>
+         <obj_property name="ObjectShortName">px_din[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_raddr">
+         <obj_property name="ElementShortName">px_raddr[7:0]</obj_property>
+         <obj_property name="ObjectShortName">px_raddr[7:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_dout">
+         <obj_property name="ElementShortName">px_dout[31:0]</obj_property>
+         <obj_property name="ObjectShortName">px_dout[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p_wen_p0">
+         <obj_property name="ElementShortName">p_wen_p0</obj_property>
+         <obj_property name="ObjectShortName">p_wen_p0</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/p_wen_p1">
+         <obj_property name="ElementShortName">p_wen_p1</obj_property>
+         <obj_property name="ObjectShortName">p_wen_p1</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_wen_p0">
+         <obj_property name="ElementShortName">px_wen_p0</obj_property>
+         <obj_property name="ObjectShortName">px_wen_p0</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_wen_p1">
+         <obj_property name="ElementShortName">px_wen_p1</obj_property>
+         <obj_property name="ObjectShortName">px_wen_p1</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_ren_p0">
+         <obj_property name="ElementShortName">px_ren_p0</obj_property>
+         <obj_property name="ObjectShortName">px_ren_p0</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_ren_p1">
+         <obj_property name="ElementShortName">px_ren_p1</obj_property>
+         <obj_property name="ObjectShortName">px_ren_p1</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_waddr_shift">
+         <obj_property name="ElementShortName">px_waddr_shift</obj_property>
+         <obj_property name="ObjectShortName">px_waddr_shift</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_raddr_shift">
+         <obj_property name="ElementShortName">px_raddr_shift</obj_property>
+         <obj_property name="ObjectShortName">px_raddr_shift</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/px_rsel_q">
+         <obj_property name="ElementShortName">px_rsel_q</obj_property>
+         <obj_property name="ObjectShortName">px_rsel_q</obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/coeff_ram_inst/logn_mask">
          <obj_property name="ElementShortName">logn_mask[7:0]</obj_property>
