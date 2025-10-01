@@ -171,6 +171,7 @@ wire chknorm_bu;
 reg chknorm_int, chknorm_set;
 
 reg  sr_i;
+wire sr_e;
 wire sr_mx;
 wire sr_o;
 wire sr_t;
@@ -356,35 +357,32 @@ assign ntt_B_i = (!sr_mx) ? coeff_ram_p1_dout : (ntt_flag_i_d) ? coeff_ram_p0_do
 assign ntt_psi_i = (sr_mx) ? twiddle_ram_dout_q : twiddle_ram_dout;
 
 ////////////////////////////////////////////////////////////////////////////////////
-assign coeff_ram_p_wen   = upoly_mul | wpoly | wpoly_zetafrwrd;
-assign coeff_ram_p_waddr = (upoly_mul  | wpoly) ?     ctr1  :
-                           /*wpoly_zetafrwrd*/        ctr0  ;
-
-assign coeff_ram_p_din   = (upoly_mul) ?        M_o         :
+assign coeff_ram_p_wen   = upoly_mul | wpoly | wpoly_zetafrwrd | upoly_encode;
+assign coeff_ram_p_waddr = (upoly_mul | wpoly | upoly_encode) ?     ctr1  :
+                           /*wpoly_zetafrwrd*/                      ctr0  ;
+assign coeff_ram_p_din   = (upoly_mul   ) ?     M_o         :
+                           (upoly_encode) ?     encode_out  :
                     /*wpoly_zetafrwrd | wpoly*/ i_data      ;
 assign coeff_ram_p_raddr = ctr0; // pwm_poly_idx, pwm_zeta_idx
 ////////////////////////////////////////////////////////////////////////////////////
 assign coeff_ram_px_wen   = upoly_zetamul;
 assign coeff_ram_px_waddr = ctr1; 
-
 assign coeff_ram_px_din   = M_o ;
 assign coeff_ram_px_raddr = ctr0; // pwm_poly_idx
 ////////////////////////////////////////////////////////////////////////////////////
-assign coeff_ram_p0_wen   =  upoly_ntt | upoly_encode;
+assign coeff_ram_p0_wen   =  upoly_ntt;
 assign coeff_ram_p0_ren   =  ren_ntt;
-assign coeff_ram_p0_waddr = (upoly_encode ) ?   ctr1       : 
-                        /*  (upoly_ntt    ) ?*/ ntt_waddr  ;
-assign coeff_ram_p0_din   = (upoly_encode            ) ?   encode_out  :
-                        /*  (upoly_ntt               )*/   ntt_p0_din  ;
-assign coeff_ram_p0_raddr = ((op == `OP_SUM) && !pwm_idx) ? (ctr0 << 1)  :
-                        /*  (                    is_ntt )*/  ntt_raddr   ;
+assign coeff_ram_p0_waddr =  ntt_waddr;
+assign coeff_ram_p0_din   =  ntt_p0_din;
+assign coeff_ram_p0_raddr = (op == `OP_SUM) ? (ctr0 << 1)  :
+                        /*  (      is_ntt )*/  ntt_raddr   ;
 ////////////////////////////////////////////////////////////////////////////////////
 assign coeff_ram_p1_wen   =  upoly_ntt_q;
 assign coeff_ram_p1_ren   =  ren_ntt;
 assign coeff_ram_p1_waddr =  ntt_waddr_q;
 assign coeff_ram_p1_din   =  ntt_p1_din;
-assign coeff_ram_p1_raddr = (                  op == `OP_SUM      ) ? ((ctr0 << 1) + 1) :  
-                        /*  (is_ntt                               )*/   ntt_raddr       ;
+assign coeff_ram_p1_raddr = (op == `OP_SUM) ? ((ctr0 << 1) + 1) :  
+                        /*  (is_ntt       )*/   ntt_raddr       ;
 ////////////////////////////////////////////////////////////////////////////////////
 assign maskS    = (1 << ctr2) - 1 ;
 assign maskIS   = ((1 << (logn_m1_ctr2)) - 1);
@@ -393,13 +391,12 @@ assign twiddle_ram_wen   =  wzeta | wpsi | upsi;
 assign twiddle_ram_waddr = (wzeta) ? {1'b1, ctr0[LOGN-2:0]} : (wpsi) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
 assign twiddle_ram_din   = (wzeta | wpsi) ? i_data : /*(upsi) ?*/ A_o/* : 0*/;
 assign twiddle_mask      = (1 << logn_m2) - 2;
-assign twiddle_ntt_ctr0  = (op == `OP_NTT) ? (ctr0[0] << (ctr2 - 1))           + (ctr0 >> (logn_ctr2)) : 
+assign twiddle_ntt_ctr0  = (op == `OP_NTT) ? (ctr0[0] << (ctr2 - 1))       + (ctr0 >> (logn_ctr2)) : 
                                              (ctr0[0] << (logn_m2 - ctr2)) + (ctr0 >> (ctr2 + 1 )) ;
-assign twiddle_ram_raddr = (pwm_zeta_idx                 ) ? (           {1'b1, ctr0[LOGN-2:0]}): 
-                           (pwm_idx | pwm_poly_idx       ) ?                    ctr0            : 
+assign twiddle_ram_raddr = (pwm_zeta_idx                 ) ? (               {1'b1, ctr0[LOGN-2:0]}): 
+                           (pwm_idx | pwm_poly_idx       ) ?                        ctr0            : 
                            (op == `OP_INTT               ) ? (  maskIS       + (twiddle_ntt_ctr0))  : 
-                                                             (  maskS        + (twiddle_ntt_ctr0))  ; 
-
+                                                             (  maskS        + (twiddle_ntt_ctr0))  ;
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -408,7 +405,7 @@ assign twiddle_ram_raddr = (pwm_zeta_idx                 ) ? (           {1'b1, 
 
 ///////////////////// Encode Inputs /////////////////////////////////////
 
-assign encode_i_valid = sr_t; // TODO: check if we should filter out based on the opcode or not.
+assign encode_i_valid = sr_e;
 assign encode_in      = (decode) ? twiddle_ram_dout  :
                                    poly_in_mx_A      ;
 assign decode         = (op == `OP_DECODE) ? 1'b1 : 
@@ -687,14 +684,26 @@ butterfly #(
 
 
 shiftreg #(
-    .SHIFT(2),
+    .SHIFT(1),
+    .DATA (1)
+) shreg_encode (
+    .clk     (clk ),
+    .rst     (rst ),
+    .data_in (sr_i),
+    .data_out(sr_e)
+);
+
+
+shiftreg #(
+    .SHIFT(1),
     .DATA (1)
 ) shreg_addsub (
     .clk     (clk ),
     .rst     (rst ),
-    .data_in (sr_i),
+    .data_in (sr_e),
     .data_out(sr_t)
 );
+
 
 
 shiftreg #(
