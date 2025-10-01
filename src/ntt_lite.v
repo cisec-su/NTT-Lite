@@ -123,7 +123,7 @@ wire [LOGN+LOGWB :0] ctr0_p1;
 reg [LOGN-1:0] ctr2_d;
 reg [LOGN-1:0] ctr2_q;
 reg ctr2_d_set;
-reg wpoly, upoly_ntt, upoly_ntt_q, upoly_intt, upoly_mul, upoly_zetamul, wpoly_zetafrwrd, wpsi, wzeta, upsi, wq, pwm_idx, pwm_zeta_idx, pwm_poly_idx, upoly_encode, ren_ntt;
+reg wpoly, upoly_ntt, upoly_ntt_q, upoly_mul, upoly_zetamul, wpoly_zetafrwrd, wpsi, wzeta, upsi, wq, pwm_idx, pwm_zeta_idx, pwm_poly_idx, upoly_encode, ren_ntt;
 reg ntt_rcv_bu, pwm_rcv_bu, pwm_zeta_rcv_bu, sum_rcv_bu, addsub_rcv_bu, encode_rcv_bu;
 reg ctr_all_rst;
 reg done_set, done_int;
@@ -179,6 +179,7 @@ wire sr_o1;
 wire sr_z;
 wire sr_x;
 wire sr_ntt;
+wire sr_sum;
 
 reg mode_p2d, en_z;
 
@@ -224,7 +225,7 @@ wire [LOGLOGN-1:0] twiddle_mask;
 
 wire [LOGN-1:0] ntt_raddr;
 wire [LOGN-1:0] ntt_waddr;
-reg  [LOGN-1:0] ntt_waddr_q;
+reg  [LOGN-1:0] ntt_sum_waddr_q;
 
 wire [LOGN-1:0] ntt_rshift;
 wire [LOGN-1:0] ntt_wshift;
@@ -238,11 +239,14 @@ wire ntt_flag_i;
 reg  ntt_flag_i_d;
 wire is_ntt;
 wire is_poly_pwm;
+wire is_sum;
 wire [LOGQ-1:0] ntt_A_i;
 wire [LOGQ-1:0] ntt_B_i;
 wire [LOGQ-1:0] ntt_psi_i;
-
 wire op_is_ntt;
+wire [LOGN-1:0] sum_raddr;
+wire [LOGN-1:0] sum_waddr;
+
 
 
 // encode signals
@@ -298,11 +302,13 @@ assign decode_num_words  = ((mode == `MODE_SINGLE) ? decode_num_words_ : decode_
 ///////////////////// BU inputs /////////////////////////////////////////
 
 assign poly_in_mx_A = (poly_in_frwrd_A_q) ? i_data_q          :
-                      (           is_ntt) ? ntt_A_i           : 
-                      (      is_poly_pwm) ? coeff_ram_px_dout :
+                      (is_ntt           ) ? ntt_A_i           :
+                      (is_sum           ) ? ntt_A_i           :
+                      (is_poly_pwm      ) ? coeff_ram_px_dout :
                                             coeff_ram_p_dout  ;
 assign poly_in_mx_B = (poly_in_frwrd_B_q) ? i_data_q          : 
                       (is_ntt           ) ? ntt_B_i           :
+                      (is_sum           ) ? ntt_B_i           :
                       (is_poly_pwm      ) ? coeff_ram_p_dout  :
                                             coeff_ram_p_dout  ;
 assign twiddle_in_mx = (rhs_const       ) ? bound             :
@@ -330,15 +336,17 @@ assign psi_i    = (op_switch) ? poly_in_mx_A : twiddle_in_mx;
 
 
 ///////////////////// bram signals //////////////////////////////////////
-
+// states to ops
 assign is_poly_pwm = (state == ST_POLY_PWM0 || state == ST_POLY_PWM1 || state == ST_POLY_PWM2 || state == ST_POLY_PWM3 || state == ST_POLY_FORWARD_POLY_PWM) ? 1'b1 : 1'b0;
-
-// NTT signals
+assign is_sum = (state == ST_SUM0 || state == ST_SUM1);
 assign is_ntt = (state == ST_NTT0 || state == ST_NTT1 || state == ST_POLY_FORWARD_NTT) ? 1'b1 : 1'b0;
-
-assign sr_mx = (op == `OP_NTT && ctr2 != 0) ? 1'b1 : (op == `OP_INTT && ctr2_q != logn_m1) ? 1'b1 : 1'b0;
-assign sr_ntt = (op == `OP_NTT && ctr2_d == 0) ? sr_o : (op == `OP_INTT && ctr2_d == logn_m1) ? sr_o : sr_o1;
-
+// SUM address generation
+assign sr_sum    = (ctr2_d == logn_m1) ? sr_t : sr_z;
+assign sum_raddr = ctr0 << ctr2;
+assign sum_waddr = ctr1 << ctr2_d;
+// NTT address generation
+assign sr_mx = (op == `OP_NTT && ctr2 != 0) ? 1'b1 : ((op == `OP_INTT || is_sum) && ctr2_q != logn_m1) ? 1'b1 : 1'b0;
+assign sr_ntt = (op == `OP_NTT && ctr2_d == 0) ? sr_o : ((op == `OP_INTT) && ctr2_d == logn_m1) ? sr_o : sr_o1;
 assign ntt_flag   = ctr1[0];
 assign ntt_flag_i = ctr0[0];
 assign ntt_isfirst_r = (op == `OP_NTT) ? (ctr2   != 0) : (ctr2   != logn_m1);
@@ -355,7 +363,6 @@ assign ntt_p1_din = (ntt_flag & ntt_isfirst_w) ? A_o   : B_o_q;
 assign ntt_A_i = (!sr_mx) ? coeff_ram_p0_dout : (ntt_flag_i_d) ? p0_dout_q : p0_dout_q;
 assign ntt_B_i = (!sr_mx) ? coeff_ram_p1_dout : (ntt_flag_i_d) ? coeff_ram_p0_dout : p1_dout_q;
 assign ntt_psi_i = (sr_mx) ? twiddle_ram_dout_q : twiddle_ram_dout;
-
 ////////////////////////////////////////////////////////////////////////////////////
 assign coeff_ram_p_wen   = upoly_mul | wpoly | wpoly_zetafrwrd | upoly_encode;
 assign coeff_ram_p_waddr = (upoly_mul | wpoly | upoly_encode) ?     ctr1  :
@@ -372,17 +379,15 @@ assign coeff_ram_px_raddr = ctr0; // pwm_poly_idx
 ////////////////////////////////////////////////////////////////////////////////////
 assign coeff_ram_p0_wen   =  upoly_ntt;
 assign coeff_ram_p0_ren   =  ren_ntt;
-assign coeff_ram_p0_waddr =  ntt_waddr;
+assign coeff_ram_p0_waddr =  (is_sum) ? sum_waddr : ntt_waddr;
 assign coeff_ram_p0_din   =  ntt_p0_din;
-assign coeff_ram_p0_raddr = (op == `OP_SUM) ? (ctr0 << 1)  :
-                        /*  (      is_ntt )*/  ntt_raddr   ;
+assign coeff_ram_p0_raddr =  (is_sum) ? sum_raddr : ntt_raddr;
 ////////////////////////////////////////////////////////////////////////////////////
 assign coeff_ram_p1_wen   =  upoly_ntt_q;
 assign coeff_ram_p1_ren   =  ren_ntt;
-assign coeff_ram_p1_waddr =  ntt_waddr_q;
+assign coeff_ram_p1_waddr =  ntt_sum_waddr_q;
 assign coeff_ram_p1_din   =  ntt_p1_din;
-assign coeff_ram_p1_raddr = (op == `OP_SUM) ? ((ctr0 << 1) + 1) :  
-                        /*  (is_ntt       )*/   ntt_raddr       ;
+assign coeff_ram_p1_raddr =  (is_sum) ? sum_raddr : ntt_raddr;
 ////////////////////////////////////////////////////////////////////////////////////
 assign maskS    = (1 << ctr2) - 1 ;
 assign maskIS   = ((1 << (logn_m1_ctr2)) - 1);
@@ -554,7 +559,7 @@ always @(posedge clk) begin
 end
 
 always @(posedge clk) begin
-    ntt_waddr_q <= ntt_waddr;
+    ntt_sum_waddr_q <= (is_sum) ? sum_waddr : ntt_waddr;
 end
 
 always @(posedge clk) begin
@@ -791,7 +796,6 @@ always @(*) begin
     ctr2_d_set = 0;
     wpoly = 0;
     upoly_ntt = 0;
-    upoly_intt = 0;
     upoly_mul = 0;
     upoly_zetamul = 0;
     wpoly_zetafrwrd = 0;
@@ -1343,7 +1347,6 @@ always @(*) begin
         ST_NTT1: begin
 
             busy = 1;
-            ren_ntt = 1;
             // BU input for next stage is valid after processing half of the poly
             if ((ctr1 >= n_over4) && (ctr2_d != logn_m1)) begin
                 next_state = ST_NTT0;
@@ -1361,14 +1364,16 @@ always @(*) begin
 
             busy = 1;
             sr_i = 1;
+            ren_ntt = 1;
             if (ctr0 == (logn_m1_shft_m1_ctr2)) begin
                 ctr0_rst = 1;
                 next_state = ST_SUM1;
-                ctr2_d_set = 1;
+                // ctr2_d_set = 1;
             end
             else begin
                 ctr0_inc = 1;                
             end
+            ctr2_d_set = ~sr_sum;
 
             sum_rcv_bu = 1;
 
@@ -1376,7 +1381,7 @@ always @(*) begin
         ST_SUM1: begin
 
             busy = 1;
-            if ((ctr1 == logn_m1_shft_m1_ctr2)) begin
+            if ((ctr1 == logn_m1_shft_m1_ctr2) && sr_sum) begin
                 if (ctr2_d != logn_m1) begin
                     next_state = ST_SUM0;
                     ctr2_inc = 1; // go to next stage                        
@@ -1385,6 +1390,7 @@ always @(*) begin
                     next_state = ST_POLY_OUT;                    
                 end
             end
+            ctr2_d_set = ~sr_sum;
 
             sum_rcv_bu = 1;
 
@@ -1442,8 +1448,7 @@ always @(*) begin
             end
             else
                 ctr1_inc = 1;
-            upoly_ntt = (op == `OP_NTT) | (op == `OP_INTT);
-            upoly_intt = (op == `OP_INTT);
+            upoly_ntt = 1;
         end
     end
     else if (pwm_rcv_bu) begin
@@ -1477,13 +1482,13 @@ always @(*) begin
         end
     end
     else if (sum_rcv_bu) begin
-        if (sr_t) begin
+        if (sr_sum) begin
             if (ctr1 == (logn_m1_shft_m1_ctr2)) begin
                 ctr1_rst = 1;
             end
             else
                 ctr1_inc = 1;
-            upoly_mul = 1;
+            upoly_ntt = 1;
         end
     end
     else if (addsub_rcv_bu) begin
