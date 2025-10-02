@@ -23,7 +23,6 @@ module butterfly
         input  [LOGLOGQ-1:0] k        ,
         input  [LOGLOGQ-1:0] d        ,
         output [LOGQ   -1:0] E        ,
-        output               chknorm  ,
         output [LOGQ   -1:0] O        ,
         output [LOGQ   -1:0] M
     );
@@ -199,6 +198,7 @@ assign M_int       = (op == `OP_ADD       ) ? add_out_C            :
                      (op == `OP_DECOMPRESS) ? asr_out_dual_masked  :
                      (op == `OP_DECOMPOSE ) ? decompose_pp_out_B0  :
                      (op == `OP_MAKEHINT  ) ? hint                 :
+                     (op == `OP_CHKNORM   ) ? chknorm              :
                      /*                  */   mm_out_C             ;
 
 assign E = E_q;

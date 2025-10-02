@@ -328,7 +328,9 @@ assign psi_i    = (op_switch) ? poly_in_mx_A : twiddle_in_mx;
 ///////////////////// op signals ///////////////////////////////////////
 
 
-//assign op_is_ntt = op == `OP_NTT;
+assign is_poly_pwm = (state == ST_POLY_PWM0 || state == ST_POLY_PWM1 || state == ST_POLY_PWM2 || state == ST_POLY_PWM3 || state == ST_POLY_FORWARD_POLY_PWM) ? 1'b1 : 1'b0;
+assign is_sum = (state == ST_SUM0 || state == ST_SUM1);
+assign is_ntt = (state == ST_NTT0 || state == ST_NTT1 || state == ST_POLY_FORWARD_NTT) ? 1'b1 : 1'b0;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -337,9 +339,7 @@ assign psi_i    = (op_switch) ? poly_in_mx_A : twiddle_in_mx;
 
 ///////////////////// bram signals //////////////////////////////////////
 // states to ops
-assign is_poly_pwm = (state == ST_POLY_PWM0 || state == ST_POLY_PWM1 || state == ST_POLY_PWM2 || state == ST_POLY_PWM3 || state == ST_POLY_FORWARD_POLY_PWM) ? 1'b1 : 1'b0;
-assign is_sum = (state == ST_SUM0 || state == ST_SUM1);
-assign is_ntt = (state == ST_NTT0 || state == ST_NTT1 || state == ST_POLY_FORWARD_NTT) ? 1'b1 : 1'b0;
+
 // SUM address generation
 assign sr_sum    = (ctr2_d == logn_m1) ? sr_t : sr_z;
 assign sum_raddr = ctr0 << ctr2;
@@ -404,6 +404,14 @@ assign twiddle_ram_raddr = (pwm_zeta_idx                 ) ? (               {1'
                                                              (  maskS        + (twiddle_ntt_ctr0))  ;
 /////////////////////////////////////////////////////////////////////////
 
+
+
+
+///////////////////// misc. assignments /////////////////////////////////
+
+assign chknorm_bu = M_o[0];
+
+/////////////////////////////////////////////////////////////////////////
 
 
 
@@ -672,7 +680,6 @@ butterfly #(
     .MU  (mu   ),
     .bound(bound),
     .inv2(inv2 ),
-    .chknorm(chknorm_bu),
     .k   (k    ),
     .d   (d    ),
     .E   (A_o  ),
@@ -1211,7 +1218,7 @@ always @(*) begin
             busy = 1;
             sr_i = 1;
 
-            if (sr_t) begin
+            if (sr_z) begin
                 if (chknorm_bu) begin
                     chknorm_set = 1;
                     done_set   = 1;
