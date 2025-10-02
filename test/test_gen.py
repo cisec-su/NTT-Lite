@@ -169,6 +169,13 @@ with open("psi.txt", "w") as f:
     f.write("0\n")
 
 
+with open("psi_dual.txt", "w") as f:
+    for i in range(n - 1):
+        j = pows[i]
+        f.write(hex((psi_table_[j] << (b // 2)) + psi_table_[j])[2:] + "\n")
+    f.write("0\n")
+
+
 print("PSI C:")
 for i in range(n - 1):
     j = pows[i]
@@ -199,6 +206,14 @@ with open("psi_inv.txt", "w") as f:
         j = pows[i]
         f.write(hex(psi_inv_table_[j])[2:] + "\n")
     f.write("0\n")
+
+
+with open("psi_inv_dual.txt", "w") as f:
+    for i in range(n - 1):
+        j = pows[i]
+        f.write(hex((psi_inv_table_[j] << (b // 2)) + psi_inv_table_[j])[2:] + "\n")
+    f.write("0\n")
+
 
 
 print("PSI INV C:")

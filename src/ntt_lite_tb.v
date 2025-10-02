@@ -12,6 +12,7 @@ parameter LOGN = 8;
 //parameter L = 11;
 parameter EN_NTT_OTF = 1;
 parameter FORWARD_EN = 0;
+parameter STOP_AT_EVERY_TEST = 0;
 localparam N = 1 << LOGN;
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
@@ -28,6 +29,8 @@ reg clk;
 reg rst;
 
 reg [LOGQ-1:0] q;
+reg [LOGQ-1:0] q_dual;
+reg [LOGQ-1:0] q_single;
 wire [LOGQ*2-1:0] mu;
 reg [LOGQ*2-1:0] mu_64;
 reg [LOGQ*2-1:0] mu_32;
@@ -101,7 +104,7 @@ ntt_lite #(
     .io_word(io_word)
 );
 
-assign mu = (mode == `MODE_SINGLE) ? mu_64 : mu_32;
+assign mu = (mode == `MODE_SINGLE) ? mu_64 : (mu_32 << (LOGQ)) + mu_32;
 
 
 initial begin
@@ -127,7 +130,8 @@ initial begin
     rhs_const = 1'b0;
     op_switch = 1'b0;
 
-    q = meta[0];
+    q_single = meta[0];
+    q_dual = (meta[0] << (LOGQ >> 1)) + meta[0];
     mu_64 = meta[1];
     logn = meta[2];
     k = meta[3];
@@ -137,6 +141,7 @@ initial begin
     bound = 0;
 
     op = 0;
+    q = q_single;
     mode = `MODE_SINGLE;
 
     cmd = `CMD_LOAD_TWIDDLE;
@@ -190,15 +195,33 @@ initial begin
         $display("(FAIL SINGLE NTT)");
         flag1 = 1;
     end
-    $stop;
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
     $readmemh("../../../../../test/ntt_out_dual.txt" , poly_out);
+    $readmemh("../../../../../test/psi_dual.txt" , psi);
+
+    q = q_dual;
     #FP;
     #FP;
+
+    op = 0;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
 
     mode = `MODE_DUAL;
     cmd = `CMD_LOAD_POLY;
@@ -238,6 +261,8 @@ initial begin
         $display("(FAIL DUAL NTT)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -246,6 +271,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
     $readmemh("../../../../../test/mul_out_single.txt" , poly_out);
 
+    q = q_single;
     op = 0;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_TWIDDLE;
@@ -297,7 +323,8 @@ initial begin
         $display("(FAIL SINGLE PWM)");
         flag1 = 1;
     end
-    $stop;
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -307,6 +334,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
     $readmemh("../../../../../test/mul_out_dual.txt" , poly_out);
 
+    q = q_dual;
     op = 0;
     mode = `MODE_DUAL;
     cmd = `CMD_LOAD_TWIDDLE;
@@ -357,6 +385,8 @@ initial begin
         $display("(FAIL DUAL PWM)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -366,8 +396,7 @@ initial begin
     $readmemh("../../../../../test/zeta_in.txt" , psi);
     $readmemh("../../../../../test/mul_out_poly.txt" , poly_out);
 
-
-
+    q = q_dual;
     op = 0;
     mode = 0;
     cmd = `CMD_LOAD_ZETA;
@@ -422,7 +451,8 @@ initial begin
         $display("(FAIL POLY PWM)");
         flag1 = 1;
     end
-    $stop;
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -432,6 +462,7 @@ initial begin
     $readmemh("../../../../../test/psi_inv.txt" , psi);
     $readmemh("../../../../../test/poly_in_single.txt" , poly_out);
 
+    q = q_single;
     op = 0;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_TWIDDLE;
@@ -482,15 +513,30 @@ initial begin
         $display("(FAIL SINGLE INTT)");
         flag1 = 1;
     end
-    $stop;
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
     $readmemh("../../../../../test/ntt_out_dual.txt" , poly_in);
-    $readmemh("../../../../../test/psi_inv.txt" , psi);
+    $readmemh("../../../../../test/psi_inv_dual.txt" , psi);
     $readmemh("../../../../../test/poly_in_dual.txt" , poly_out);
+
+    q = q_dual;
+    op = 0;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
 
     op = `OP_INTT;
     mode = `MODE_DUAL;
@@ -529,7 +575,8 @@ initial begin
         $display("(FAIL DUAL INTT)");
         flag1 = 1;
     end
-    $stop;
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -540,6 +587,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
     $readmemh("../../../../../test/add_out_single.txt" , poly_out);
 
+    q = q_single;
     op = 0;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_TWIDDLE;
@@ -591,7 +639,8 @@ initial begin
         $display("(FAIL SINGLE ADD)");
         flag1 = 1;
     end
-    $stop;
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -601,6 +650,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
     $readmemh("../../../../../test/sub_out_single.txt" , poly_out);
 
+    q = q_single;
     op = 0;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_TWIDDLE;
@@ -651,6 +701,8 @@ initial begin
         $display("(FAIL SINGLE SUB)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -661,6 +713,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
     $readmemh("../../../../../test/add_out_dual.txt" , poly_out);
 
+    q = q_dual;
     op = 0;
     mode = `MODE_DUAL;
     cmd = `CMD_LOAD_TWIDDLE;
@@ -711,6 +764,8 @@ initial begin
         $display("(FAIL DUAL ADD)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -720,6 +775,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
     $readmemh("../../../../../test/sub_out_dual.txt" , poly_out);
 
+    q = q_dual;
     op = 0;
     mode = `MODE_DUAL;
     cmd = `CMD_LOAD_TWIDDLE;
@@ -770,6 +826,8 @@ initial begin
         $display("(FAIL DUAL SUB)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -778,6 +836,7 @@ initial begin
     $readmemh("../../../../../test/comp_out_single.txt" , poly_in);
     $readmemh("../../../../../test/decomp_out_single.txt" , poly_out);
 
+    q = q_single;
     op = `OP_DECOMPRESS;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_POLY;
@@ -815,7 +874,8 @@ initial begin
         $display("(FAIL SINGLE DECOMPRESS)");
         flag1 = 1;
     end
-
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -823,6 +883,7 @@ initial begin
     $readmemh("../../../../../test/comp_out_dual.txt" , poly_in);
     $readmemh("../../../../../test/decomp_out_dual.txt" , poly_out);
 
+    q = q_dual;
     op = `OP_DECOMPRESS;
     mode = `MODE_DUAL;
     cmd = `CMD_LOAD_POLY;
@@ -860,6 +921,8 @@ initial begin
         $display("(FAIL DUAL DECOMPRESS)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -868,6 +931,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_single.txt" , poly_in);
     $readmemh("../../../../../test/comp_out_single.txt" , poly_out);
 
+    q = q_single;
     op = `OP_COMPRESS;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_POLY;
@@ -905,6 +969,8 @@ initial begin
         $display("(FAIL SINGLE COMPRESS)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -913,6 +979,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
     $readmemh("../../../../../test/comp_out_dual.txt" , poly_out);
 
+    q = q_dual;
     op = `OP_COMPRESS;
     mode = `MODE_DUAL;
     cmd = `CMD_LOAD_POLY;
@@ -950,6 +1017,8 @@ initial begin
         $display("(FAIL DUAL COMPRESS)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -958,6 +1027,7 @@ initial begin
     $readmemh("../../../../../test/encode_in_poly_d1.txt" , poly_in);
     $readmemh("../../../../../test/encode_out_poly_d1.txt" , poly_out);
 
+    q = q_dual;
     op = `OP_ENCODE;
     mode = `MODE_POLY;
     cmd = `CMD_LOAD_POLY;
@@ -998,6 +1068,8 @@ initial begin
     end
 
     d = meta[4];
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1005,6 +1077,7 @@ initial begin
     $readmemh("../../../../../test/encode_out_poly.txt", psi);
     $readmemh("../../../../../test/comp_out_dual.txt", poly_out);
 
+    q = q_dual;
     op = 0;
     mode = `MODE_POLY;
     cmd = `CMD_LOAD_TWIDDLE;
@@ -1061,6 +1134,8 @@ initial begin
     end
 
     d = meta[4];
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1071,6 +1146,7 @@ initial begin
     #FP;
     #FP;
 
+    q = q_dual;
     mode = `MODE_DUAL;
     cmd = `CMD_LOAD_POLY;
     op = `OP_SUM;
@@ -1110,6 +1186,8 @@ initial begin
         $display("(FAIL DUAL SUM)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1118,6 +1196,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
     $readmemh("../../../../../test/add_out_dual_const.txt" , poly_out);
 
+    q = q_dual;
     op = `OP_ADD;
     mode = `MODE_DUAL;
     // cmd = `CMD_LOAD_TWIDDLE;
@@ -1169,8 +1248,12 @@ initial begin
         $display("(FAIL DUAL ADD CONST)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     rhs_const = 1'b0;
+
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1180,6 +1263,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
     $readmemh("../../../../../test/add_out_single_const.txt" , poly_out);
 
+    q = q_single;
     op = `OP_ADD;
     mode = `MODE_SINGLE;
     // cmd = `CMD_LOAD_TWIDDLE;
@@ -1231,8 +1315,11 @@ initial begin
         $display("(FAIL SINGLE ADD CONST)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     rhs_const = 1'b0;
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1241,6 +1328,7 @@ initial begin
     $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
     $readmemh("../../../../../test/sub_out_single_const_switched.txt" , poly_out);
 
+    q = q_single;
     op = `OP_SUB;
     mode = `MODE_SINGLE;
     // cmd = `CMD_LOAD_TWIDDLE;
@@ -1293,6 +1381,8 @@ initial begin
         $display("(FAIL SINGLE SUB CONST SWITCHED)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     rhs_const = 1'b0;
     op_switch = 1'b0;
@@ -1349,6 +1439,8 @@ initial begin
         $display("(FAIL DECOMPOSE OUT LOW)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     $readmemh("../../../../../test/decompose_out_high.txt" , poly_out);
     cmd = `CMD_READ_TWIDDLE;
@@ -1386,6 +1478,8 @@ initial begin
         $display("(FAIL DECOMPOSE OUT HIGH)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1423,6 +1517,8 @@ initial begin
         $display("(FAIL CHKNORM CORRECT CASE)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1511,6 +1607,8 @@ initial begin
         $display("(FAIL MAKEHINT)");
         flag1 = 1;
     end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

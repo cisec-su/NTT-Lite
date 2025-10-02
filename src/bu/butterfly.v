@@ -61,11 +61,8 @@ wire [LOGQ -1:0] mm_inv2_in;
 wire [LOGQ -1:0] mm_inv2_out;
 wire [      1:0] mode_mul;
 wire             dual;
-wire [LOGQ -1:0] Q_dual;
-wire [LOGQ*2-1:0] MU_dual;
 wire [LOGQ -1:0] Q_half_dual;
 wire [LOGQ -1:0] bound_half;
-wire [LOGQ -1:0] psi_dual;
 wire [LOGQ -1:0] pow_2_d;
 wire [LOGQ -1:0] pow_2_d_dual;
 wire [LOGQ -1:0] pow_2_d_shift_dual;
@@ -100,15 +97,10 @@ assign mode_mul    = (mode == `MODE_POLY && op != `OP_PWM) ? `MODE_DUAL :
                      (mode_p2d                           ) ? `MODE_DUAL :
                                                               mode      ;
 assign dual        =  mode == `MODE_DUAL || mode == `MODE_POLY;
-assign Q_dual      = (dual) ? {Q[LOGQ0-1:0], Q[LOGQ0-1:0]} : 
-                               Q                           ;
+
 assign Q_half_dual = (dual) ? {Q[LOGQ0-1:0] >> 1, Q[LOGQ0-1:0] >> 1} : 
                                Q >> 1                                ;
 assign bound_half  = (bound >> 1) - 1'b1;
-assign MU_dual     = (dual) ? {MU[LOGQ-1:0], MU[LOGQ-1:0]} :
-                               MU                          ;
-assign psi_dual    = ((op == `OP_NTT || op == `OP_INTT) && dual) ? {PSI[LOGQ0-1:0], PSI[LOGQ0-1:0]} : 
-                                                                    PSI                             ;
 
 assign one_dual     = (dual) ? {{(LOGQ0-1){1'b0}}, 1'b1, {(LOGQ0-1){1'b0}}} : 
                                {1'b1}                                       ;
@@ -142,8 +134,8 @@ assign mm_in_A     = (op == `OP_INTT                          ) ? sub_out_C     
                                                                   B                  ;
 assign mm_in_B     = (op == `OP_DECOMPOSE                     ) ? one_dual           :
                      (op == `OP_COMPRESS                      ) ? pow_2_d_dual       :
-                     (op == `OP_DECOMPRESS                    ) ? Q_dual             : 
-                                                                  psi_dual           ;
+                     (op == `OP_DECOMPRESS                    ) ? Q                  : 
+                                                                  PSI                ;
 assign mm_in_E     = (floor                                   ) ? {LOGQ{1'b0}}       :
                      (op == `OP_DECOMPOSE                     ) ? bound_half         :
                      (op == `OP_COMPRESS                      ) ? Q_half_dual        :
@@ -151,7 +143,7 @@ assign mm_in_E     = (floor                                   ) ? {LOGQ{1'b0}}  
                                                                   {LOGQ{1'b0}}       ;
 assign mm_in_Z     = A[LOGQ-1:LOGQ0];
 assign mm_in_Q     = (op == `OP_DECOMPOSE                     ) ? bound              : 
-                                                                  Q_dual             ;
+                                                                  Q                  ;
 assign add_in_A    = (op == `OP_INTT || op == `OP_ADD) ? A              :
                      (op == `OP_SUM                  ) ? A              :
                      (op == `OP_CHKNORM              ) ? A              :
@@ -175,7 +167,7 @@ assign sub_in_B    = (op == `OP_INTT                 ) ? B              :
                      (op == `OP_SUB                  ) ? PSI            : 
                                                          mm_out_C       ;
 assign sub_in_Q    = (op == `OP_DECOMPOSE            ) ? bound          : 
-                                                         Q_dual         ;                                                         
+                                                         Q              ;                                                         
 assign shift_in_0  = (op == `OP_INTT                 ) ? add_out_C      : 
                                                          A              ;
 assign shift_in_1  = (op == `OP_INTT                 ) ? mm_inv2_out    : 
@@ -243,7 +235,7 @@ modmul #(
     .mode(mode_mul),
     .en_z(en_z    ),
     .Q   (mm_in_Q ),
-    .MU  (MU_dual ),
+    .MU  (MU      ),
     .A   (mm_in_A ),
     .B   (mm_in_B ),
     .E   (mm_in_E ),
@@ -260,7 +252,7 @@ modadd  #(
     .A   (add_in_A ),
     .B   (add_in_B ),
     .dual(dual     ),
-    .Q   (Q_dual   ),
+    .Q   (Q        ),
     .C   (add_out_C) 
 );
 
@@ -292,7 +284,7 @@ modmul_inv2 #(
 ) mm_inv2 (
     .A   (mm_inv2_in ),
     .inv2(inv2       ),
-    .Q   (Q_dual     ),
+    .Q   (Q          ),
     .dual(dual       ),
     .C   (mm_inv2_out)
 );
@@ -305,7 +297,7 @@ decompose_pp #(
     .A1  (decompose_pp_in_A1 ),
     .T   (decompose_pp_in_T  ),
     .sc  (inv2               ),
-    .q   (Q_dual             ),
+    .q   (Q                  ),
     .B0  (decompose_pp_out_B0),
     .B1  (decompose_pp_out_B1)
 );
