@@ -16,7 +16,7 @@ module barrett
         input  [LOGC   -1:0] C   ,
         output [LOGQ   -1:0] T   ,
         input  [LOGMU  -1:0] MU  ,
-        input  [LOGD   -1:0] D   ,
+        output [LOGD   -1:0] D   ,
         input  [LOGQ   -1:0] Q
     );
 

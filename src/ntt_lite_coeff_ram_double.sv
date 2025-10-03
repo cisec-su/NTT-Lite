@@ -39,8 +39,8 @@ localparam N2  = 1 << (LOGN - 1);
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 
 
-(* ram_style="block" *) reg [LOGQ-1:0] bram0 [N2-1:0] = '{default: {LOGQ{1'b0}}};
-(* ram_style="block" *) reg [LOGQ-1:0] bram1 [N2-1:0] = '{default: {LOGQ{1'b0}}};
+reg [LOGQ-1:0] bram0 [N2-1:0];
+reg [LOGQ-1:0] bram1 [N2-1:0];
 
 
 wire p0_wen_int;
