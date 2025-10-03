@@ -61,7 +61,7 @@ localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1)));
 localparam LOGWB   = $clog2(LOGQ/B);
 localparam WBMASK  = (1 << LOGWB) - 1;
 localparam L       = L_MUL + L_RED;
-localparam L_REAL  = L + 2;
+localparam L_REAL  = L + 3;
 
 // states, todo: add glitch protection as HW codes
 localparam ST_IDLE         = 5'd0;
@@ -707,7 +707,7 @@ shiftreg #(
 
 
 shiftreg #(
-    .SHIFT(1),
+    .SHIFT(2),
     .DATA (1)
 ) shreg_addsub (
     .clk     (clk ),
@@ -1176,7 +1176,7 @@ always @(*) begin
         ST_DECODE: begin
 
             pwm_idx = 1;
-            if (encode_i_ready && ctr1 != n_m1 && !sr_t) begin
+            if (encode_i_ready && ctr1 != n_m1 && !sr_e) begin
                 ctr0_inc = 1;
                 sr_i = 1;
             end
@@ -1202,7 +1202,7 @@ always @(*) begin
                 ctr0_inc = 1;
             end
 
-            if (sr_t) begin
+            if ((sr_t && op != `OP_MAKEHINT) || (sr_z && op == `OP_MAKEHINT)) begin
                 if (ctr1 == n_m1) begin
                     ctr0_rst = 1;
                     next_state = ST_POLY_OUT;
@@ -1327,7 +1327,9 @@ always @(*) begin
         ST_PWM1: begin
 
             busy = 1;
-            if ((sr_x && op == `OP_DECOMPRESS) || sr_o) begin
+            if ((sr_x && op == `OP_DECOMPRESS) || 
+                (sr_o && op != `OP_DECOMPOSE ) || 
+                (sr_o1 && op == `OP_DECOMPOSE)) begin
                 if (ctr1 == n_m1) begin
                     next_state = ST_POLY_OUT;
                 end
@@ -1463,11 +1465,17 @@ always @(*) begin
             ctr1_inc = 1;
             upoly_mul = 1;
         end
-        else if (sr_o) begin
-            ctr1_inc = 1;
-            upoly_mul = 1;
-            if (op == `OP_DECOMPOSE) begin
+        else if (op == `OP_DECOMPOSE) begin
+            if (sr_o1) begin
+                ctr1_inc = 1;
+                upoly_mul = 1;
                 upsi = 1;
+            end
+        end
+        else begin
+            if (sr_o) begin
+                ctr1_inc = 1;
+                upoly_mul = 1;
             end
         end
     end
@@ -1499,14 +1507,26 @@ always @(*) begin
         end
     end
     else if (addsub_rcv_bu) begin
-        if (sr_t) begin
-            upoly_mul = 1;
-            if (ctr1 == n_m1) begin
-                // ctr0_rst = 1;
-                ctr1_rst = 1;
+        if (op == `OP_MAKEHINT) begin
+            if (sr_z) begin
+                upoly_mul = 1;
+                if (ctr1 == n_m1) begin
+                    ctr1_rst = 1;
+                end
+                else begin
+                    ctr1_inc = 1;
+                end
             end
-            else begin
-                ctr1_inc = 1;
+        end
+        else begin
+            if (sr_t) begin
+                upoly_mul = 1;
+                if (ctr1 == n_m1) begin
+                    ctr1_rst = 1;
+                end
+                else begin
+                    ctr1_inc = 1;
+                end
             end
         end
     end
