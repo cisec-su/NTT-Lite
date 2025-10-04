@@ -927,6 +927,7 @@ always @(*) begin
                 next_state = next_state_op;
             end
 
+            ctr_all_rst = 1;
             encode_rst = 1;
         end
         ST_TWIDDLE_IN: begin
@@ -1429,20 +1430,20 @@ always @(*) begin
 
         end
         ST_TWIDDLE_OUT: begin
-                pwm_idx = 1;
-                o_valid_int = 1;
-                busy = 1;
-                o_data = twiddle_ram_dout;
-                if (o_read) begin
-                    if (ctr0 == num_words_m1) begin
-                        next_state = ST_IDLE;
-                        ctr_all_rst = 1;
-                        done_set = 1;
-                        twiddle_out_set = 1;
-                    end
-                    else
-                        ctr0_inc = 1;
+            pwm_idx = 1;
+            o_valid_int = 1;
+            busy = 1;
+            o_data = twiddle_ram_dout;
+            if (o_read) begin
+                if (ctr0 == num_words_m1) begin
+                    next_state = ST_IDLE;
+                    ctr_all_rst = 1;
+                    done_set = 1;
+                    twiddle_out_set = 1;
                 end
+                else
+                    ctr0_inc = 1;
+            end
         end
 
     endcase

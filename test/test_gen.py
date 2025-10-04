@@ -182,6 +182,12 @@ for i in range(n - 1):
     print(hex(psi_table_[j]), end=", ")
 print("\n\n")
 
+print("PSI C DUAL:")
+for i in range(n - 1):
+    j = pows[i]
+    print(hex((psi_table_[j] << (b // 2)) + psi_table_[j]), end=", ")
+print("\n\n")
+
 print("A DUAL C:")
 for i in range(n):
     print(hex((A_1[i] << (b // 2)) + A_0[i]), end=", ")
@@ -220,6 +226,13 @@ print("PSI INV C:")
 for i in range(n - 1):
     j = pows[i]
     print(hex(psi_inv_table_[j]), end=", ")
+print("\n\n")
+
+
+print("PSI INV C DUAL:")
+for i in range(n - 1):
+    j = pows[i]
+    print(hex((psi_inv_table_[j] << (b // 2)) + psi_inv_table_[j]), end=", ")
 print("\n\n")
 
 

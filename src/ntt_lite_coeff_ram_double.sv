@@ -115,9 +115,6 @@ assign p1_raddr_int = (p1_ren  ) ?              p1_raddr :
                       (p_ren_p1) ? (p_raddr & logn_mask) : 
                       (1 << (LOGN - 2)) | (px_raddr & logn_mask);
 
-// assign p0_dout_int = bram0[p0_raddr_int];
-// assign p1_dout_int = bram1[p1_raddr_int];
-
 assign p_dout  = (p_rsel_q ) ? p1_dout : p0_dout;
 assign px_dout = (px_rsel_q) ? p0_dout : p1_dout;
 

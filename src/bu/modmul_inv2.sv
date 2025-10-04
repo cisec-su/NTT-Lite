@@ -24,7 +24,6 @@ localparam LOGQ0 = LOGQ >> 1;
 
 wire [LOGLOGQ-1:0] one;
 wire [LOGQ   -1:0] asr_out;
-wire [LOGQ   -1:0] inv2_dual;
 wire [LOGQ   -1:0] add_out;
 
 /////////////////////////////////////////////////////////////////////////
@@ -34,8 +33,6 @@ wire [LOGQ   -1:0] add_out;
 ///////////////////////////// Assignments ///////////////////////////////
 
 assign one = 1;
-assign inv2_dual = (dual) ? {inv2[LOGQ0-1:0], inv2[LOGQ0-1:0]} : 
-                             inv2                              ;
 
 assign C[LOGQ0-1:    0] = (                 A[0]                 ) ? add_out[LOGQ0-1:    0] : 
                                                                      asr_out[LOGQ0-1:    0] ;
@@ -63,7 +60,7 @@ modadd  #(
     .LOGQ(LOGQ)
 ) ma (
     .A   (asr_out  ),
-    .B   (inv2_dual),
+    .B   (inv2     ),
     .dual(dual     ),
     .Q   (Q        ),
     .C   (add_out  ) 

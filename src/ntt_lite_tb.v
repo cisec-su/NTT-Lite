@@ -35,6 +35,7 @@ wire [LOGQ*2-1:0] mu;
 reg [LOGQ*2-1:0] mu_64;
 reg [LOGQ*2-1:0] mu_32;
 reg [LOGQ-1:0] inv2;
+wire [LOGQ-1:0] inv2_;
 reg [LOGQ-1:0] bound;
 reg [LOGQ*2-1:0] meta   [0:  7];
 reg [LOGQ-1:0] psi      [0:N-1];
@@ -86,7 +87,7 @@ ntt_lite #(
     .q(q),
     .floor(0),
     .bound(bound),
-    .inv2(inv2),
+    .inv2(inv2_),
     .d(d),
     .o_dis(1'b0),
     .rhs_const(rhs_const),
@@ -105,7 +106,7 @@ ntt_lite #(
 );
 
 assign mu = (mode == `MODE_SINGLE) ? mu_64 : (mu_32 << (LOGQ)) + mu_32;
-
+assign inv2_ = (mode == `MODE_SINGLE) ? inv2 : (inv2 << (LOGQ >> 1)) + inv2;
 
 initial begin
 
