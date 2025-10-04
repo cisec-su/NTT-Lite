@@ -15,7 +15,7 @@ module ntt_lite_twiddle_ram
 localparam N  = 1 << LOGN;
 
 
-(* ram_style="block" *) reg [LOGQ-1:0] bram [N-1:0] = '{default: {LOGQ{1'b0}}}; // low -even
+reg [LOGQ-1:0] bram [N-1:0];
 
 
 always @(posedge clk) begin

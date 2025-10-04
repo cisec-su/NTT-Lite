@@ -147,8 +147,9 @@ with open("sub_out_dual.txt", "w") as f:
 
 psi_table_ = ntt.generate_ntt_tables(n, q, psi)
 
-A_0_ntt, pows = ntt.NTT(A_0, psi_table_, q, debug=False)
+A_0_ntt, pows = ntt.NTT(A_0, psi_table_, q, debug=True)
 A_1_ntt, _    = ntt.NTT(A_1, psi_table_, q, debug=False)
+
 
 
 with open("ntt_out_single.txt", "w") as f:
@@ -167,10 +168,24 @@ with open("psi.txt", "w") as f:
         f.write(hex(psi_table_[j])[2:] + "\n")
     f.write("0\n")
 
+
+with open("psi_dual.txt", "w") as f:
+    for i in range(n - 1):
+        j = pows[i]
+        f.write(hex((psi_table_[j] << (b // 2)) + psi_table_[j])[2:] + "\n")
+    f.write("0\n")
+
+
 print("PSI C:")
 for i in range(n - 1):
     j = pows[i]
     print(hex(psi_table_[j]), end=", ")
+print("\n\n")
+
+print("PSI C DUAL:")
+for i in range(n - 1):
+    j = pows[i]
+    print(hex((psi_table_[j] << (b // 2)) + psi_table_[j]), end=", ")
 print("\n\n")
 
 print("A DUAL C:")
@@ -186,7 +201,10 @@ print("\n\n")
 
 psi_inv_table_ = ntt.generate_ntt_tables(n, q, pow(psi, -1, q))
 psi_inv_table_ = [(x*inv2) % q for x in psi_inv_table_]
-# _, _ = ntt.INTT(A_0_ntt, psi_inv_table_, q, debug=False, flag=False)
+ntt.INTT(A_0_ntt, psi_inv_table_, q, debug=True, flag=False)
+
+# while True:
+#     pass
 
 
 with open("psi_inv.txt", "w") as f:
@@ -196,10 +214,25 @@ with open("psi_inv.txt", "w") as f:
     f.write("0\n")
 
 
+with open("psi_inv_dual.txt", "w") as f:
+    for i in range(n - 1):
+        j = pows[i]
+        f.write(hex((psi_inv_table_[j] << (b // 2)) + psi_inv_table_[j])[2:] + "\n")
+    f.write("0\n")
+
+
+
 print("PSI INV C:")
 for i in range(n - 1):
     j = pows[i]
     print(hex(psi_inv_table_[j]), end=", ")
+print("\n\n")
+
+
+print("PSI INV C DUAL:")
+for i in range(n - 1):
+    j = pows[i]
+    print(hex((psi_inv_table_[j] << (b // 2)) + psi_inv_table_[j]), end=", ")
 print("\n\n")
 
 

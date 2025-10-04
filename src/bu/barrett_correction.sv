@@ -23,8 +23,6 @@ localparam LOGA  = LOGA0 << 1;
 
 ///////////////////////////// signals ///////////////////////////////////
 
-wire [LOGQ -1:0] Q;
-wire [LOGA -1:0] A;
 wire [LOGA -1:0] T1;
 wire [LOGA0  :0] T1_0;
 wire [LOGA0  :0] T1_1;
