@@ -123,7 +123,7 @@ wire [LOGN+LOGWB :0] ctr0_p1;
 reg [LOGN-1:0] ctr2_d;
 reg [LOGN-1:0] ctr2_q;
 reg ctr2_d_set;
-reg wpoly, upoly_ntt, upoly_ntt_q, upoly_mul, upoly_zetamul, wpoly_zetafrwrd, wpsi, wzeta, upsi, wq, pwm_idx, pwm_zeta_idx, pwm_poly_idx, upoly_encode, ren_ntt;
+reg wpoly, upoly_ntt, upoly_ntt_q, upoly_mul, upoly_zetamul, wpoly_zetafrwrd, wpsi, wzeta, upsi, wq, pwm_idx, pwm_zeta_idx, pwm_poly_idx, upoly_encode, upoly_cbd, ren_ntt;
 reg ntt_rcv_bu, pwm_rcv_bu, pwm_zeta_rcv_bu, sum_rcv_bu, addsub_rcv_bu, encode_rcv_bu;
 reg ctr_all_rst;
 reg done_set, done_int;
@@ -258,6 +258,13 @@ wire encode_i_valid;
 wire encode_i_ready;
 wire encode_o_valid;
 
+// cbd signals
+wire [LOGQ-1:0] cbd_in;
+wire [LOGQ-1:0] cbd_out;
+wire cbd_i_valid;
+wire cbd_o_valid;
+wire cbd_mode;
+
 
 // parallel input and point-op
 reg [B-1:0] i_data_q;
@@ -364,11 +371,12 @@ assign ntt_A_i = (!sr_mx) ? coeff_ram_p0_dout : (ntt_flag_i_d) ? p0_dout_q : p0_
 assign ntt_B_i = (!sr_mx) ? coeff_ram_p1_dout : (ntt_flag_i_d) ? coeff_ram_p0_dout : p1_dout_q;
 assign ntt_psi_i = (sr_mx) ? twiddle_ram_dout_q : twiddle_ram_dout;
 ////////////////////////////////////////////////////////////////////////////////////
-assign coeff_ram_p_wen   = upoly_mul | wpoly | wpoly_zetafrwrd | upoly_encode;
-assign coeff_ram_p_waddr = (upoly_mul | wpoly | upoly_encode) ?     ctr1  :
-                           /*wpoly_zetafrwrd*/                      ctr0  ;
+assign coeff_ram_p_wen   = upoly_mul | wpoly | wpoly_zetafrwrd | upoly_encode | upoly_cbd;
+assign coeff_ram_p_waddr = (upoly_mul | wpoly | upoly_encode | upoly_cbd) ? ctr1  :
+                           /*wpoly_zetafrwrd*/                              ctr0  ;
 assign coeff_ram_p_din   = (upoly_mul   ) ?     M_o         :
                            (upoly_encode) ?     encode_out  :
+                           (upoly_cbd   ) ?     cbd_out     :
                     /*wpoly_zetafrwrd | wpoly*/ i_data      ;
 assign coeff_ram_p_raddr = ctr0; // pwm_poly_idx, pwm_zeta_idx
 ////////////////////////////////////////////////////////////////////////////////////
@@ -421,10 +429,23 @@ assign chknorm_bu = M_o[0];
 assign encode_i_valid = sr_e;
 assign encode_in      = (decode) ? twiddle_ram_dout  :
                                    poly_in_mx_A      ;
-assign decode         = (op == `OP_DECODE) ? 1'b1 : 
+assign decode         = (op == `OP_DECODE) ? 1'b1 :
+                        (op == `OP_CBD   ) ? 1'b1 : 
                                              1'b0 ;
 
 /////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////// CBD Inputs ////////////////////////////////////////
+
+assign cbd_i_valid = encode_o_valid;
+assign cbd_in      = encode_out;
+assign cbd_mode    = d[1];
+
+/////////////////////////////////////////////////////////////////////////
+
 
 
 
@@ -766,6 +787,7 @@ shiftreg #(
 
 
 
+
 ////////////////////////// encode/decode ////////////////////////////////
 
 encode #(
@@ -781,6 +803,21 @@ encode #(
     .i_valid(encode_i_valid  ),
     .i_ready(encode_i_ready  ),
     .o_valid(encode_o_valid  )
+);
+
+
+cbd #(
+    .LOGQ(LOGQ)
+) cbd_inst (
+    .clk     (clk        ),
+    .rst     (rst        ),
+    .A       (cbd_in     ),
+    .mode    (mode       ),
+    .cbd_mode(cbd_mode   ),
+    .Q       (q          ),
+    .C       (cbd_out    ),
+    .i_valid (cbd_i_valid),
+    .o_valid (cbd_o_valid)
 );
 
 /////////////////////////////////////////////////////////////////////////
@@ -832,6 +869,7 @@ always @(*) begin
     io_word = ctr0_d; // will change
 
     encode_rst = 0;
+    upoly_cbd = 0;
     upoly_encode = 0;
 
     twiddle_out_set = 0;
@@ -1181,8 +1219,15 @@ always @(*) begin
                 ctr0_inc = 1;
                 sr_i = 1;
             end
-            if (encode_o_valid) begin
-                upoly_encode = 1;
+            if ((op != `OP_CBD && encode_o_valid) || 
+                (op == `OP_CBD && cbd_o_valid  ))
+            begin
+                if (op == `OP_CBD) begin
+                    upoly_cbd = 1;
+                end
+                else begin
+                    upoly_encode = 1;
+                end
                 if (ctr1 == n_m1) begin
                     ctr1_rst = 1;
                     ctr0_rst = 1;
@@ -1559,6 +1604,7 @@ always @(*) begin
         `OP_MAKEHINT   : next_state_op = ST_ADDSUB;
         `OP_ENCODE     : next_state_op = ST_ENCODE0;
         `OP_DECODE     : next_state_op = ST_DECODE;
+        `OP_CBD        : next_state_op = ST_DECODE;
         default        : next_state_op = ST_IDLE;
     endcase
 end

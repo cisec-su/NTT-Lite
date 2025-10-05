@@ -147,7 +147,7 @@ with open("sub_out_dual.txt", "w") as f:
 
 psi_table_ = ntt.generate_ntt_tables(n, q, psi)
 
-A_0_ntt, pows = ntt.NTT(A_0, psi_table_, q, debug=True)
+A_0_ntt, pows = ntt.NTT(A_0, psi_table_, q, debug=False)
 A_1_ntt, _    = ntt.NTT(A_1, psi_table_, q, debug=False)
 
 
@@ -201,10 +201,7 @@ print("\n\n")
 
 psi_inv_table_ = ntt.generate_ntt_tables(n, q, pow(psi, -1, q))
 psi_inv_table_ = [(x*inv2) % q for x in psi_inv_table_]
-ntt.INTT(A_0_ntt, psi_inv_table_, q, debug=True, flag=False)
-
-# while True:
-#     pass
+ntt.INTT(A_0_ntt, psi_inv_table_, q, debug=False, flag=False)
 
 
 with open("psi_inv.txt", "w") as f:
@@ -317,6 +314,25 @@ sum1 %= q
 
 with open("sum_out_dual.txt", "w") as f:
     f.write(hex((sum1 << (b // 2)) + sum0)[2:] + "\n")
+
+hw_lut = [bin(i).count("1") for i in range(16)]
+
+cbd_in = [random.randint(0, 1 << 32) for _ in range((n // 4))]
+cbd_out = []
+for i in range(len(cbd_in)):
+    t = cbd_in[i]
+    for j in range(8):
+        t0 = (t >> (4*j)) & 0x3
+        t1 = (t >> (4*j + 2)) & 0x3
+        cbd_out.append((hw_lut[t0] - hw_lut[t1]) % q)
+
+with open("cbd_in.txt", "w") as f:
+    for i in range(n // 4):
+        f.write(hex(cbd_in[i])[2:] + "\n")
+
+with open("cbd_out_dual.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((cbd_out[(2*i) + 1] << (b // 2)) + cbd_out[2*i])[2:] + "\n")
 
 
 

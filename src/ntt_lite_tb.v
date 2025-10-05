@@ -12,7 +12,7 @@ parameter LOGN = 8;
 //parameter L = 11;
 parameter EN_NTT_OTF = 1;
 parameter FORWARD_EN = 1;
-parameter STOP_AT_EVERY_TEST = 0;
+parameter STOP_AT_EVERY_TEST = 1;
 localparam N = 1 << LOGN;
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
@@ -1130,6 +1130,73 @@ initial begin
     end
     else begin
         $display("(FAIL POLY DECODE)");
+        flag1 = 1;
+        $stop;
+    end
+
+    d = meta[4];
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    $readmemh("../../../../../test/cbd_in.txt", psi);
+    $readmemh("../../../../../test/cbd_out_dual.txt", poly_out);
+
+    q = q_dual;
+    op = 0;
+    mode = `MODE_POLY;
+    cmd = `CMD_LOAD_TWIDDLE;
+    op_switch = 1;
+    d = 4;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
+    cmd = `CMD_START;
+    op = `OP_CBD;
+    #FP;
+    cmd = 0;
+    flag = 0;
+    op_switch = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0) begin
+        $display("(SUCCESS POLY CBD DUAL)");
+    end
+    else begin
+        $display("(FAIL POLY CBD DUAL)");
         flag1 = 1;
         $stop;
     end

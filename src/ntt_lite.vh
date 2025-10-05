@@ -25,6 +25,7 @@
 `define OP_DECOMPOSE          4'd10
 `define OP_CHKNORM            4'd11
 `define OP_MAKEHINT           4'd12
+`define OP_CBD                4'd13
 
 
 `define MODE_SINGLE           2'd0
