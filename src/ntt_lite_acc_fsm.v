@@ -45,7 +45,6 @@ localparam [31:0] ST_GET = 1;
 localparam [31:0] ST_BUSY = 2;
 localparam [31:0] ST_PUT = 3;
 localparam [31:0] ST_GET0 = 4;
-localparam [31:0] ST_GET2 = 5;
 
 
 reg [31:0] cnt;
@@ -73,31 +72,27 @@ begin
         begin
             if(ctrl_cmd == `CMD_LOAD_TWIDDLE)
             begin
-                cstate <=  ST_GET0;
+                cstate <=  ST_GET;
             end
             else if(ctrl_cmd == `CMD_LOAD_ZETA)
             begin
-                cstate <= ST_GET0;
+                cstate <= ST_GET;
             end
             else if(ctrl_cmd == `CMD_LOAD_POLY)
             begin
-                cstate <= ST_GET0;
+                cstate <= ST_GET;
             end
             else if(fsm_o_valid)
             begin
                 cstate <= ST_PUT;
             end
         end
-        ST_GET0:
-            cstate <= ST_GET;
+        // ST_GET0:
+        //     cstate <= ST_GET;
         ST_GET:
         begin
             if(cnt >= (fsm_io_limit))
-                cstate <= ST_GET2; 
-        end
-        ST_GET2:
-        begin
-            cstate <= ST_IDLE;
+                cstate <= ST_IDLE; 
         end
         
         ST_PUT:
@@ -118,41 +113,34 @@ begin
     mem_addr = 0;
         
     mem_o_data = fsm_o_data;
-    fsm_i_data = 0;
+    fsm_i_data = mem_i_data;
     fsm_i_valid = mem_i_valid;
     fsm_o_read = 0;
-    mem_re = fsm_i_ready;
+    mem_re = 0;
     mem_we = 0;
     case(cstate)
-    ST_GET0:
+    ST_IDLE:
     begin
-        if(fsm_i_ready)
-        begin  
-            mem_addr = ctrl_din_addr + (cnt << 2);
-            cnt_up = 1;
-        end
+        cnt_rst = 1;
     end
     ST_GET:
     begin
-        fsm_i_data = mem_i_data;
+        mem_addr = ctrl_din_addr + (cnt << 2);
         if(fsm_i_ready)
-        begin  
-            mem_addr = ctrl_din_addr + (cnt << 2);
-            cnt_up = 1;
+        begin
+            mem_re = 1;  
+            if (cnt >= (fsm_io_limit))
+                cnt_rst = 1;
+            else
+                cnt_up = 1;
         end
-        if(cnt >= (fsm_io_limit))
-            cnt_rst = 1;
-    end
-    ST_GET2:
-    begin
-        fsm_i_data = mem_i_data;
     end
     ST_PUT:
     begin
+        mem_addr = ctrl_dout_addr + (fsm_io_word << 2);
         if(fsm_o_valid)
         begin  
-            mem_addr = ctrl_dout_addr + (fsm_io_word << 2);
-            mem_we = fsm_o_valid;
+            mem_we = 1;
             fsm_o_read = mem_o_ready;
         end
     end

@@ -4,6 +4,7 @@ module ntt_lite_twiddle_ram
         parameter LOGN  = 8
     )
     (   input                 clk  ,
+        input                 ren  ,
 
         input                 wen  ,
         input      [LOGN-1:0] waddr,
@@ -25,7 +26,7 @@ end
 
 
 always @(posedge clk) begin
-    dout <= bram[raddr];
+    dout <= (ren) ? bram[raddr] : {LOGQ{1'b0}};
 end
 
 

@@ -7,6 +7,7 @@ module ntt_lite_coeff_ram_double
     (   
         input                 clk     ,
         input   [LOGLOGN-1:0] logn    ,
+        input                 ren     ,
 
         input                 p0_wen  ,
         input                 p0_ren  ,
@@ -131,8 +132,8 @@ end
 
 
 always @(posedge clk) begin
-    p0_dout <= bram0[p0_raddr_int];
-    p1_dout <= bram1[p1_raddr_int];
+    p0_dout <= (ren) ? bram0[p0_raddr_int] : {LOGQ{1'b0}};
+    p1_dout <= (ren) ? bram1[p1_raddr_int] : {LOGQ{1'b0}};
 end
 
 always @(posedge clk) begin

@@ -25,6 +25,8 @@ module ntt_lite_acc_dma
         output reg         dma_rst_i   
     );
 
+reg re_q;
+
 
 assign i_ready = 1;
 assign o_ready = 1;
@@ -40,9 +42,7 @@ begin
     dma_sel_i = 0; 
     
     dma_rst_i = rst;
-    
-    i_data = dma_dat_o;
-    
+
     
     if(re)
     begin
@@ -67,13 +67,18 @@ end
 
 always @ (posedge clk)
 begin
-    if(rst)
+    if(rst) begin
         i_valid <= 0;
-    else
-        i_valid <= re;
-        
+        re_q <= 0;
+    end
+    else begin
+        i_valid <= re_q;
+        re_q <= re;
+    end
 end
 
-  
+always @(posedge clk) begin
+    i_data <= dma_dat_o;
+end
 
 endmodule
