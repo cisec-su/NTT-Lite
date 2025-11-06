@@ -13,15 +13,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="83,866.687 ns"></ZoomStartTime>
-      <ZoomEndTime time="84,333.863 ns"></ZoomEndTime>
-      <Cursor1Time time="84,256.000 ns"></Cursor1Time>
+      <ZoomStartTime time="117,573.833 ns"></ZoomStartTime>
+      <ZoomEndTime time="117,744.434 ns"></ZoomEndTime>
+      <Cursor1Time time="117,716.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="192"></NameColumnWidth>
       <ValueColumnWidth column_width="158"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="57" />
+   <WVObjectSize size="55" />
    <wave_markers>
       <marker label="" time="26449876" />
       <marker label="" time="3195000" />
@@ -196,13 +196,6 @@
       <obj_property name="ElementShortName">twiddle_ram_dout_q[31:0]</obj_property>
       <obj_property name="ObjectShortName">twiddle_ram_dout_q[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/state">
-      <obj_property name="ElementShortName">state[4:0]</obj_property>
-      <obj_property name="ObjectShortName">state[4:0]</obj_property>
-      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_sum">
       <obj_property name="ElementShortName">sr_sum</obj_property>
       <obj_property name="ObjectShortName">sr_sum</obj_property>
@@ -274,11 +267,6 @@
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0">
       <obj_property name="ElementShortName">ctr0[7:0]</obj_property>
       <obj_property name="ObjectShortName">ctr0[7:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr1">
-      <obj_property name="ElementShortName">ctr1[7:0]</obj_property>
-      <obj_property name="ObjectShortName">ctr1[7:0]</obj_property>
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr2">
@@ -656,9 +644,21 @@
          <obj_property name="ElementShortName">cbd_mode</obj_property>
          <obj_property name="ObjectShortName">cbd_mode</obj_property>
       </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/state">
+         <obj_property name="ElementShortName">state[4:0]</obj_property>
+         <obj_property name="ObjectShortName">state[4:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/i_valid">
          <obj_property name="ElementShortName">i_valid</obj_property>
          <obj_property name="ObjectShortName">i_valid</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr1">
+         <obj_property name="ElementShortName">ctr1[7:0]</obj_property>
+         <obj_property name="ObjectShortName">ctr1[7:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
       </wvobject>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/o_valid">
          <obj_property name="ElementShortName">o_valid</obj_property>
@@ -707,10 +707,6 @@
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/T1">
          <obj_property name="ElementShortName">T1[31:0]</obj_property>
          <obj_property name="ObjectShortName">T1[31:0]</obj_property>
-      </wvobject>
-      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/mode_q">
-         <obj_property name="ElementShortName">mode_q</obj_property>
-         <obj_property name="ObjectShortName">mode_q</obj_property>
       </wvobject>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/dual">
          <obj_property name="ElementShortName">dual</obj_property>
