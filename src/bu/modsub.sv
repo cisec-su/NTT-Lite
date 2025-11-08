@@ -7,6 +7,8 @@ module modsub
         input  [LOGQ-1:0] B   ,
         input  [LOGQ-1:0] Q   ,
         input             dual,
+        output            corr0,
+        output            corr1,
         output            corr,
         output [LOGQ+1:0] T   ,
         output [LOGQ-1:0] C
@@ -33,8 +35,6 @@ wire [LOGQ0-1:0] C0;
 wire [LOGQ0-1:0] C1;
 
 wire c;
-
-wire corr0, corr1;
 
 /////////////////////////////////////////////////////////////////////////
 

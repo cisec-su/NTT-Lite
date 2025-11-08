@@ -45,6 +45,7 @@ localparam Q_ADDR         = 8'h10; // Offset for coefficient modulus register
 localparam MU_ADDR_LOW    = 8'h14; // Offset for mu register lsb 32-bits
 localparam MU_ADDR_HIGH   = 8'h18; // Offset for mu register msb 2-bit
 localparam INV2_ADDR      = 8'h1C; // Offset for mu register lsb 32-bits
+localparam ACTRL_ADDR     = 8'h20; // Offset for advanced ctrl register
 
 // Bit-fields for ctrl register
 localparam CTRL_CMD_LSB       = 0;
