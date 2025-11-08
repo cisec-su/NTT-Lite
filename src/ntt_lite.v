@@ -826,6 +826,7 @@ cbd #(
     .center  (rej_samp_center),
     .Q       (q          ),
     .C       (cbd_out    ),
+    .k       (k          ),
     .i_valid (cbd_i_valid),
     .o_valid (cbd_o_valid)
 );

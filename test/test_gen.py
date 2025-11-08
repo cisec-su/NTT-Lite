@@ -510,7 +510,7 @@ logn = 8
 n = 1 << logn
 mu_64 = (1 << 64) // inv2
 mu_32 = (1 << 32) // inv2
-d = 23
+d = 24
 
 with open("rejsamp32_meta.txt", "w") as f:
     f.write(hex(q)[2:] + "\n")
@@ -539,8 +539,9 @@ for i in range(len(rej_samp_in)):
 
 
 for i in range(len(rej_samp_decoded)):
-    if rej_samp_decoded[i] < bound:
-        rej_samp_out.append(rej_samp_decoded[i])
+    temp = rej_samp_decoded[i] & ((1 << logq) - 1)
+    if temp < bound:
+        rej_samp_out.append(temp)
         if len(rej_samp_out) >= n:
             break
 
@@ -559,7 +560,7 @@ with open("rej_samp_out.txt", "w") as f:
 q = 0x7fe001
 bound = 9
 inv2 = 230
-logq = math.ceil(math.log2(q))
+logq = 4
 logn = 8
 n = 1 << logn
 mu_64 = (1 << 64) // inv2
@@ -613,7 +614,7 @@ with open("rej_samp_eta_out.txt", "w") as f:
 q = 3329
 bound = (q << 16) | q
 inv2 = 250
-logq = math.ceil(math.log2(q))
+logq = 12
 logn = 7
 n = 1 << logn
 mu_64 = (1 << 64) // inv2
@@ -631,6 +632,9 @@ with open("rejsampdual_meta.txt", "w") as f:
     f.write(hex(bound)[2:] + "\n")
 
 rej_samp_in = [random.randint(0, 1 << 32) for _ in range(inv2)]
+
+rej_samp_in[0] = (rej_samp_in[0] & 0xfffff000) + 0xd01
+
 
 rej_samp_decoded = []
 rej_samp_out = []

@@ -15,6 +15,7 @@ module cbd
         input  [LOGQ    -1:0] bound   ,
         input                 i_valid ,
         input                 center  ,
+        input  [LOGLOGQ -1:0] k       ,
         output                o_valid ,
         output [LOGQ    -1:0] C
     );
@@ -22,6 +23,7 @@ module cbd
 ///////////////////////////// parameters ////////////////////////////////
 
 localparam LOGQ0 = LOGQ >> 1;
+localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -43,10 +45,13 @@ wire [LOGQ-1:0] T1;
 reg  cbd_mode_q;
 wire dual;
 reg  dual_q;
+reg [LOGLOGQ -1:0] k_q;
 wire [LOGQ-1:0] modsub0_in_A;
 wire [LOGQ-1:0] modsub0_in_B;
 wire [LOGQ-1:0] modsub0_in_C;
 wire [LOGQ-1:0] modsub1_out_C;
+wire [LOGQ -1:0] mask_k;
+wire [LOGQ -1:0] mask_k_dual;
 
 
 reg rej_samp_q;
@@ -66,6 +71,7 @@ wire [LOGQ-1:0] bound_half;
 wire [LOGQ-1:0] rej_samp_sub_mx;
 reg  [LOGQ0-1:0] rej_samp_mem;
 reg  [LOGQ0-1:0] rej_samp_mem_next;
+wire [LOGQ-1:0] A_q_masked;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -171,7 +177,7 @@ assign C = C_q;
 
 ////////////////////////////// Comb. Assignments (RejSamp) //////////////
 
-assign rej_samp_sub_mx = (center) ? modsub1_out_C : A_q;
+assign rej_samp_sub_mx = (center) ? modsub1_out_C : A_q_masked;
 
 
 always @(*) begin
@@ -231,7 +237,13 @@ end
 
 ////////////////////////////// Comb. Assignments (Misc) /////////////////
 
-assign modsub0_in_A = (rej_samp_q) ? A_q : T0;
+assign mask_k      = (k_q == 0) ?  {LOGQ{1'b1}}                          : 
+                                 ({{(LOGQ-1){1'b0}}, 1'b1} << k_q) - 1'b1;
+assign mask_k_dual = (dual) ?    {mask_k[LOGQ0-1:0], mask_k[LOGQ0-1:0]} : 
+                                  mask_k                                ;
+assign A_q_masked = A_q & mask_k_dual;
+
+assign modsub0_in_A = (rej_samp_q) ? (A_q_masked & mask_k_dual) : T0;
 assign modsub0_in_B = (rej_samp_q) ? bound_q : T1;
 
 assign o_valid_mx = (rej_samp_q) ? o_valid_rejsamp : i_valid_d;
@@ -262,7 +274,7 @@ modsub  #(
     .LOGQ(LOGQ)
 ) ms1 (
     .A   (bound_half   ),
-    .B   (A_q          ),
+    .B   (A_q_masked   ),
     .dual(dual_q       ),
     .Q   (Q_q          ),
     .C   (modsub1_out_C)
@@ -317,6 +329,7 @@ always @(posedge clk) begin
     rej_samp_q <= rej_samp;
     center_q <= center;
     bound_q <= bound;
+    k_q <= k;
 end
 
 
