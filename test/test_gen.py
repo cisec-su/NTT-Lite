@@ -497,3 +497,165 @@ for i in range(n):
 with open("makehint_out.txt", "w") as f:
     for i in range(n):
         f.write(hex(hints[i])[2:] + "\n")
+
+
+############################# rej sample test ##########################
+
+
+q = 0x77e001
+bound = q
+inv2 = 254
+logq = math.ceil(math.log2(q))
+logn = 8
+n = 1 << logn
+mu_64 = (1 << 64) // inv2
+mu_32 = (1 << 32) // inv2
+d = 23
+
+with open("rejsamp32_meta.txt", "w") as f:
+    f.write(hex(q)[2:] + "\n")
+    f.write(hex(mu_64)[2:] + "\n")
+    f.write(hex(logn)[2:] + "\n")
+    f.write(hex(logq)[2:] + "\n")
+    f.write(hex(d)[2:] + "\n")
+    f.write(hex(inv2)[2:] + "\n")
+    f.write(hex(mu_32)[2:] + "\n")
+    f.write(hex(bound)[2:] + "\n")
+
+rej_samp_in = [random.randint(0, 1 << 32) for _ in range(inv2)]
+
+rej_samp_decoded = []
+rej_samp_out = []
+mem = 0
+ctr = 0
+for i in range(len(rej_samp_in)):
+    mem = mem | (rej_samp_in[i] << ctr)
+    ctr += 32
+    while ctr >= d:
+        t = mem & ((1 << d) - 1)
+        mem = mem >> d
+        ctr = ctr - d
+        rej_samp_decoded.append(t)
+
+
+for i in range(len(rej_samp_decoded)):
+    if rej_samp_decoded[i] < bound:
+        rej_samp_out.append(rej_samp_decoded[i])
+        if len(rej_samp_out) >= n:
+            break
+
+with open("rej_samp_in.txt", "w") as f:
+    for i in range(len(rej_samp_in)):
+        f.write(hex(rej_samp_in[i])[2:] + "\n")
+
+with open("rej_samp_out.txt", "w") as f:
+    for i in range(len(rej_samp_out)):
+        f.write(hex(rej_samp_out[i])[2:] + "\n")
+
+
+############################# rej sample eta test ##########################
+
+
+q = 0x7fe001
+bound = 9
+inv2 = 230
+logq = math.ceil(math.log2(q))
+logn = 8
+n = 1 << logn
+mu_64 = (1 << 64) // inv2
+mu_32 = (1 << 32) // inv2
+d = 4
+
+with open("rejsampeta_meta.txt", "w") as f:
+    f.write(hex(q)[2:] + "\n")
+    f.write(hex(mu_64)[2:] + "\n")
+    f.write(hex(logn)[2:] + "\n")
+    f.write(hex(logq)[2:] + "\n")
+    f.write(hex(d)[2:] + "\n")
+    f.write(hex(inv2)[2:] + "\n")
+    f.write(hex(mu_32)[2:] + "\n")
+    f.write(hex(bound)[2:] + "\n")
+
+rej_samp_in = [random.randint(0, 1 << 32) for _ in range(inv2)]
+
+rej_samp_decoded = []
+rej_samp_out = []
+mem = 0
+ctr = 0
+for i in range(len(rej_samp_in)):
+    mem = mem | (rej_samp_in[i] << ctr)
+    ctr += 32
+    while ctr >= d:
+        t = mem & ((1 << d) - 1)
+        mem = mem >> d
+        ctr = ctr - d
+        rej_samp_decoded.append(t)
+
+
+for i in range(len(rej_samp_decoded)):
+    if rej_samp_decoded[i] < bound:
+        rej_samp_out.append(((bound >> 1) - rej_samp_decoded[i]) % q)
+        if len(rej_samp_out) >= n:
+            break
+
+with open("rej_samp_eta_in.txt", "w") as f:
+    for i in range(len(rej_samp_in)):
+        f.write(hex(rej_samp_in[i])[2:] + "\n")
+
+with open("rej_samp_eta_out.txt", "w") as f:
+    for i in range(len(rej_samp_out)):
+        f.write(hex(rej_samp_out[i])[2:] + "\n")
+
+
+############################# rej sample dual test ##########################
+
+
+q = 3329
+bound = (q << 16) | q
+inv2 = 250
+logq = math.ceil(math.log2(q))
+logn = 7
+n = 1 << logn
+mu_64 = (1 << 64) // inv2
+mu_32 = (1 << 32) // inv2
+d = 12
+
+with open("rejsampdual_meta.txt", "w") as f:
+    f.write(hex(q)[2:] + "\n")
+    f.write(hex(mu_64)[2:] + "\n")
+    f.write(hex(logn)[2:] + "\n")
+    f.write(hex(logq)[2:] + "\n")
+    f.write(hex(d)[2:] + "\n")
+    f.write(hex(inv2)[2:] + "\n")
+    f.write(hex(mu_32)[2:] + "\n")
+    f.write(hex(bound)[2:] + "\n")
+
+rej_samp_in = [random.randint(0, 1 << 32) for _ in range(inv2)]
+
+rej_samp_decoded = []
+rej_samp_out = []
+mem = 0
+ctr = 0
+for i in range(len(rej_samp_in)):
+    mem = mem | (rej_samp_in[i] << ctr)
+    ctr += 32
+    while ctr >= d:
+        t = mem & ((1 << d) - 1)
+        mem = mem >> d
+        ctr = ctr - d
+        rej_samp_decoded.append(t)
+
+
+for i in range(len(rej_samp_decoded)):
+    if rej_samp_decoded[i] < q:
+        rej_samp_out.append(rej_samp_decoded[i])
+        if len(rej_samp_out) >= (n*2):
+            break
+
+with open("rej_samp_in_dual.txt", "w") as f:
+    for i in range(len(rej_samp_in)):
+        f.write(hex(rej_samp_in[i])[2:] + "\n")
+
+with open("rej_samp_out_dual.txt", "w") as f:
+    for i in range(len(rej_samp_out)//2):
+        f.write(hex((rej_samp_out[(2*i) + 1] << (b // 2)) + rej_samp_out[2*i])[2:] + "\n")

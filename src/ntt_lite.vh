@@ -26,6 +26,7 @@
 `define OP_CHKNORM            4'd11
 `define OP_MAKEHINT           4'd12
 `define OP_CBD                4'd13
+`define OP_REJ_SAMP           4'd14
 
 
 `define MODE_SINGLE           2'd0

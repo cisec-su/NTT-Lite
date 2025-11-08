@@ -12,7 +12,7 @@ parameter LOGN = 8;
 //parameter L = 11;
 parameter EN_NTT_OTF = 1;
 parameter FORWARD_EN = 1;
-parameter STOP_AT_EVERY_TEST = 1;
+parameter STOP_AT_EVERY_TEST = 0;
 localparam N = 1 << LOGN;
 localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
 localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
@@ -1680,6 +1680,239 @@ initial begin
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+    $readmemh("../../../../../test/rejsamp32_meta.txt" , meta);
+    $readmemh("../../../../../test/rej_samp_in.txt", psi);
+    $readmemh("../../../../../test/rej_samp_out.txt", poly_out);
+
+    mode = `MODE_SINGLE;
+    q = meta[0];
+    mu_64 = meta[1];
+    logn = meta[2];
+    k = meta[3];
+    d = meta[4];
+    inv2 = meta[5];
+    mu_32 = meta[6];
+    bound = meta[7];
+    rhs_const = 1'b1;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
+    cmd = `CMD_START;
+    op = `OP_REJ_SAMP;
+    #FP;
+    cmd = 0;
+    flag = 0;
+    rhs_const = 1'b0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0) begin
+        $display("(SUCCESS REJ SAMP SINGLE)");
+        $stop;
+    end
+    else begin
+        $display("(FAIL REJ SAMP SINGLE)");
+        flag1 = 1;
+        $stop;
+    end
+
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    $readmemh("../../../../../test/rejsampeta_meta.txt" , meta);
+    $readmemh("../../../../../test/rej_samp_eta_in.txt", psi);
+    $readmemh("../../../../../test/rej_samp_eta_out.txt", poly_out);
+
+    mode = `MODE_SINGLE;
+    q = meta[0];
+    mu_64 = meta[1];
+    logn = meta[2];
+    k = meta[3];
+    d = meta[4];
+    inv2 = meta[5];
+    mu_32 = meta[6];
+    bound = meta[7];
+    rhs_const = 1'b1;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
+    cmd = `CMD_START;
+    op = `OP_REJ_SAMP;
+    #FP;
+    cmd = 0;
+    flag = 0;
+    rhs_const = 1'b1;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+    rhs_const = 1'b0;
+
+    if (flag == 0) begin
+        $display("(SUCCESS REJ SAMP ETA SINGLE)");
+        $stop;
+    end
+    else begin
+        $display("(FAIL REJ SAMP ETA SINGLE)");
+        flag1 = 1;
+        $stop;
+    end
+
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/rejsampdual_meta.txt" , meta);
+    $readmemh("../../../../../test/rej_samp_in_dual.txt", psi);
+    $readmemh("../../../../../test/rej_samp_out_dual.txt", poly_out);
+
+    mode = `MODE_POLY;
+    q = meta[0];
+    mu_64 = meta[1];
+    logn = meta[2];
+    k = meta[3];
+    d = meta[4];
+    inv2 = meta[5];
+    mu_32 = meta[6];
+    bound = meta[7];
+    rhs_const = 1'b1;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
+    cmd = `CMD_START;
+    op = `OP_REJ_SAMP;
+    #FP;
+    cmd = 0;
+    flag = 0;
+    rhs_const = 1'b0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0) begin
+        $display("(SUCCESS REJ SAMP DUAL)");
+        $stop;
+    end
+    else begin
+        $display("(FAIL REJ SAMP DUAL)");
+        flag1 = 1;
+        $stop;
+    end
+
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     if (flag1 == 0)

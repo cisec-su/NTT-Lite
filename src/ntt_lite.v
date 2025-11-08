@@ -150,6 +150,7 @@ wire [LOGN+LOGWB-1:0] num_words_over2_m1;
 
 wire [LOGN-1:0] decode_num_words_;
 wire [LOGN-1:0] decode_num_words;
+wire [LOGN-1:0] rejsamp_num_words;
 
 
 // error register
@@ -264,6 +265,9 @@ wire [LOGQ-1:0] cbd_out;
 wire cbd_i_valid;
 wire cbd_o_valid;
 wire cbd_mode;
+reg rej_samp;
+reg rej_samp_center;
+reg cbd_rst;
 
 
 // parallel input and point-op
@@ -299,7 +303,9 @@ assign num_words_over2 = num_words >> 1;
 assign num_words_over2_m1 = num_words_over2 - 1;
 assign ctr0_p1 = ctr0 + 1;
 assign decode_num_words_ = d << (logn - (LOGLOGQ - 1));
-assign decode_num_words  = ((mode == `MODE_SINGLE) ? decode_num_words_ : decode_num_words_ << 1) - 1'b1;
+assign decode_num_words  = ( (mode == `MODE_SINGLE) ? decode_num_words_             :
+                                                      decode_num_words_ << 1        ) - 1'b1;
+assign rejsamp_num_words = inv2 - 1'b1;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -429,9 +435,10 @@ assign chknorm_bu = M_o[0];
 assign encode_i_valid = sr_e;
 assign encode_in      = (decode) ? twiddle_ram_dout  :
                                    poly_in_mx_A      ;
-assign decode         = (op == `OP_DECODE) ? 1'b1 :
-                        (op == `OP_CBD   ) ? 1'b1 : 
-                                             1'b0 ;
+assign decode         = (op == `OP_DECODE  ) ? 1'b1 :
+                        (op == `OP_CBD     ) ? 1'b1 :
+                        (op == `OP_REJ_SAMP) ? 1'b1 :
+                                               1'b0 ;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -810,10 +817,13 @@ cbd #(
     .LOGQ(LOGQ)
 ) cbd_inst (
     .clk     (clk        ),
-    .rst     (rst        ),
+    .rst     (rst | cbd_rst),
     .A       (cbd_in     ),
     .mode    (mode       ),
     .cbd_mode(cbd_mode   ),
+    .rej_samp(rej_samp   ),
+    .bound   (bound      ),
+    .center  (rej_samp_center),
     .Q       (q          ),
     .C       (cbd_out    ),
     .i_valid (cbd_i_valid),
@@ -869,6 +879,7 @@ always @(*) begin
     io_word = ctr0_d; // will change
 
     encode_rst = 0;
+    cbd_rst = 0;
     upoly_cbd = 0;
     upoly_encode = 0;
 
@@ -890,6 +901,9 @@ always @(*) begin
     set_ctr1_poly_tail = 0;
     poly_pwm_flag_set = 0;
     poly_pwm_flag_clr = 0;
+
+    rej_samp = 1'b0;
+    rej_samp_center = rhs_const;
 
     case (state)
         ST_IDLE: begin
@@ -967,18 +981,22 @@ always @(*) begin
 
             ctr_all_rst = 1;
             encode_rst = 1;
+            cbd_rst = 1;
         end
         ST_TWIDDLE_IN: begin
 
             if (op_switch) begin
                 io_limit = decode_num_words;
             end
+            else if (rhs_const) begin
+                io_limit = rejsamp_num_words;
+            end
 
             io_word = ctr0;
             i_ready = 1;
             if (i_valid) begin
                 wpsi = 1;
-                if (((ctr0 == decode_num_words) && op_switch) || (ctr0 == num_words_m1)) begin
+                if (((ctr0 == decode_num_words) && op_switch) || ((ctr0 == rejsamp_num_words) && rhs_const) || (ctr0 == num_words_m1)) begin
                     next_state = ST_IDLE;
                     done_set = 1;
                     ctr0_rst = 1;
@@ -1215,14 +1233,16 @@ always @(*) begin
         ST_DECODE: begin
 
             pwm_idx = 1;
+            rej_samp = (op == `OP_REJ_SAMP) ? 1'b1 : 1'b0;
             if (encode_i_ready && ctr1 != n_m1 && !sr_e) begin
                 ctr0_inc = 1;
                 sr_i = 1;
             end
-            if ((op != `OP_CBD && encode_o_valid) || 
-                (op == `OP_CBD && cbd_o_valid  ))
+            if (((op != `OP_CBD && op != `OP_REJ_SAMP) && encode_o_valid) || 
+                (op == `OP_CBD      && cbd_o_valid   ) ||
+                (op == `OP_REJ_SAMP && cbd_o_valid   ))
             begin
-                if (op == `OP_CBD) begin
+                if (op == `OP_CBD || op == `OP_REJ_SAMP) begin
                     upoly_cbd = 1;
                 end
                 else begin
@@ -1605,6 +1625,7 @@ always @(*) begin
         `OP_ENCODE     : next_state_op = ST_ENCODE0;
         `OP_DECODE     : next_state_op = ST_DECODE;
         `OP_CBD        : next_state_op = ST_DECODE;
+        `OP_REJ_SAMP   : next_state_op = ST_DECODE;
         default        : next_state_op = ST_IDLE;
     endcase
 end
