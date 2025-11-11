@@ -81,13 +81,13 @@ localparam ST_SUM0         = 5'd16;
 localparam ST_SUM1         = 5'd17;
 localparam ST_TWIDDLE_OUT  = 5'd18;
 localparam ST_CHKNORM      = 5'd19;
-// localparam ST_POLY_FORWARD = 5'd20;
 localparam ST_POLY_FORWARD_PWM    = 5'd21;
 localparam ST_POLY_FORWARD_ADDSUB = 5'd22;
 localparam ST_POLY_FORWARD_NTT    = 5'd23;
 localparam ST_POLY_FORWARD_ENCODE = 5'd24;
 localparam ST_TWIDDLE_FORWARD_ADDSUB = 5'd25;
 localparam ST_TWIDDLE_FORWARD_PWM    = 5'd26;
+localparam ST_TWIDDLE_FORWARD_DECODE = 5'd20;
 localparam ST_POLY_PWM0    = 5'd27;
 localparam ST_POLY_PWM1    = 5'd28;
 localparam ST_POLY_PWM2    = 5'd29;
@@ -123,7 +123,7 @@ wire [LOGN+LOGWB :0] ctr0_p1;
 reg [LOGN-1:0] ctr2_d;
 reg [LOGN-1:0] ctr2_q;
 reg ctr2_d_set;
-reg wpoly, upoly_ntt, upoly_ntt_q, upoly_mul, upoly_zetamul, wpoly_zetafrwrd, wpsi, wzeta, upsi, wq, pwm_idx, pwm_zeta_idx, pwm_poly_idx, upoly_encode, upoly_cbd, ren_ntt;
+reg wpoly, upoly_ntt, upoly_ntt_q, upoly_mul, upoly_zetamul, wpoly_zetafrwrd, wpsi, wzeta, upsi, wq, pwm_idx, pwm_zeta_idx, pwm_poly_idx, upoly_encode, upoly_cbd, ren_ntt, pwm_idx_df;
 reg ntt_rcv_bu, pwm_rcv_bu, pwm_zeta_rcv_bu, sum_rcv_bu, addsub_rcv_bu, encode_rcv_bu;
 reg ctr_all_rst;
 reg done_set, done_int;
@@ -413,7 +413,8 @@ assign twiddle_mask      = (1 << logn_m2) - 2;
 assign twiddle_ntt_ctr0  = (op == `OP_NTT) ? (ctr0[0] << (ctr2 - 1))       + (ctr0 >> (logn_ctr2)) : 
                                              (ctr0[0] << (logn_m2 - ctr2)) + (ctr0 >> (ctr2 + 1 )) ;
 assign twiddle_ram_raddr = (pwm_zeta_idx                 ) ? (               {1'b1, ctr0[LOGN-2:0]}): 
-                           (pwm_idx | pwm_poly_idx       ) ?                        ctr0            : 
+                           (pwm_idx | pwm_poly_idx       ) ?                        ctr0            :
+                           (pwm_idx_df                   ) ?                        ctr2            : 
                            (op == `OP_INTT               ) ? (  maskIS       + (twiddle_ntt_ctr0))  : 
                                                              (  maskS        + (twiddle_ntt_ctr0))  ;
 /////////////////////////////////////////////////////////////////////////
@@ -906,6 +907,8 @@ always @(*) begin
     rej_samp = 1'b0;
     rej_samp_center = rhs_const;
 
+    pwm_idx_df = 0;
+
     case (state)
         ST_IDLE: begin
             if (cmd == `CMD_LOAD_TWIDDLE) begin
@@ -914,14 +917,22 @@ always @(*) begin
                     next_state = ST_IDLE;
                 end
                 else begin
-                    if (op == `OP_ADD || (op == `OP_SUB)) begin
-                        next_state = ST_TWIDDLE_FORWARD_ADDSUB;
-                    end
-                    else if (op == `OP_PWM) begin
-                        next_state = ST_TWIDDLE_FORWARD_PWM;
+                    if (FORWARD_EN) begin
+                        if (op == `OP_ADD || (op == `OP_SUB)) begin
+                            next_state = ST_TWIDDLE_FORWARD_ADDSUB;
+                        end
+                        else if (op == `OP_PWM) begin
+                            next_state = ST_TWIDDLE_FORWARD_PWM;
+                        end
+                        else if (next_state_op == ST_DECODE) begin
+                            next_state = ST_TWIDDLE_FORWARD_DECODE;
+                        end
+                        else begin
+                            next_state = ST_TWIDDLE_IN;                        
+                        end
                     end
                     else begin
-                        next_state = ST_TWIDDLE_IN;                        
+                        next_state = ST_TWIDDLE_IN;
                     end
                 end
             end
@@ -997,7 +1008,7 @@ always @(*) begin
             i_ready = 1;
             if (i_valid) begin
                 wpsi = 1;
-                if (((ctr0 == decode_num_words) && op_switch) || ((ctr0 == rejsamp_num_words) && rhs_const) || (ctr0 == num_words_m1)) begin
+                if (ctr0 == io_limit) begin
                     next_state = ST_IDLE;
                     done_set = 1;
                     ctr0_rst = 1;
@@ -1066,6 +1077,55 @@ always @(*) begin
             pwm_rcv_bu = 1;
 
         end
+        ST_TWIDDLE_FORWARD_DECODE: begin
+
+            if ((op == `OP_DECODE) || (op == `OP_CBD)) begin
+                io_limit = decode_num_words;
+            end
+            else if (op == `OP_REJ_SAMP) begin
+                io_limit = rejsamp_num_words;
+            end
+
+            io_word = ctr0;
+            i_ready = 1;
+            if (i_valid) begin
+                wpsi = 1;
+                if (ctr0 == io_limit) begin
+                    // do nothing, just wait
+                end
+                else
+                    ctr0_inc = 1;
+            end
+
+            rej_samp = (op == `OP_REJ_SAMP) ? 1'b1 : 1'b0;
+
+            if (encode_i_ready && (ctr1 != n_m1) && (ctr0_d >= ctr2) && (ctr0 != 0)) begin
+                ctr2_inc = 1;
+                sr_i = 1;
+            end
+            if ((op == `OP_DECODE   && encode_o_valid) || 
+                (op == `OP_CBD      && cbd_o_valid   ) ||
+                (op == `OP_REJ_SAMP && cbd_o_valid   ))
+            begin
+                if (op == `OP_CBD || op == `OP_REJ_SAMP) begin
+                    upoly_cbd = 1;
+                end
+                else begin
+                    upoly_encode = 1;
+                end
+                if (ctr1 == n_m1) begin
+                    ctr1_rst = 1;
+                    ctr0_rst = 1;
+                    ctr2_rst = 1;
+                    next_state = ST_POLY_OUT;
+                end
+                else begin
+                    ctr1_inc = 1;
+                end                
+            end
+
+            pwm_idx_df = 1;
+        end        
         ST_POLY_IN: begin
 
             io_word = ctr1;
@@ -1235,7 +1295,7 @@ always @(*) begin
 
             pwm_idx = 1;
             rej_samp = (op == `OP_REJ_SAMP) ? 1'b1 : 1'b0;
-            if (encode_i_ready && ctr1 != n_m1 && !sr_e) begin
+            if (encode_i_ready && ctr1 != n_m1) begin
                 ctr0_inc = 1;
                 sr_i = 1;
             end

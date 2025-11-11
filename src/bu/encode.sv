@@ -32,6 +32,7 @@ localparam LOGQ0 = LOGQ >> 1;
 
 reg  [LOGLOGQ:0] ctr;
 wire [LOGLOGQ:0] ctr_read;
+wire [LOGLOGQ:0] ctr_read_next;
 wire [LOGLOGQ:0] d_dual;
 reg  i_valid_q;
 reg  [K+LOGQ -1:0] C_q;
@@ -42,6 +43,8 @@ wire [LOGQ-1  :0] d_mask_h;
 
 wire [LOGQ+K-1:0] asr_out;
 wire  asr_dual;
+
+reg i_ready_q;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -70,9 +73,10 @@ assign C = (decode && (mode != `MODE_POLY)) ?  C_q & {d_mask_h, d_mask_l}       
 
 assign o_valid = (~decode & ctr[LOGLOGQ-1]) || (decode && (ctr >= d_dual));                                              
 
-assign i_ready = (ctr_read <= (K)) ? 1'b1 : 1'b0; // some buffer is allowed
+assign i_ready = (ctr_read_next <= (K)) ? 1'b1 : 1'b0; // some buffer is allowed
 
 assign ctr_read = ctr - ((ctr >= d_dual) ? d_dual : 0);
+assign ctr_read_next = (i_valid) ? ctr_read + LOGQ : ctr_read;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -106,7 +110,7 @@ always @(posedge clk) begin
         C_q <= ((o_valid) ? (C_q[K+LOGQ-1:LOGQ]) : C_q) ^ ((i_valid) ? (A_dual << ctr[LOGLOGQ-2:0]) : 0);
     end
     else if( decode) begin
-        C_q <= ((i_valid & i_ready) ? (A << ctr_read) : 0) ^ ((o_valid) ? asr_out : C_q);
+        C_q <= ((i_valid & i_ready_q) ? (A << ctr_read) : 0) ^ ((o_valid) ? asr_out : C_q);
     end
 end
 
@@ -119,7 +123,7 @@ always @(posedge clk) begin
         ctr <= ctr + ((i_valid) ? d_dual : 0) - ({ctr[LOGLOGQ-1], {(LOGLOGQ-1){1'b0}}});
     end
     else if (decode) begin
-        ctr <= ctr_read + ((i_valid & i_ready) ? LOGQ : 0);
+        ctr <= ctr_read + ((i_valid & i_ready_q) ? LOGQ : 0);
     end    
 end
 
@@ -127,9 +131,11 @@ end
 always @(posedge clk) begin
     if (rst) begin
         i_valid_q <= 0;
+        i_ready_q <= 1;
     end
     else begin
         i_valid_q <= i_valid;
+        i_ready_q <= i_ready;
     end
 end
 
