@@ -13,15 +13,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="120,129.900 ns"></ZoomStartTime>
-      <ZoomEndTime time="121,025.901 ns"></ZoomEndTime>
-      <Cursor1Time time="120,306.900 ns"></Cursor1Time>
+      <ZoomStartTime time="0.000000 us"></ZoomStartTime>
+      <ZoomEndTime time="613.000001 us"></ZoomEndTime>
+      <Cursor1Time time="136.315000 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="192"></NameColumnWidth>
-      <ValueColumnWidth column_width="154"></ValueColumnWidth>
+      <ValueColumnWidth column_width="150"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="56" />
+   <WVObjectSize size="59" />
    <wave_markers>
       <marker label="" time="26449876" />
       <marker label="" time="3195000" />
@@ -277,6 +277,7 @@
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr2">
       <obj_property name="ElementShortName">ctr2[7:0]</obj_property>
       <obj_property name="ObjectShortName">ctr2[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr2_d">
       <obj_property name="ElementShortName">ctr2_d[7:0]</obj_property>
@@ -733,10 +734,6 @@
          <obj_property name="ElementShortName">modsub0_in_C[31:0]</obj_property>
          <obj_property name="ObjectShortName">modsub0_in_C[31:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/modsub1_in_C">
-         <obj_property name="ElementShortName">modsub1_in_C[31:0]</obj_property>
-         <obj_property name="ObjectShortName">modsub1_in_C[31:0]</obj_property>
-      </wvobject>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/rej_samp_q">
          <obj_property name="ElementShortName">rej_samp_q</obj_property>
          <obj_property name="ObjectShortName">rej_samp_q</obj_property>
@@ -769,9 +766,9 @@
          <obj_property name="ElementShortName">o_valid_rejsamp</obj_property>
          <obj_property name="ObjectShortName">o_valid_rejsamp</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/C_rejsamp">
-         <obj_property name="ElementShortName">C_rejsamp</obj_property>
-         <obj_property name="ObjectShortName">C_rejsamp</obj_property>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/C_rejsamp">
+         <obj_property name="ElementShortName">C_rejsamp[31:0]</obj_property>
+         <obj_property name="ObjectShortName">C_rejsamp[31:0]</obj_property>
       </wvobject>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/set_dual_full">
          <obj_property name="ElementShortName">set_dual_full</obj_property>
@@ -792,14 +789,6 @@
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/rej_samp_sub_mx">
          <obj_property name="ElementShortName">rej_samp_sub_mx[31:0]</obj_property>
          <obj_property name="ObjectShortName">rej_samp_sub_mx[31:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/rej_samp_C_mem">
-         <obj_property name="ElementShortName">rej_samp_C_mem[15:0]</obj_property>
-         <obj_property name="ObjectShortName">rej_samp_C_mem[15:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/rej_samp_C_next">
-         <obj_property name="ElementShortName">rej_samp_C_next[15:0]</obj_property>
-         <obj_property name="ObjectShortName">rej_samp_C_next[15:0]</obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/C_mx">
          <obj_property name="ElementShortName">C_mx[31:0]</obj_property>
@@ -829,9 +818,21 @@
          <obj_property name="ElementShortName">encode_i_valid</obj_property>
          <obj_property name="ObjectShortName">encode_i_valid</obj_property>
       </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_i_ready">
+         <obj_property name="ElementShortName">encode_i_ready</obj_property>
+         <obj_property name="ObjectShortName">encode_i_ready</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/i_valid">
+         <obj_property name="ElementShortName">i_valid</obj_property>
+         <obj_property name="ObjectShortName">i_valid</obj_property>
+      </wvobject>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_o_valid">
          <obj_property name="ElementShortName">encode_o_valid</obj_property>
          <obj_property name="ObjectShortName">encode_o_valid</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/o_valid">
+         <obj_property name="ElementShortName">o_valid</obj_property>
+         <obj_property name="ObjectShortName">o_valid</obj_property>
       </wvobject>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/decode">
          <obj_property name="ElementShortName">decode</obj_property>
@@ -844,5 +845,20 @@
          <obj_property name="UseCustomSignalColor">true</obj_property>
          <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
       </wvobject>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr2">
+      <obj_property name="ElementShortName">ctr2[7:0]</obj_property>
+      <obj_property name="ObjectShortName">ctr2[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr1">
+      <obj_property name="ElementShortName">ctr1[7:0]</obj_property>
+      <obj_property name="ObjectShortName">ctr1[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0">
+      <obj_property name="ElementShortName">ctr0[7:0]</obj_property>
+      <obj_property name="ObjectShortName">ctr0[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
 </wave_config>

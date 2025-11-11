@@ -1695,6 +1695,7 @@ initial begin
     mu_32 = meta[6];
     bound = meta[7];
     rhs_const = 1'b1;
+    op_switch = 1'b0;
     #FP;
     cmd = 0;
     flag = 0;
@@ -1776,8 +1777,9 @@ initial begin
     #FP;
     cmd = 0;
     flag = 0;
-
+    op = 0;
     cmd = `CMD_LOAD_TWIDDLE;
+    op = 0;
     #FP;
     cmd = 0;
 
@@ -1837,6 +1839,68 @@ initial begin
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+    mode = `MODE_SINGLE;
+    q = meta[0];
+    mu_64 = meta[1];
+    logn = meta[2];
+    k = meta[3];
+    d = meta[4];
+    inv2 = meta[5];
+    mu_32 = meta[6];
+    bound = meta[7];
+    rhs_const = 1'b1;
+
+    #FP;
+    cmd = 0;
+    flag = 0;
+    op = `OP_REJ_SAMP;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+
+
+    o_read = 1'b0;
+    i_valid = 1'b0;
+    rhs_const = 1'b0;
+
+    if (flag == 0) begin
+        $display("(SUCCESS REJ SAMP ETA SINGLE FORWARD)");
+        $stop;
+    end
+    else begin
+        $display("(FAIL REJ SAMP ETA SINGLE FORWARD)");
+        flag1 = 1;
+        $stop;
+    end
+
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
     $readmemh("../../../../../test/rejsampdual_meta.txt" , meta);
     $readmemh("../../../../../test/rej_samp_in_dual.txt", psi);
     $readmemh("../../../../../test/rej_samp_out_dual.txt", poly_out);
@@ -1854,7 +1918,7 @@ initial begin
     #FP;
     cmd = 0;
     flag = 0;
-
+    op = 0;
     cmd = `CMD_LOAD_TWIDDLE;
     #FP;
     cmd = 0;
