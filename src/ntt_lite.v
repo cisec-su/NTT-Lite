@@ -1099,7 +1099,7 @@ always @(*) begin
 
             rej_samp = (op == `OP_REJ_SAMP) ? 1'b1 : 1'b0;
 
-            if (encode_i_ready && (ctr1 != n_m1) && (ctr0 >= ctr2)) begin
+            if (encode_i_ready && (ctr1 != n_m1) && (ctr0_d >= ctr2) && (ctr0 != 0)) begin
                 ctr2_inc = 1;
                 sr_i = 1;
             end
