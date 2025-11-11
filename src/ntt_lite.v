@@ -1008,7 +1008,7 @@ always @(*) begin
             i_ready = 1;
             if (i_valid) begin
                 wpsi = 1;
-                if (((ctr0 == decode_num_words) && op_switch) || ((ctr0 == rejsamp_num_words) && rhs_const) || (ctr0 == num_words_m1)) begin
+                if (ctr0 == io_limit) begin
                     next_state = ST_IDLE;
                     done_set = 1;
                     ctr0_rst = 1;
@@ -1079,10 +1079,10 @@ always @(*) begin
         end
         ST_TWIDDLE_FORWARD_DECODE: begin
 
-            if (op_switch) begin
+            if ((op == `OP_DECODE) || (op == `OP_CBD)) begin
                 io_limit = decode_num_words;
             end
-            else if (rhs_const) begin
+            else if (op == `OP_REJ_SAMP) begin
                 io_limit = rejsamp_num_words;
             end
 
@@ -1090,7 +1090,7 @@ always @(*) begin
             i_ready = 1;
             if (i_valid) begin
                 wpsi = 1;
-                if (((ctr0 == decode_num_words) && (op == `OP_DECODE)) || ((ctr0 == rejsamp_num_words) && (op == `OP_REJ_SAMP)) || (ctr0 == num_words_m1)) begin
+                if (ctr0 == io_limit) begin
                     // do nothing, just wait
                 end
                 else
@@ -1099,7 +1099,7 @@ always @(*) begin
 
             rej_samp = (op == `OP_REJ_SAMP) ? 1'b1 : 1'b0;
 
-            if (encode_i_ready && (ctr1 != n_m1) && (ctr0 > ctr2)) begin
+            if (encode_i_ready && (ctr1 != n_m1) && (ctr0 >= ctr2)) begin
                 ctr2_inc = 1;
                 sr_i = 1;
             end

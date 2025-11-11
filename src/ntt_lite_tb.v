@@ -1208,6 +1208,60 @@ initial begin
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    $readmemh("../../../../../test/cbd_in.txt", psi);
+    $readmemh("../../../../../test/cbd_out_dual.txt", poly_out);
+
+    q = q_dual;
+    op = `OP_CBD;
+    mode = `MODE_POLY;
+    cmd = `CMD_LOAD_TWIDDLE;
+    op_switch = 0;
+    d = 4;
+    #FP;
+    cmd = 0;
+
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0) begin
+        $display("(SUCCESS POLY CBD DUAL FORWARD)");
+        $stop;
+    end
+    else begin
+        $display("(FAIL POLY CBD DUAL FORWARD)");
+        flag1 = 1;
+        $stop;
+    end
+
+    d = meta[4];
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
     $readmemh("../../../../../test/sum_out_dual.txt" , poly_out);
