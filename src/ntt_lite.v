@@ -1103,7 +1103,7 @@ always @(*) begin
                 ctr2_inc = 1;
                 sr_i = 1;
             end
-            if (((op != `OP_CBD && op != `OP_REJ_SAMP) && encode_o_valid) || 
+            if ((op == `OP_DECODE   && encode_o_valid) || 
                 (op == `OP_CBD      && cbd_o_valid   ) ||
                 (op == `OP_REJ_SAMP && cbd_o_valid   ))
             begin
