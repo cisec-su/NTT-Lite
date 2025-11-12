@@ -923,10 +923,10 @@ always @(*) begin
                         if (op == `OP_ADD || (op == `OP_SUB)) begin
                             next_state = ST_TWIDDLE_FORWARD_ADDSUB;
                         end
-                        else if (next_state_op == ST_PWM0) begin
+                        else if ((op == `OP_PWM) && (next_state_op == ST_PWM0)) begin
                             next_state = ST_TWIDDLE_FORWARD_PWM;
                         end
-                        else if (next_state_op == ST_POLY_PWM0) begin
+                        else if ((op == `OP_PWM) && (next_state_op == ST_POLY_PWM0)) begin
                             next_state = ST_TWIDDLE_FORWARD_POLY_PWM;
                         end
                         else if (next_state_op == ST_DECODE) begin
