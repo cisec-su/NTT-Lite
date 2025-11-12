@@ -459,6 +459,85 @@ initial begin
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+    $readmemh("../../../../../test/poly_in_dual.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
+    $readmemh("../../../../../test/mul_out_poly.txt" , poly_out);
+
+    q = q_dual;
+    op = `OP_ADD;
+    mode = 0;
+    rhs_const = 1;
+    bound = 0;
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;        
+    end
+
+
+    op = `OP_PWM;
+    mode = `MODE_POLY;
+    rhs_const = 0;
+    bound = 0;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0) begin
+        $display("(SUCCESS POLY PWM FORWARD)");
+        $stop;
+    end
+    else begin
+        $display("(FAIL POLY PWM FORWARD)");
+        flag1 = 1;
+        $stop;
+    end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     $readmemh("../../../../../test/ntt_out_single.txt" , poly_in);
     $readmemh("../../../../../test/psi_inv.txt" , psi);
     $readmemh("../../../../../test/poly_in_single.txt" , poly_out);
