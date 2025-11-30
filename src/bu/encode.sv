@@ -33,7 +33,6 @@ localparam LOGQ0 = LOGQ >> 1;
 reg  [LOGLOGQ:0] ctr;
 wire [LOGLOGQ:0] ctr_read;
 wire [LOGLOGQ:0] ctr_read_next;
-wire [LOGLOGQ:0] d_dual;
 reg  i_valid_q;
 reg  [K+LOGQ -1:0] C_q;
 wire [LOGQ   -1:0] A_dual;
@@ -47,6 +46,13 @@ reg i_ready_q;
 
 wire dual;
 
+wire [LOGLOGQ:0] d_in;
+wire [LOGLOGQ:0] d_out;
+
+wire [LOGLOGQ:0] d_in_h;
+wire [LOGLOGQ:0] d_out_h;
+
+
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -56,28 +62,32 @@ wire dual;
 
 assign dual = (mode != `MODE_SINGLE);
 
-assign logq0_m_d = LOGQ0 - d;
 
-assign A_dual = (dual) ? ({A[LOGQ-1:LOGQ0],{(LOGQ0){1'b0}}} >> logq0_m_d) ^ A[LOGQ0-1:0] :
-                                                                                       A ; 
-assign d_dual = (~dual) ? d : {d, 1'b0} ;
+assign d_in     = ( decode) ? (LOGQ) : ((dual) ? {d,1'b0} : d);
+assign d_out    = (~decode) ? (LOGQ) : ((dual) ? {d,1'b0} : d);
+assign d_in_h   = (~decode) ? d : (LOGQ>>1);
+assign d_out_h  = ( decode) ? d : (LOGQ>>1);
 
-assign asr_out = C_q >> d_dual;
+assign logq0_m_d = LOGQ0 - d_out_h;
 
-assign d_mask_l = (1 << d) - 1;
-assign d_mask_h = (~dual) ? 0              :
-                           (d_mask_l << d) ;
+assign A_dual = (dual) ? ({A[LOGQ-1:LOGQ0],{(LOGQ0){1'b0}}} >> (LOGQ0 - d_in_h)) ^ A[LOGQ0-1:0] :
+                                                                                   A ; 
 
-assign C = (decode && (~dual)) ?  C_q & {d_mask_h, d_mask_l}                        : 
-           (decode           ) ? (C_q & d_mask_l) ^ ((C_q & d_mask_h) << logq0_m_d) : 
-                                  C_q                                               ;
+assign asr_out = C_q >> d_out;
 
-assign o_valid = (~decode & ctr[LOGLOGQ-1]) || (decode && (ctr >= d_dual));                                              
+assign d_mask_l = (1 << d_out_h) - 1;
+assign d_mask_h = (~dual & decode) ? 0  :
+                  (d_mask_l << d_out_h) ;
 
-assign i_ready = (ctr_read_next <= (K)) ? 1'b1 : 1'b0; // some buffer is allowed
+assign C = ((~dual)) ?  C_q & {d_mask_h ^ d_mask_l}                        : 
+                       (C_q & d_mask_l) ^ ((C_q & d_mask_h) << logq0_m_d)  ;
 
-assign ctr_read = ctr - ((ctr >= d_dual) ? d_dual : 0);
-assign ctr_read_next = (i_valid) ? ctr_read + LOGQ : ctr_read;
+assign o_valid = ctr >= d_out;;                                              
+
+assign i_ready = (~decode) ? 1 : (ctr_read_next <= (K)) ? 1'b1 : 1'b0; // some buffer is allowed
+
+assign ctr_read = ctr - ((ctr >= d_out) ? d_out : 0);
+assign ctr_read_next = (i_valid) ? ctr_read + d_in : ctr_read;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -91,12 +101,12 @@ always @(posedge clk) begin
     if (rst) begin
         C_q <= 0;
     end
-    else if(~decode) begin
-        C_q <= ((o_valid) ? (C_q[K+LOGQ-1:LOGQ]) : C_q) ^ ((i_valid) ? (A_dual << ctr[LOGLOGQ-2:0]) : 0);
+    else begin// if(~decode) begin
+        C_q <= ((i_valid & i_ready_q) ? (A_dual << ctr_read) : 0) ^ ((o_valid) ? asr_out : C_q);
     end
-    else if( decode) begin
-        C_q <= ((i_valid & i_ready_q) ? (A << ctr_read) : 0) ^ ((o_valid) ? asr_out : C_q);
-    end
+    // else if( decode) begin
+    //     C_q <= ((i_valid & i_ready_q) ? (A_dual << ctr_read) : 0) ^ ((o_valid) ? asr_out : C_q);
+    // end
 end
 
 
@@ -104,11 +114,12 @@ always @(posedge clk) begin
     if (rst) begin
         ctr <= 0;
     end
-    else if (~decode) begin
-        ctr <= ctr + ((i_valid) ? d_dual : 0) - ({ctr[LOGLOGQ-1], {(LOGLOGQ-1){1'b0}}});
-    end
-    else if (decode) begin
-        ctr <= ctr_read + ((i_valid & i_ready_q) ? LOGQ : 0);
+    // else if (~decode) begin
+    //     ctr <= ctr_read_next;// + ((i_valid) ? d_dual : 0);// - ({ctr[LOGLOGQ-1], {(LOGLOGQ-1){1'b0}}});
+    // end
+    // else if (decode) begin
+    else begin
+        ctr <= ctr_read_next;//ctr_read + ((i_valid & i_ready_q) ? LOGQ : 0);
     end    
 end
 
