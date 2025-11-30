@@ -93,8 +93,8 @@ wire  [LOGC-1:0] S;
 (* use_dsp = "no" *) wire  [LOGC0:0] S1;
 reg  [LOGC-1:0] S_q;
 
-(* use_dsp = "no" *) wire [DSP_B_U-1:0] T0;
-(* use_dsp = "no" *) wire [DSP_B_U-1:0] T1;
+(* use_dsp = "no" *) wire [LOGD0+1:0] T0;
+(* use_dsp = "no" *) wire [LOGD0+1:0] T1;
 (* use_dsp = "no" *) wire [LOGD0+1:0] T;
 (* use_dsp = "no" *) reg  [LOGC-1:0] S_int;
 wire dual;
@@ -174,12 +174,7 @@ assign C = (FF_OUT) ? S_q : S;
 
 ///////////////////////////// multiplication ////////////////////////////
 
-if (!OPT_HIGH) begin
-    assign P[0][0] = A_i_mx[0] * B_i_mx[0];
-end
-else begin
-    assign P[0][0] = A_i_mx[0] * B_i_mx[0];
-end
+assign P[0][0] = A_i_mx[0] * B_i_mx[0];
 
 // when OPT_HIGH is enabled, P[1][1] is not calculated. As P[1][1] is required for dual mode, we place its computation to P[0][1]
 if (OPT_HIGH) begin
@@ -188,12 +183,9 @@ end
 else begin
     assign P[0][1] = A_i_mx[0] * B_i_mx[1]; 
 end
-if (!OPT_HIGH) begin
-    assign P[1][0] = A_i_mx[1] * B_i_mx[0];
-end
-else begin
-    assign P[1][0] = A_i_mx[1] * B_i_mx[0];
-end
+
+assign P[1][0] = A_i_mx[1] * B_i_mx[0];
+
 
 if (!OPT_HIGH) begin
     assign LHS = (en_z) ? Z_i_mx : A_i_mx[1];
