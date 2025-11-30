@@ -170,7 +170,6 @@ wire [LOGQ-1:0] B_i;
 wire [LOGQ-1:0] psi_i;
 wire [LOGQ-1:0] A_o;
 wire [LOGQ-1:0] B_o;
-wire [LOGQ-1:0] M_o;
 reg  [LOGQ-1:0] B_o_q;
 
 // chk norm
@@ -388,7 +387,7 @@ assign ntt_psi_i = (sr_mx) ? twiddle_ram_dout_q : twiddle_ram_dout;
 assign coeff_ram_p_wen   = upoly_mul | wpoly | wpoly_zetafrwrd | upoly_encode | upoly_cbd | zeropoly;
 assign coeff_ram_p_waddr = (upoly_mul | wpoly | upoly_encode | upoly_cbd) ? ctr1  :
                            /*wpoly_zetafrwrd, zeropoly*/                    ctr0  ;
-assign coeff_ram_p_din   = (upoly_mul   ) ?     M_o         :
+assign coeff_ram_p_din   = (upoly_mul   ) ?     A_o         :
                            (upoly_encode) ?     encode_out  :
                            (upoly_cbd   ) ?     cbd_out     :
                            (zeropoly    ) ?     0           :
@@ -397,7 +396,7 @@ assign coeff_ram_p_raddr = ctr0; // pwm_poly_idx, pwm_zeta_idx
 ////////////////////////////////////////////////////////////////////////////////////
 assign coeff_ram_px_wen   = upoly_zetamul;
 assign coeff_ram_px_waddr = ctr1; 
-assign coeff_ram_px_din   = M_o ;
+assign coeff_ram_px_din   = A_o ;
 assign coeff_ram_px_raddr = ctr0; // pwm_poly_idx
 ////////////////////////////////////////////////////////////////////////////////////
 assign coeff_ram_p0_wen   =  upoly_ntt;
@@ -417,7 +416,7 @@ assign maskIS   = ((1 << (logn_m1_ctr2)) - 1);
 
 assign twiddle_ram_wen   =  wzeta | wpsi | upsi | zerotwiddle;
 assign twiddle_ram_waddr = (wzeta) ? {1'b1, ctr0[LOGN-2:0]} : (wpsi | zerotwiddle) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
-assign twiddle_ram_din   = (wzeta | wpsi) ? i_data : (zerotwiddle) ? 0 : A_o;
+assign twiddle_ram_din   = (wzeta | wpsi) ? i_data : (zerotwiddle) ? 0 : B_o;
 assign twiddle_mask      = (1 << logn_m2) - 2;
 assign twiddle_ntt_ctr0  = (op == `OP_NTT) ? (ctr0[0] << (ctr2 - 1))       + (ctr0 >> (logn_ctr2)) : 
                                              (ctr0[0] << (logn_m2 - ctr2)) + (ctr0 >> (ctr2 + 1 )) ;
@@ -433,7 +432,7 @@ assign twiddle_ram_raddr = (pwm_zeta_idx                 ) ? (               {1'
 
 ///////////////////// misc. assignments /////////////////////////////////
 
-assign chknorm_bu = M_o[0];
+assign chknorm_bu = A_o[0];
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -748,8 +747,7 @@ butterfly #(
     .k   (k    ),
     .d   (d    ),
     .E   (A_o  ),
-    .O   (B_o  ),
-    .M   (M_o  )
+    .O   (B_o  )
 );
 
 /////////////////////////////////////////////////////////////////////////

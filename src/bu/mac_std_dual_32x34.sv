@@ -93,8 +93,8 @@ wire  [LOGC-1:0] S;
 (* use_dsp = "no" *) wire  [LOGC0:0] S1;
 reg  [LOGC-1:0] S_q;
 
-wire [LOGD0+1:0] T;
-reg  [LOGC-1:0] S_int;
+(* use_dsp = "no" *) wire [LOGD0+1:0] T;
+(* use_dsp = "no" *) reg  [LOGC-1:0] S_int;
 wire dual;
 
 wire c;

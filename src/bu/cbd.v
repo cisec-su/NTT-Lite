@@ -177,7 +177,7 @@ assign C = C_q;
 
 ////////////////////////////// Comb. Assignments (RejSamp) //////////////
 
-assign rej_samp_sub_mx = (center) ? modsub1_out_C : A_q_masked;
+assign rej_samp_sub_mx = (center_q) ? modsub1_out_C : A_q_masked;
 
 
 always @(*) begin
@@ -243,7 +243,7 @@ assign mask_k_dual = (dual) ?    {mask_k[LOGQ0-1:0], mask_k[LOGQ0-1:0]} :
                                   mask_k                                ;
 assign A_q_masked = A_q & mask_k_dual;
 
-assign modsub0_in_A = (rej_samp_q) ? (A_q_masked & mask_k_dual) : T0;
+assign modsub0_in_A = (rej_samp_q) ? (A_q_masked) : T0;
 assign modsub0_in_B = (rej_samp_q) ? bound_q : T1;
 
 assign o_valid_mx = (rej_samp_q) ? o_valid_rejsamp : i_valid_d;
