@@ -80,6 +80,7 @@ wire [LOGQ -1:0] decompose_pp_out_B0;
 wire [LOGQ -1:0] decompose_pp_out_B1;
 
 wire makehint_specialcase;
+reg  makehint_specialcase_q;
 wire hint;
 
 wire [LOGQ-1:0] E_int;
@@ -102,9 +103,6 @@ reg [LOGQ-1:0] inv2_q;
 
 reg [LOGLOGQ-1:0] k_q;
 reg [LOGLOGQ-1:0] d_q;
-
-reg [LOGQ-1:0] A_d;
-reg [LOGQ-1:0] PSI_d;
 
 reg [LOGT-1:0] mm_out_D_q;
 
@@ -202,8 +200,8 @@ assign decompose_pp_in_A1 = mm_out_D_q;
 assign decompose_pp_in_T  = bound_q;
 
 assign chknorm = sub_out_corr;
-assign makehint_specialcase = (A_d == inv2_q && PSI_d != 0);
-assign hint = chknorm | makehint_specialcase;
+assign makehint_specialcase = (A_q == inv2_q && PSI_q != 0);
+assign hint = chknorm | makehint_specialcase_q;
 
 assign mm_inv2_in  = shift_out_0;
 
@@ -363,8 +361,7 @@ end
 
 
 always @(posedge clk) begin
-    A_d <= A_q;
-    PSI_d <= PSI_q;
+    makehint_specialcase_q <= makehint_specialcase;
 end
 
 
