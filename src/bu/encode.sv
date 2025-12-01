@@ -65,7 +65,7 @@ assign dual = (mode != `MODE_SINGLE);
 
 assign d_in     = ( decode) ? (LOGQ) : ((dual) ? {d,1'b0} : d);
 assign d_out    = (~decode) ? (LOGQ) : ((dual) ? {d,1'b0} : d);
-assign d_in_h   = (~decode) ? d : (LOGQ>>1);
+assign d_in_h   = d_in >> 1;
 assign d_out_h  = ( decode) ? d : (LOGQ>>1);
 
 assign logq0_m_d = LOGQ0 - d_out_h;
