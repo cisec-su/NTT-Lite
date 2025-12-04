@@ -23,8 +23,7 @@ module butterfly
         input  [LOGLOGQ-1:0] k        ,
         input  [LOGLOGQ-1:0] d        ,
         output [LOGQ   -1:0] E        ,
-        output [LOGQ   -1:0] O        ,
-        output [LOGQ   -1:0] M
+        output [LOGQ   -1:0] O
     );
 
 
@@ -81,11 +80,12 @@ wire [LOGQ -1:0] decompose_pp_out_B0;
 wire [LOGQ -1:0] decompose_pp_out_B1;
 
 wire makehint_specialcase;
+reg  makehint_specialcase_q;
 wire hint;
 
 wire [LOGQ-1:0] E_int;
 wire [LOGQ-1:0] O_int;
-wire [LOGQ-1:0] M_int;
+
 
 reg [LOGQ-1:0] E_q;
 reg [LOGQ-1:0] O_q;
@@ -104,9 +104,6 @@ reg [LOGQ-1:0] inv2_q;
 reg [LOGLOGQ-1:0] k_q;
 reg [LOGLOGQ-1:0] d_q;
 
-reg [LOGQ-1:0] A_d;
-reg [LOGQ-1:0] PSI_d;
-
 reg [LOGT-1:0] mm_out_D_q;
 
 reg [3:0] op_q;
@@ -122,7 +119,7 @@ assign dual        =  mode_q == `MODE_DUAL || mode_q == `MODE_POLY;
 
 assign Q_half      = (dual) ? {Q_q[LOGQ0-1:0] >> 1, Q_q[LOGQ0-1:0] >> 1} : 
                                Q_q >> 1                                  ;
-assign bound_half  = (bound_q >> 1) - 1'b1;
+assign bound_half  = (bound_q - 1'b1) >> 1;
 
 assign one_dual     = (dual) ? {{(LOGQ0-1){1'b0}}, 1'b1, {(LOGQ0-1){1'b0}}} : 
                                {1'b1}                                       ;
@@ -188,8 +185,8 @@ assign sub_in_B    = (op_q == `OP_INTT                 ) ? B_q            :
                      (op_q == `OP_MAKEHINT             ) ? shift_out_0    :
                      (op_q == `OP_SUB                  ) ? PSI_q          : 
                                                            mm_out_C       ;
-assign sub_in_Q    = (op_q == `OP_DECOMPOSE            ) ? bound_q        : 
-                                                           Q_q            ;                                                         
+assign sub_in_Q    = Q_q;
+
 assign shift_in_0  = (op_q == `OP_INTT                 ) ? add_out_C      :
                      (op_q == `OP_CHKNORM              ) ? add_out_C      :
                      (op_q == `OP_MAKEHINT             ) ? add_out_C      :
@@ -203,8 +200,8 @@ assign decompose_pp_in_A1 = mm_out_D_q;
 assign decompose_pp_in_T  = bound_q;
 
 assign chknorm = sub_out_corr;
-assign makehint_specialcase = (A_d == inv2_q && PSI_d != 0);
-assign hint = chknorm | makehint_specialcase;
+assign makehint_specialcase = (A_q == inv2_q && PSI_q != 0);
+assign hint = chknorm | makehint_specialcase_q;
 
 assign mm_inv2_in  = shift_out_0;
 
@@ -213,11 +210,7 @@ assign asr_in      = mm_out_T;
 assign asr_out_dual_masked = asr_out_dual & mask_k_dual;
 
 assign E_int       = (op_q == `OP_INTT      ) ? shift_out_1          :
-                     (op_q == `OP_DECOMPOSE ) ? decompose_pp_out_B1  :                     
-                                                add_out_C            ;
-assign O_int       = (op_q == `OP_INTT) ? mm_out_C    :
-                                         sub_out_C   ;
-assign M_int       = (op_q == `OP_ADD       ) ? add_out_C            :
+                     (op_q == `OP_ADD       ) ? add_out_C            :
                      (op_q == `OP_SUM       ) ? add_out_C            :
                      (op_q == `OP_SUB       ) ? sub_out_C            :
                      (op_q == `OP_COMPRESS  ) ? D_dual_masked        :
@@ -225,11 +218,14 @@ assign M_int       = (op_q == `OP_ADD       ) ? add_out_C            :
                      (op_q == `OP_DECOMPOSE ) ? decompose_pp_out_B0  :
                      (op_q == `OP_MAKEHINT  ) ? hint                 :
                      (op_q == `OP_CHKNORM   ) ? chknorm              :
-                                                mm_out_C             ;
+                     (op_q == `OP_PWM       ) ? mm_out_C             :
+                    /*op_q == `OP_NTT        */ add_out_C            ;
+assign O_int       = (op_q == `OP_INTT      ) ? mm_out_C             :
+                     (op_q == `OP_DECOMPOSE ) ? decompose_pp_out_B1  :
+                    /*op_q == `OP_NTT        */ sub_out_C            ;
 
 assign E = E_q;
 assign O = O_q;
-assign M = M_q;
 
 
 shiftreg #(
@@ -356,7 +352,6 @@ end
 always @(posedge clk) begin
     E_q <= E_int;
     O_q <= O_int;
-    M_q <= M_int;
 end
 
 
@@ -366,8 +361,7 @@ end
 
 
 always @(posedge clk) begin
-    A_d <= A_q;
-    PSI_d <= PSI_q;
+    makehint_specialcase_q <= makehint_specialcase;
 end
 
 
