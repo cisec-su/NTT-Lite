@@ -4,7 +4,8 @@ module ntt_lite_acc_fsm
    #(
         parameter B = 32,
         parameter LOGQ = 64,
-        parameter LOGN = 6
+        parameter LOGN = 6 ,
+        parameter LOGLOGN = $clog2(LOGN+1)
     )
     (
         input                      clk,
@@ -25,9 +26,9 @@ module ntt_lite_acc_fsm
         input      [B-1:0]         fsm_o_data,
         output reg                 fsm_o_read,
         input                      fsm_o_valid,
-        input      [LOGN+LOGWB-1:0]fsm_io_word,
+        input      [LOGN-1:0]      fsm_io_word,
         input                      fsm_o_done,
-        input      [LOGN+LOGWB-1:0]fsm_io_limit,
+        input      [LOGN-1:0]      fsm_io_limit,
 
         input      [31:0]          ctrl_din_addr,
         input      [31:0]          ctrl_dout_addr,
@@ -38,18 +39,16 @@ module ntt_lite_acc_fsm
     );
 
 
-localparam LOGWB   = $clog2(LOGQ/B);
-localparam LOGLOGN = $clog2(LOGN+1); 
-localparam [31:0] ST_IDLE = 0;
-localparam [31:0] ST_GET = 1;
-localparam [31:0] ST_BUSY = 2;
-localparam [31:0] ST_PUT = 3;
-localparam [31:0] ST_GET0 = 4;
+localparam ST_IDLE = 3'd0;
+localparam ST_GET  = 3'd1;
+localparam ST_BUSY = 3'd2;
+localparam ST_PUT  = 3'd3;
+localparam ST_GET0 = 3'd4;
 
 
-reg [31:0] cnt;
+reg [LOGN-1:0] cnt;
 reg cnt_up, cnt_rst;
-reg [31:0] cstate;
+reg [2:0] cstate;
 
 always @(posedge clk or posedge rst)
 begin
@@ -87,8 +86,6 @@ begin
                 cstate <= ST_PUT;
             end
         end
-        // ST_GET0:
-        //     cstate <= ST_GET;
         ST_GET:
         begin
             if(cnt >= (fsm_io_limit))
@@ -125,7 +122,7 @@ begin
     end
     ST_GET:
     begin
-        mem_addr = ctrl_din_addr + (cnt << 2);
+        mem_addr = ctrl_din_addr + ({cnt, 2'b00});
         if(fsm_i_ready)
         begin
             mem_re = 1;  

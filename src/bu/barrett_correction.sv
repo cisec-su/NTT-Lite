@@ -1,6 +1,10 @@
 module barrett_correction
    #(
-        parameter LOGQ = 32
+        parameter LOGQ = 32,
+        // don't touch below parameters
+        parameter LOGQ0 = LOGQ >> 1 ,
+        parameter LOGA0 = LOGQ0 + 1 ,
+        parameter LOGA  = LOGA0 << 1
     )
     (
         input             dual,
@@ -9,16 +13,6 @@ module barrett_correction
         output [     1:0] K   ,
         output [LOGQ-1:0] C
     );
-
-///////////////////////////// parameters ////////////////////////////////
-
-localparam LOGQ0 = LOGQ >> 1;
-localparam LOGA0 = LOGQ0 + 1;    
-localparam LOGA  = LOGA0 << 1;
-
-/////////////////////////////////////////////////////////////////////////
-
-
 
 
 ///////////////////////////// signals ///////////////////////////////////

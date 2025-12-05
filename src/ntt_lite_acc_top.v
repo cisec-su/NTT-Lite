@@ -32,7 +32,6 @@ module ntt_lite_acc_top
         output          dma_rst_i
     );
 
-localparam LOGWB   = $clog2(LOGQ/B);
 localparam LOGLOGQ = $clog2(LOGQ + 1);
 localparam LOGLOGN = $clog2(LOGN+1); 
 
@@ -62,8 +61,8 @@ wire fsm_i_valid;
 wire [B-1:0] fsm_o_data;
 wire fsm_o_read;
 wire fsm_o_valid;
-wire [LOGN+LOGWB-1:0] fsm_io_word;
-wire [LOGN+LOGWB-1:0] fsm_io_limit;
+wire [LOGN-1:0] fsm_io_word;
+wire [LOGN-1:0] fsm_io_limit;
 
 
 // CTRL & NTT

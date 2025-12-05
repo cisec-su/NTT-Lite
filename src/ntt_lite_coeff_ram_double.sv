@@ -2,7 +2,8 @@ module ntt_lite_coeff_ram_double
    #(
         parameter LOGQ  = 32  ,
         parameter LOGN  = 8   ,
-        parameter L     = 10
+        parameter L     = 10  ,
+        parameter LOGLOGN = $clog2(LOGN+1)
     )
     (   
         input                 clk     ,
@@ -37,8 +38,6 @@ module ntt_lite_coeff_ram_double
     );
 
 localparam N2  = 1 << (LOGN - 1);
-localparam LOGLOGN = $clog2(LOGN+1);
-
 
 reg [LOGQ-1:0] bram0 [N2-1:0];
 reg [LOGQ-1:0] bram1 [N2-1:0];
