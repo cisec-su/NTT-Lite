@@ -34,7 +34,7 @@ end
 ///////////////////////////// parameters ////////////////////////////////
 
 localparam barrett_params_t params = {LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT};
-localparam intmul_karatsuba_dual_params_t mac_0_params = barrett_mac_0_params(params);
+localparam karatsuba_64x64_dual_params_t  mac_0_params = barrett_mac_0_params(params);
 localparam mac_std_dual_32x34_params_t    mac_1_params = barrett_mac_1_params(params);
 
 localparam LOGQ0 = LOGQ >> 1;
@@ -201,14 +201,15 @@ lsb_dual #(
 
 /////////////////////////// intmul //////////////////////////////////////
 
-intmul_karatsuba_dual #(
-    .LOGA    (             LOGC   ),
-    .FF_IN_A (mac_0_params.FF_IN_A),
-    .FF_IN_B (mac_0_params.FF_IN_B),
-    .FF_SUM  (mac_0_params.FF_SUM ),
-    .FF_MUL  (mac_0_params.FF_MUL ),
-    .FF_SUB  (mac_0_params.FF_SUB ),
-    .FF_OUT  (mac_0_params.FF_OUT )
+karatsuba_64x64_dual #(
+    .FF_IN  (mac_0_params.FF_IN  ),
+    .FF_SUM0(mac_0_params.FF_SUM0),
+    .FF_SUB0(mac_0_params.FF_SUB0), 
+    .FF_MUL (mac_0_params.FF_MUL ),
+    .FF_SUM1(mac_0_params.FF_SUM1),
+    .FF_SUM2(mac_0_params.FF_SUM2),
+    .FF_SUB1(mac_0_params.FF_SUB1),
+    .FF_OUT (mac_0_params.FF_OUT )
 ) intmul_karatsuba_inst_0 (
     .clk     (clk      ),
     .dual    (dual     ),
