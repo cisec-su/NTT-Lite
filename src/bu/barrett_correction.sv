@@ -2,8 +2,8 @@ module barrett_correction
    #(
         parameter LOGQ = 32,
         // don't touch below parameters
-        parameter LOGQ0 = LOGQ >> 1 ,
-        parameter LOGA0 = LOGQ0 + 1 ,
+        parameter LOGQ0 = LOGQ  >> 1 ,
+        parameter LOGA0 = LOGQ0  + 1 ,
         parameter LOGA  = LOGA0 << 1
     )
     (

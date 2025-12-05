@@ -115,12 +115,14 @@ karatsuba_34x34 #(
     .FF_SUB(FF_SUB0),
     .FF_MUL(FF_MUL ),
     .FF_SUM(FF_SUM1),
-    .FF_OUT(FF_SUM2)
+    .FF_OUT(FF_SUM2),
+    .LOGA  (32),
+    .LOGB  (32)
 )  karatsuba_0 (
     .clk(clk),
-    .A({2'b00, A0_mx}),
-    .B({2'b00, B0_mx}),
-    .C(A0B0)
+    .A(A0_mx),
+    .B(B0_mx),
+    .C(A0B0 )
 );
 
 karatsuba_34x34 #(
@@ -128,11 +130,13 @@ karatsuba_34x34 #(
     .FF_SUB(FF_SUB0),
     .FF_MUL(FF_MUL ),
     .FF_SUM(FF_SUM1),
-    .FF_OUT(FF_SUM2)
+    .FF_OUT(FF_SUM2),
+    .LOGA  (33),
+    .LOGB  (33)
 )  karatsuba_1 (
     .clk(clk),
-    .A({1'b0, A1A0}),
-    .B({1'b0, B1B0}),
+    .A(A1A0),
+    .B(B1B0),
     .C(A1A0_B1B0)
 );
 
@@ -142,15 +146,15 @@ karatsuba_34x34 #(
     .FF_SUB(FF_SUB0),
     .FF_MUL(FF_MUL ),
     .FF_SUM(FF_SUM1),
-    .FF_OUT(FF_SUM2)
+    .FF_OUT(FF_SUM2),
+    .LOGA  (32),
+    .LOGB  (32)
 )  karatsuba_2 (
     .clk(clk),
-    .A({2'b00, A1_mx}),
-    .B({2'b00, B1_mx}),
-    .C(A1B1)
+    .A(A1_mx),
+    .B(B1_mx),
+    .C(A1B1 )
 );
-
-
 
 /////////////////////////////////////////////////////////////////////////
 

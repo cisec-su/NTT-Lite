@@ -11,13 +11,13 @@ module barrett
         parameter  FF_OUT   = 1
     )
     (
-        input                clk ,
-        input                dual,
-        input  [LOGC   -1:0] C   ,
-        output [LOGQ   -1:0] T   ,
-        input  [LOGMU  -1:0] MU  ,
-        output [LOGD   -1:0] D   ,
-        input  [LOGQ   -1:0] Q
+        input               clk ,
+        input               dual,
+        input  [2*LOGQ-1:0] C   ,
+        output [  LOGQ-1:0] T   ,
+        input  [2*LOGQ-1:0] MU  ,
+        output [2*LOGQ-1:0] D   ,
+        input  [  LOGQ-1:0] Q
     );
 
 ///////////////////////////// input check ///////////////////////////////

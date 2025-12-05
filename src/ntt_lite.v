@@ -4,12 +4,12 @@ module ntt_lite
    #(   
         parameter LOGN       = 8,
         parameter LOGQ       = 32,
-        parameter B          = 32, // bandwidth, must divide LOGQ
         parameter L_RED      = 5, // BU  latency
         parameter L_MUL      = 3, // MUL latency
         parameter FORWARD_EN = 1,
         parameter EN_NTT_OTF = 0,
-        parameter LOGLOGQ    = $clog2(LOGQ + 1)
+        parameter LOGLOGQ    = $clog2(LOGQ + 1),
+        parameter LOGLOGN    = $clog2(LOGN + 1)
     )
     (
         input                       clk      ,
@@ -43,12 +43,6 @@ module ntt_lite
         output reg                  error
    );
 
-///////////////////// input checks //////////////////////////////////////
-
-if (LOGQ != B) begin
-    LOGQ_MUST_BE_EQUAL_TO_B();
-end
-
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -57,7 +51,6 @@ end
 ///////////////////// local parameters //////////////////////////////////
 
 localparam N       = 1 << LOGN;
-localparam LOGLOGN = $clog2(LOGN+1);
 localparam L       = L_MUL + L_RED;
 localparam L_REAL  = L + 3;
 
@@ -192,14 +185,14 @@ reg set_ctr0_poly_tail, set_ctr1_poly_tail;
 
 // bram signals
 wire coeff_ram_p0_wen, coeff_ram_p0_ren;
-wire [LOGN-1:0] coeff_ram_p0_waddr;
+wire [LOGN-2:0] coeff_ram_p0_waddr;
 wire [LOGQ-1:0] coeff_ram_p0_din;
-wire [LOGN-1:0] coeff_ram_p0_raddr;
+wire [LOGN-2:0] coeff_ram_p0_raddr;
 wire [LOGQ-1:0] coeff_ram_p0_dout;
 wire coeff_ram_p1_wen, coeff_ram_p1_ren;
-wire [LOGN-1:0] coeff_ram_p1_waddr;
+wire [LOGN-2:0] coeff_ram_p1_waddr;
 wire [LOGQ-1:0] coeff_ram_p1_din;
-wire [LOGN-1:0] coeff_ram_p1_raddr;
+wire [LOGN-2:0] coeff_ram_p1_raddr;
 wire [LOGQ-1:0] coeff_ram_p1_dout;
 wire coeff_ram_p_wen;
 wire [LOGN-1:0] coeff_ram_p_waddr;
@@ -276,7 +269,7 @@ reg cbd_rst;
 
 
 // parallel input and point-op
-reg [B-1:0] i_data_q;
+reg [LOGQ-1:0] i_data_q;
 reg poly_in_frwrd_A, poly_in_frwrd_A_q;
 reg poly_in_frwrd_B, poly_in_frwrd_B_q;
 reg twiddle_frwrd  , twiddle_frwrd_q;
@@ -302,7 +295,7 @@ assign n_over2 = 1 << logn_m1;
 assign n_over4 = n_over2 >> 1;
 assign logn_m1_shft_m1 = n_over2 - 1;
 assign logn_m1_shft_m1_ctr2 = logn_m1_shft_m1 >> ctr2;
-assign num_words = ((LOGQ/B) << logn);
+assign num_words = (1 << logn);
 assign num_words_m1 = num_words - 1;
 assign num_words_over2 = num_words >> 1;
 assign num_words_over2_m1 = num_words_over2 - 1;

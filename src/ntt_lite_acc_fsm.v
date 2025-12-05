@@ -2,9 +2,8 @@
 
 module ntt_lite_acc_fsm
    #(
-        parameter B = 32,
-        parameter LOGQ = 64,
-        parameter LOGN = 6 ,
+        parameter LOGQ = 32,
+        parameter LOGN = 8 ,
         parameter LOGLOGN = $clog2(LOGN+1)
     )
     (
@@ -20,10 +19,10 @@ module ntt_lite_acc_fsm
         input                      mem_o_ready,
         output reg [31:0]          mem_o_data,
          
-        output reg [B-1:0]         fsm_i_data,
+        output reg [LOGQ-1:0]      fsm_i_data,
         input                      fsm_i_ready,
         output reg                 fsm_i_valid,
-        input      [B-1:0]         fsm_o_data,
+        input      [LOGQ-1:0]      fsm_o_data,
         output reg                 fsm_o_read,
         input                      fsm_o_valid,
         input      [LOGN-1:0]      fsm_io_word,

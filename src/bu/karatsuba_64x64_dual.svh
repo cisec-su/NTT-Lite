@@ -7,7 +7,7 @@ typedef struct packed {
 } karatsuba_64x64_dual_params_t;
 
 
-function int karatsuba_64x64_dual_lat(input karatsuba_64x64_dual_params_t params);
+function automatic int karatsuba_64x64_dual_lat(input karatsuba_64x64_dual_params_t params);
     karatsuba_64x64_dual_lat = (params.FF_IN + params.FF_SUM0 + params.FF_SUB0 + params.FF_MUL + params.FF_SUM1 + params.FF_SUM2 + params.FF_SUB1 + params.FF_OUT);
 endfunction
 

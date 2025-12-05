@@ -11,13 +11,16 @@ module karatsuba_34x34
         parameter FF_SUB    = 1,
         parameter FF_MUL    = 1,
         parameter FF_SUM    = 1,
-        parameter FF_OUT    = 1
+        parameter FF_OUT    = 1,
+        parameter LOGA      = 34,
+        parameter LOGB      = 34,
+        parameter LOGC      = LOGA + LOGB
     )
     (
-        input               clk,
-        input  wire  [33:0] A  ,
-        input  wire  [33:0] B  ,
-        output wire  [67:0] C
+        input                   clk,
+        input  wire  [LOGA-1:0] A  ,
+        input  wire  [LOGB-1:0] B  ,
+        output wire  [LOGC-1:0] C
     );
 
 
@@ -87,10 +90,10 @@ reg  [67:0] AB_q;
 
 //////////////////////////// partitioning ///////////////////////////////
 
-assign A0 = A[16: 0];
-assign A1 = A[33:17];
-assign B0 = B[16: 0];
-assign B1 = B[33:17];
+assign A0 = A[    16: 0];
+assign A1 = A[LOGA-1:17];
+assign B0 = B[    16: 0];
+assign B1 = B[LOGB-1:17];
 
 /////////////////////////////////////////////////////////////////////////
 
