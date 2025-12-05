@@ -82,11 +82,11 @@ assign d_mask_h = (~dual & decode) ? 0  :
 assign C = ((~dual)) ?  C_q & {d_mask_h ^ d_mask_l}                        : 
                        (C_q & d_mask_l) ^ ((C_q & d_mask_h) << logq0_m_d)  ;
 
-assign o_valid = ctr >= d_out;;                                              
+assign o_valid = ctr >= d_out;                                              
 
 assign i_ready = (~decode) ? 1 : (ctr_read_next <= (K)) ? 1'b1 : 1'b0; // some buffer is allowed
 
-assign ctr_read = ctr - ((ctr >= d_out) ? d_out : 0);
+assign ctr_read = ctr - ((o_valid) ? d_out : 0);
 assign ctr_read_next = (i_valid) ? ctr_read + d_in : ctr_read;
 
 /////////////////////////////////////////////////////////////////////////

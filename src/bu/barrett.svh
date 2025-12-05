@@ -1,7 +1,7 @@
 `ifndef BARRETT
 `define BARRETT
 
-`include "intmul_karatsuba_dual.svh"
+`include "karatsuba_64x64_dual.svh"
 `include "mac_std_dual_32x34.svh"
 
 
@@ -10,9 +10,9 @@ typedef struct packed {
 } barrett_params_t;
 
 
-function intmul_karatsuba_dual_params_t barrett_mac_0_params(input barrett_params_t params);
-    barrett_mac_0_params = '{FF_IN_A: params.FF_SHF,  FF_IN_B: params.FF_SHF, FF_SUM : 0,
-                             FF_MUL : params.FF_MUL,  FF_SUB : 0, FF_OUT : 1};
+function karatsuba_64x64_dual_params_t barrett_mac_0_params(input barrett_params_t params);
+    barrett_mac_0_params = '{FF_IN: params.FF_SHF, FF_SUM0 : 0, FF_SUB0 : 0, FF_MUL : params.FF_MUL,
+                             FF_SUM1 : 0, FF_SUM2 : 0, FF_SUB1 : 0, FF_OUT : 1};
 endfunction
 
 
@@ -22,7 +22,7 @@ endfunction
 
 
 function int barrett_mac_0_lat(input barrett_params_t params);
-    barrett_mac_0_lat = intmul_karatsuba_dual_lat(barrett_mac_0_params(params));
+    barrett_mac_0_lat = karatsuba_64x64_dual_lat(barrett_mac_0_params(params));
 endfunction
 
 
