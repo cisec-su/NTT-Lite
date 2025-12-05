@@ -37,7 +37,7 @@ module ntt_lite_coeff_ram_double
     );
 
 localparam N2  = 1 << (LOGN - 1);
-localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
+localparam LOGLOGN = $clog2(LOGN+1);
 
 
 reg [LOGQ-1:0] bram0 [N2-1:0];

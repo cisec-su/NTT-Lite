@@ -33,8 +33,8 @@ module ntt_lite_acc_top
     );
 
 localparam LOGWB   = $clog2(LOGQ/B);
-localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
-localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
+localparam LOGLOGQ = $clog2(LOGQ + 1);
+localparam LOGLOGN = $clog2(LOGN+1); 
 
 
 wire clk, rst;

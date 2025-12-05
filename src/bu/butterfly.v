@@ -27,7 +27,7 @@ module butterfly
     );
 
 
-localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
+localparam LOGLOGQ = $clog2(LOGQ + 1);
 localparam LOGQ0   = LOGQ >> 1;
 localparam LOGT    = LOGQ << 1;
 

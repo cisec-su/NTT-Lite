@@ -39,7 +39,7 @@ module ntt_lite_acc_fsm
 
 
 localparam LOGWB   = $clog2(LOGQ/B);
-localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
+localparam LOGLOGN = $clog2(LOGN+1); 
 localparam [31:0] ST_IDLE = 0;
 localparam [31:0] ST_GET = 1;
 localparam [31:0] ST_BUSY = 2;

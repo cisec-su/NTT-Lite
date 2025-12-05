@@ -55,9 +55,9 @@ end
 
 ///////////////////// local parameters //////////////////////////////////
 
-localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
+localparam LOGLOGQ = $clog2(LOGQ + 1);
 localparam N       = 1 << LOGN;
-localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
+localparam LOGLOGN = $clog2(LOGN+1);
 localparam LOGWB   = $clog2(LOGQ/B);
 localparam WBMASK  = (1 << LOGWB) - 1;
 localparam L       = L_MUL + L_RED;

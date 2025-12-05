@@ -13,7 +13,7 @@ module msb_dual
 
 localparam LOGA  = LOGA0 << 1;
 localparam LOGC  = LOGC0 << 1;
-localparam LOGLOGA = $rtoi($ceil($clog2(LOGA + 1)));
+localparam LOGLOGA = $clog2(LOGA + 1);
     
 /////////////////////////////////////////////////////////////////////////
 

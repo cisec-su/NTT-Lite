@@ -10,7 +10,7 @@ parameter FP       = (2 * HP);
 parameter TEST_NUM = 1000;
 
 localparam LOGQ0 = LOGQ >> 1;
-localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
+localparam LOGLOGQ = $clog2(LOGQ + 1);
 
 integer i    = 0;
 integer seed = 0;
