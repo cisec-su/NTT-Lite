@@ -87,6 +87,10 @@ with open("mul_out_single.txt", "w") as f:
     for i in range(n):
         f.write(hex((A_0[i] * B_0[i]) % q )[2:] + "\n")
 
+with open("mac_out_single.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((A_0[i] * B_0[i] + A_0[i] * B_0[i]) % q )[2:] + "\n")
+
 
 with open("mul_out_dual.txt", "w") as f:
     for i in range(n):
