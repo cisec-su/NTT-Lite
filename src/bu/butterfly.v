@@ -212,6 +212,7 @@ assign asr_out_dual_masked = asr_out_dual & mask_k_dual;
 assign E_int       = (op_q == `OP_INTT      ) ? shift_out_1          :
                      (op_q == `OP_ADD       ) ? add_out_C            :
                      (op_q == `OP_SUM       ) ? add_out_C            :
+                     (op_q == `OP_MAC       ) ? add_out_C            :
                      (op_q == `OP_SUB       ) ? sub_out_C            :
                      (op_q == `OP_COMPRESS  ) ? D_dual_masked        :
                      (op_q == `OP_DECOMPRESS) ? asr_out_dual_masked  :

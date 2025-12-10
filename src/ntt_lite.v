@@ -1755,6 +1755,7 @@ always @(*) begin
         `OP_NTT        : next_state_op = ST_NTT0;
         `OP_INTT       : next_state_op = ST_NTT0;
         `OP_PWM        : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
+        `OP_MAC        : next_state_op = ST_PWM0;
         `OP_ADD        : next_state_op = ST_ADDSUB;
         `OP_SUB        : next_state_op = ST_ADDSUB;
         `OP_SUM        : next_state_op = ST_SUM0;
