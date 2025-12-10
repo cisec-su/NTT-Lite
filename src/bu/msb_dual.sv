@@ -4,16 +4,15 @@ module msb_dual
         parameter LOGC0 = 64
     )
     (
-        input  [LOGA-1:0] A   ,
-        input             dual,
-        output [LOGC-1:0] C
+        input  [2*LOGA0-1:0] A   ,
+        input                dual,
+        output [2*LOGC0-1:0] C
     );
 
 ///////////////////////////// parameters ////////////////////////////////
 
 localparam LOGA  = LOGA0 << 1;
-localparam LOGC  = LOGC0 << 1;
-localparam LOGLOGA = $rtoi($ceil($clog2(LOGA + 1)));
+localparam LOGLOGA = $clog2(LOGA + 1);
     
 /////////////////////////////////////////////////////////////////////////
 

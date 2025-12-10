@@ -10,7 +10,19 @@ module mac_std_dual_32x34
         parameter          FF_IN_Z  = 0     ,
         parameter          FF_MUL   = 1     ,
         parameter          FF_OUT   = 1     ,
-        parameter          OPT_HIGH = 0
+        parameter          OPT_HIGH = 0     ,
+        // don't touch below parameters
+        parameter mac_std_dual_32x34_params_t params = {LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_IN_Z, FF_MUL, FF_OUT},
+        parameter LOGA  = mac_std_dual_32x34_loga(params),
+        parameter LOGE  = mac_std_dual_32x34_loge(params),
+        parameter LOGA0 = mac_std_dual_32x34_loga0(params),
+        parameter LOGB0 = mac_std_dual_32x34_logb0(params),
+        parameter LOGE0 = mac_std_dual_32x34_loge0(params),
+        parameter LOGD  = mac_std_dual_32x34_logd(params),
+        parameter LOGD0 = mac_std_dual_32x34_logd0(params),
+        parameter LOGC  = mac_std_dual_32x34_logc(params),
+        parameter LOGC0 = mac_std_dual_32x34_logc0(params),
+        parameter LOGZ  = mac_std_dual_32x34_logz(params)
     )
     (
         input               clk     ,
@@ -35,17 +47,6 @@ end
 
 ///////////////////////////// parameters ////////////////////////////////
 
-localparam mac_std_dual_32x34_params_t params = {LOGB, MODE_E, FF_IN_A, FF_IN_B, FF_IN_E, FF_IN_Z, FF_MUL, FF_OUT};
-localparam LOGA = mac_std_dual_32x34_loga(params);
-localparam LOGE = mac_std_dual_32x34_loge(params);
-localparam LOGA0 = mac_std_dual_32x34_loga0(params);
-localparam LOGB0 = mac_std_dual_32x34_logb0(params);
-localparam LOGE0 = mac_std_dual_32x34_loge0(params);
-localparam LOGD  = mac_std_dual_32x34_logd(params);
-localparam LOGD0 = mac_std_dual_32x34_logd0(params);
-localparam LOGC = mac_std_dual_32x34_logc(params);
-localparam LOGC0 = mac_std_dual_32x34_logc0(params);
-localparam LOGZ  = mac_std_dual_32x34_logz(params);
 localparam LAT  = mac_std_dual_32x34_lat(params);
 localparam DSP_A_U = LOGA0;
 localparam DSP_B_U = LOGB0;

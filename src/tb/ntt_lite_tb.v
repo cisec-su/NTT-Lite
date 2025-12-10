@@ -14,8 +14,8 @@ parameter EN_NTT_OTF = 1;
 parameter FORWARD_EN = 1;
 parameter STOP_AT_EVERY_TEST = 0;
 localparam N = 1 << LOGN;
-localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
-localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
+localparam LOGLOGN = $clog2(LOGN+1); 
+localparam LOGLOGQ = $clog2(LOGQ + 1);
 
 localparam LOGQB = $clog2(LOGQ/B);
 localparam QBMASK = (1 << LOGQB) - 1;

@@ -5,18 +5,18 @@ module modmul
         parameter LOGQ    = 32
     )
     (
-        input                clk ,
-        input   mode_mul_t   mode,
-        input                en_z,
-        input  [LOGQ   -1:0] Q   ,
-        input  [LOGT   -1:0] MU  ,
-        input  [LOGQ   -1:0] A   ,
-        input  [LOGQ   -1:0] E   ,
-        input  [LOGZ   -1:0] Z   ,
-        input  [LOGQ   -1:0] B   ,
-        output [LOGT   -1:0] T   ,        
-        output [LOGT   -1:0] D   ,
-        output [LOGQ   -1:0] C
+        input                  clk ,
+        input   mode_mul_t     mode,
+        input                  en_z,
+        input  [ LOGQ    -1:0] Q   ,
+        input  [(LOGQ<<1)-1:0] MU  ,
+        input  [ LOGQ    -1:0] A   ,
+        input  [ LOGQ    -1:0] E   ,
+        input  [(LOGQ>>1)-1:0] Z   ,
+        input  [ LOGQ    -1:0] B   ,
+        output [(LOGQ<<1)-1:0] T   ,        
+        output [(LOGQ<<1)-1:0] D   ,
+        output [ LOGQ    -1:0] C
     );
 
 ///////////////////////////// input check ///////////////////////////////
@@ -30,15 +30,6 @@ endgenerate
 /////////////////////////////////////////////////////////////////////////
 
 
-
-
-///////////////////////////// parameters ////////////////////////////////
-
-localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
-localparam LOGT    = LOGQ << 1;
-localparam LOGZ    = LOGQ >> 1;
-
-/////////////////////////////////////////////////////////////////////////
 
 
 wire dual;

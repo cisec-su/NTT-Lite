@@ -2,8 +2,9 @@
 
 module butterfly
    #(
-        parameter LOGQ   = 32,
-        parameter L      = 12
+        parameter LOGQ    = 32,
+        parameter L       = 12,
+        parameter LOGLOGQ = $clog2(LOGQ + 1)
     )
     (
         input                clk      ,
@@ -27,7 +28,6 @@ module butterfly
     );
 
 
-localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 localparam LOGQ0   = LOGQ >> 1;
 localparam LOGT    = LOGQ << 1;
 

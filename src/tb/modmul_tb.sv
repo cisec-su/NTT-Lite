@@ -13,7 +13,7 @@ parameter L                = 8;
 parameter LOGQ_INIT        = 12;
 
 localparam LOGQ0   = LOGQ >> 1;
-localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
+localparam LOGLOGQ = $clog2(LOGQ + 1);
 localparam LOGD    = LOGQ << 1;
 localparam LOGD0   = LOGD >> 1;
 

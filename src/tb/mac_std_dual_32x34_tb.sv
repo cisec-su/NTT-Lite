@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 
-`include "mac_std_dual_32x34.svh"
-
 module mac_std_dual_32x34_tb();
+
+`include "mac_std_dual_32x34.svh"
 
 parameter mode_e_t MODE_E  = DIS_E;
 parameter          FF_IN_A = 0;

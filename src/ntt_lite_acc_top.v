@@ -2,8 +2,7 @@ module ntt_lite_acc_top
     #(
         parameter BASE_ADDR  = 32'h40001000,
         parameter LOGN       = 8           ,
-        parameter LOGQ       = 32          ,
-        parameter B          = 32
+        parameter LOGQ       = 32          
     )
     (
         input           wb_cyc_i,
@@ -32,9 +31,8 @@ module ntt_lite_acc_top
         output          dma_rst_i
     );
 
-localparam LOGWB   = $clog2(LOGQ/B);
-localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
-localparam LOGLOGN = $rtoi($ceil($clog2(LOGN+1))); 
+localparam LOGLOGQ = $clog2(LOGQ + 1);
+localparam LOGLOGN = $clog2(LOGN+1); 
 
 
 wire clk, rst;
@@ -56,14 +54,14 @@ wire mem_we;
 wire mem_re;
 
 // FSM & NTT
-wire [B-1:0] fsm_i_data;
+wire [LOGQ-1:0] fsm_i_data;
 wire fsm_i_ready;
 wire fsm_i_valid;
-wire [B-1:0] fsm_o_data;
+wire [LOGQ-1:0] fsm_o_data;
 wire fsm_o_read;
 wire fsm_o_valid;
-wire [LOGN+LOGWB-1:0] fsm_io_word;
-wire [LOGN+LOGWB-1:0] fsm_io_limit;
+wire [LOGN-1:0] fsm_io_word;
+wire [LOGN-1:0] fsm_io_limit;
 
 
 // CTRL & NTT
@@ -94,8 +92,7 @@ wire [31:0] ctrl_dout_addr;
 
 ntt_lite #(
     .LOGN(LOGN),
-    .LOGQ(LOGQ),
-    .B(B)
+    .LOGQ(LOGQ)
 ) ntt_lite (
     .clk        (clk        ),
     .rst        (rst        ),
@@ -222,7 +219,6 @@ ntt_lite_acc_wb ntt_lite_acc_wb_inst (
 
 
 ntt_lite_acc_fsm #(
-    .B   (B   ),
     .LOGQ(LOGQ),
     .LOGN(LOGN)
 ) ntt_lite_acc_fsm_inst (

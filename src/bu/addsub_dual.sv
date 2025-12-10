@@ -5,11 +5,11 @@ module addsub_dual
         parameter LOGB0 = 32
     )
     (
-        input  [LOGA-1:0] A   ,
-        input  [LOGB-1:0] B   ,
-        input             dual,
-        output [LOGA-1:0] C   ,
-        output [     1:0] K
+        input  [2*LOGA0-1:0] A   ,
+        input  [2*LOGB0-1:0] B   ,
+        input                dual,
+        output [2*LOGA0-1:0] C   ,
+        output [        1:0] K
     );
 
 ///////////////////////////// input check ///////////////////////////////

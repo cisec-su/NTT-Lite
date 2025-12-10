@@ -1,6 +1,7 @@
 module asr /* Arithmetic Shift Right */
    #(
-        parameter LOGQ       = 64
+        parameter LOGQ       = 64,
+        parameter LOGLOGQ    = $clog2(LOGQ + 1)
     )
     (
         input  [LOGQ    -1:0] A   ,
@@ -11,7 +12,6 @@ module asr /* Arithmetic Shift Right */
 
 ///////////////////////////// parameters ////////////////////////////////
 
-localparam LOGLOGQ = $rtoi($ceil($clog2(LOGQ + 1)));
 localparam LOGQ0 = LOGQ >> 1;
 
 /////////////////////////////////////////////////////////////////////////
