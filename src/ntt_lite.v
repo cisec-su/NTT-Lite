@@ -1018,13 +1018,28 @@ always @(*) begin
                     next_state = ST_TWIDDLE_OUT;
                 end
             end            
+            else if (cmd == `CMD_READ_POLY) begin
+                if (logn > LOGN) begin
+                    error_set = 1;
+                    next_state = ST_IDLE;
+                end
+                else begin
+                    next_state = ST_POLY_OUT;
+                end
+            end
             else if (cmd == `CMD_RST) begin
                 next_state = ST_IDLE;
                 ctr_all_rst = 1;
                 done_set = 1;
             end
             else if (cmd == `CMD_START) begin
-                next_state = next_state_op;
+                if (logn > LOGN) begin
+                    error_set = 1;
+                    next_state = ST_IDLE;
+                end
+                else begin
+                    next_state = next_state_op;
+                end
             end
             else if (cmd == `CMD_SET_CLR) begin
                 clr_poly_set = 1;

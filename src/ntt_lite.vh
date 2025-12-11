@@ -9,6 +9,7 @@
 `define CMD_LOAD_POLY         4'd4
 `define CMD_READ_TWIDDLE      4'd5
 `define CMD_LOAD_ZETA         4'd6
+`define CMD_READ_POLY         4'd7
 `define CMD_SET_CLR           4'd15
 
 
