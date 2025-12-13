@@ -14,8 +14,8 @@ module ntt_lite
     (
         input                       clk      ,
         input                       rst      ,
-        input      [           3:0] cmd      ,
-        input      [           3:0] op       ,
+        input      [           2:0] cmd      ,
+        input      [           4:0] op       ,
         input                       otf      ,
         input      [   LOGLOGN-1:0] logn     ,
         input      [   LOGLOGQ-1:0] k        ,
@@ -1027,11 +1027,11 @@ always @(*) begin
                     next_state = ST_POLY_OUT;
                 end
             end
-            else if (cmd == `CMD_RST) begin
-                next_state = ST_IDLE;
-                ctr_all_rst = 1;
-                done_set = 1;
-            end
+            // else if (cmd == `CMD_RST) begin
+            //     next_state = ST_IDLE;
+            //     ctr_all_rst = 1;
+            //     done_set = 1;
+            // end
             else if (cmd == `CMD_START) begin
                 if (logn > LOGN) begin
                     error_set = 1;
@@ -1411,7 +1411,8 @@ always @(*) begin
                 ctr0_inc = 1;
             end
 
-            if ((sr_t && op != `OP_MAKEHINT) || (sr_z && op == `OP_MAKEHINT)) begin
+            if ((sr_t && (op != `OP_MAKEHINT && op != `OP_USEHINT)) || 
+                (sr_z && (op == `OP_MAKEHINT || op == `OP_USEHINT))) begin
                 if (ctr1 == n_m1) begin
                     ctr0_rst = 1;
                     next_state = ST_POLY_OUT;
@@ -1729,7 +1730,7 @@ always @(*) begin
         end
     end
     else if (addsub_rcv_bu) begin
-        if (op == `OP_MAKEHINT) begin
+        if (op == `OP_MAKEHINT || op == `OP_USEHINT) begin
             if (sr_z) begin
                 upoly_mul = 1;
                 if (ctr1 == n_m1) begin
@@ -1773,6 +1774,7 @@ always @(*) begin
         `OP_MAC        : next_state_op = ST_PWM0;
         `OP_ADD        : next_state_op = ST_ADDSUB;
         `OP_SUB        : next_state_op = ST_ADDSUB;
+        `OP_USEHINT    : next_state_op = ST_ADDSUB;
         `OP_SUM        : next_state_op = ST_SUM0;
         `OP_COMPRESS   : next_state_op = ST_PWM0;
         `OP_DECOMPRESS : next_state_op = ST_PWM0;

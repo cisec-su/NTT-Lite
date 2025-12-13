@@ -12,10 +12,10 @@ module ntt_lite_ctrl
         output reg [31:0]  rdata,        // Read data
 
         // ctrl reg fields
-        output reg [ 3:0]  cmd,          // (Write/Self-Clear)
+        output reg [ 2:0]  cmd,          // (Write/Self-Clear)
         output reg [ 3:0]  logn,         // (Read/Write)
         output reg [ 1:0]  mode,         // (Read/Write)
-        output reg [ 3:0]  op  ,         // (Write)
+        output reg [ 4:0]  op  ,         // (Write)
         output reg         otf,          // (Read/Write)
         output reg [ 5:0]  k,            // (Read/Write)
         output reg [ 5:0]  d,            // (Write)
@@ -49,12 +49,12 @@ localparam ACTRL_ADDR     = 8'h20; // Offset for advanced ctrl register
 
 // Bit-fields for ctrl register
 localparam CTRL_CMD_LSB       = 0;
-localparam CTRL_CMD_MSB       = 3;
+localparam CTRL_CMD_MSB       = 2;
 localparam CTRL_CMD_LEN       = CTRL_CMD_MSB - CTRL_CMD_LSB + 1;
-localparam CTRL_LOGN_LSB      = 4;
-localparam CTRL_LOGN_MSB      = 7;
+localparam CTRL_LOGN_LSB      = 3;
+localparam CTRL_LOGN_MSB      = 6;
 localparam CTRL_LOGN_LEN      = CTRL_LOGN_MSB - CTRL_LOGN_LSB + 1;
-localparam CTRL_OP_LSB        = 8;
+localparam CTRL_OP_LSB        = 7;
 localparam CTRL_OP_MSB        = 11;
 localparam CTRL_OP_LEN        = CTRL_OP_MSB - CTRL_OP_LSB + 1;
 localparam CTRL_OP_SWITCH_BIT = 12;

@@ -404,26 +404,27 @@ with open("decompose_in.txt", "w") as f:
         f.write(hex(A[i])[2:] + "\n")
 
 
-A0 = []
-A1 = []
+AD0 = []
+AD1 = []
 
 for A_i in A:
     r1, r0 = decompose(A_i, bound, q)
-    A0.append(r0)
-    A1.append(r1)
+    AD0.append(r0)
+    AD1.append(r1)
 
 
 with open("decompose_out_low.txt", "w") as f:
     for i in range(n):
-        f.write(hex(A0[i])[2:] + "\n")
+        f.write(hex(AD0[i])[2:] + "\n")
 
 with open("decompose_out_high.txt", "w") as f:
     for i in range(n):
-        f.write(hex(A1[i])[2:] + "\n")
+        f.write(hex(AD1[i])[2:] + "\n")
 
 
 q = 8380417
-bound =  (q - 1) // (16)
+bb = 16
+bound =  (q - 1) // (bb)
 inv2 = q - bound
 logq = math.ceil(math.log2(q))
 logn = 8
@@ -501,6 +502,21 @@ for i in range(n):
 with open("makehint_out.txt", "w") as f:
     for i in range(n):
         f.write(hex(hints[i])[2:] + "\n")
+
+
+for i in range(n):
+    if (hints[i]):
+        if AD0[i] <= q//2:
+            AD1[i] += 1
+        else:
+            while 1:
+                pass            
+            AD1[i] += 15
+            AD1[i] = AD1[i] % 16
+
+with open("usehint_out.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(AD1[i])[2:] + "\n")
 
 
 ############################# rej sample test ##########################

@@ -65,12 +65,12 @@ wire [LOGN-1:0] fsm_io_limit;
 
 
 // CTRL & NTT
-wire [3:0] ctrl_cmd;
+wire [2:0] ctrl_cmd;
 wire [LOGLOGN-1:0] ctrl_logn;
 wire [LOGLOGQ-1:0] ctrl_k;
 wire [LOGLOGQ-1:0] ctrl_d;
 wire [1:0] ctrl_mode;
-wire [3:0] ctrl_op;
+wire [4:0] ctrl_op;
 wire [LOGQ-1:0] ctrl_q;
 wire [LOGQ*2-1:0] ctrl_mu;
 wire [LOGQ-1:0] ctrl_inv2;
