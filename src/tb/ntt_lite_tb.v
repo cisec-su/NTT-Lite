@@ -42,8 +42,8 @@ reg [LOGQ-1:0] psi      [0:N-1];
 reg [LOGQ-1:0] poly_in  [0:N-1];
 reg [LOGQ-1:0] poly_out [0:N-1];
 
-reg  [3  :0] cmd;
-reg  [3  :0] op;
+reg  [2  :0] cmd;
+reg  [4  :0] op;
 reg          otf;
 reg          rhs_const;
 reg          op_switch;
@@ -590,12 +590,10 @@ initial begin
 
     if (flag == 0) begin
         $display("(SUCCESS POLY PWM FORWARD)");
-        $stop;
     end
     else begin
         $display("(FAIL POLY PWM FORWARD)");
         flag1 = 1;
-        $stop;
     end
     if (STOP_AT_EVERY_TEST)
         $stop;
@@ -1276,7 +1274,6 @@ initial begin
     else begin
         $display("(FAIL POLY DECODE)");
         flag1 = 1;
-        $stop;
     end
 
     d = meta[4];
@@ -1392,12 +1389,10 @@ initial begin
 
     if (flag == 0) begin
         $display("(SUCCESS POLY CBD DUAL FORWARD)");
-        $stop;
     end
     else begin
         $display("(FAIL POLY CBD DUAL FORWARD)");
         flag1 = 1;
-        $stop;
     end
 
     d = meta[4];
@@ -1748,6 +1743,57 @@ initial begin
     if (STOP_AT_EVERY_TEST)
         $stop;
 
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    if (FORWARD_EN) begin
+        $readmemh("../../../../../test/makehint_out.txt" , poly_in);
+        $readmemh("../../../../../test/usehint_out.txt" , poly_out);
+
+        cmd = `CMD_LOAD_POLY;
+        op = `OP_USEHINT;
+        #FP;
+        cmd = 0;
+        flag = 0;
+
+        while(!done) begin
+            if (i_ready) begin
+                i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+                i_valid = 1'b1;
+                o_read = 1'b0;
+            end
+            else if (o_valid) begin
+                o_read = 1'b1;
+                i_valid = 1'b0;
+                $display("Output: %h", o_data);
+                if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                    $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                    flag = 1;
+                end
+            end
+            else begin
+                o_read = 1'b0;
+                i_valid = 1'b0;
+            end
+            #FP;
+        end
+        o_read = 1'b0;
+        i_valid = 1'b0;
+
+        if (flag == 0)
+            $display("(SUCCESS USEHINT OUT HIGH)");
+        else begin
+            $display("(FAIL USEHINT OUT HIGH)");
+            flag1 = 1;
+        end
+        if (STOP_AT_EVERY_TEST)
+            $stop;
+    
+    end
+
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1944,12 +1990,10 @@ initial begin
 
     if (flag == 0) begin
         $display("(SUCCESS REJ SAMP SINGLE)");
-        $stop;
     end
     else begin
         $display("(FAIL REJ SAMP SINGLE)");
         flag1 = 1;
-        $stop;
     end
 
     if (STOP_AT_EVERY_TEST)
@@ -2024,12 +2068,10 @@ initial begin
 
     if (flag == 0) begin
         $display("(SUCCESS REJ SAMP ETA SINGLE)");
-        $stop;
     end
     else begin
         $display("(FAIL REJ SAMP ETA SINGLE)");
         flag1 = 1;
-        $stop;
     end
 
     if (STOP_AT_EVERY_TEST)
@@ -2085,12 +2127,10 @@ initial begin
 
     if (flag == 0) begin
         $display("(SUCCESS REJ SAMP ETA SINGLE FORWARD)");
-        $stop;
     end
     else begin
         $display("(FAIL REJ SAMP ETA SINGLE FORWARD)");
         flag1 = 1;
-        $stop;
     end
 
     if (STOP_AT_EVERY_TEST)
@@ -2163,12 +2203,10 @@ initial begin
 
     if (flag == 0) begin
         $display("(SUCCESS REJ SAMP DUAL)");
-        $stop;
     end
     else begin
         $display("(FAIL REJ SAMP DUAL)");
         flag1 = 1;
-        $stop;
     end
 
     if (STOP_AT_EVERY_TEST)

@@ -9,7 +9,7 @@ module butterfly
     (
         input                clk      ,
 
-        input  [        3:0] op       ,
+        input  [        4:0] op       ,
         input  [        1:0] mode     ,
         input                floor    ,
         input                mode_p2d ,
@@ -43,6 +43,7 @@ wire [LOGT -1:0] mm_out_D;
 wire [LOGQ -1:0] add_in_A;
 wire [LOGQ -1:0] add_in_B;
 wire [LOGQ -1:0] add_out_C;
+wire [LOGQ -1:0] add_in_Q;
 wire [LOGQ -1:0] sub_in_A;
 wire [LOGQ -1:0] sub_in_B;
 wire [LOGQ -1:0] sub_in_Q;
@@ -83,6 +84,8 @@ wire makehint_specialcase;
 reg  makehint_specialcase_q;
 wire hint;
 
+wire [LOGQ -1:0] use_hint_mux;
+
 wire [LOGQ-1:0] E_int;
 wire [LOGQ-1:0] O_int;
 
@@ -106,10 +109,13 @@ reg [LOGLOGQ-1:0] d_q;
 
 reg [LOGT-1:0] mm_out_D_q;
 
-reg [3:0] op_q;
+reg [4:0] op_q;
 reg [1:0] mode_q;
 reg floor_q;
 
+wire chknorm;
+reg  chknorm_q;
+reg  hint_q;
 
 
 assign mode_mul    = (mode_q == `MODE_POLY && op_q != `OP_PWM) ? `MODE_DUAL :
@@ -166,6 +172,7 @@ assign mm_in_Q     = (op_q == `OP_DECOMPOSE                     ) ? bound_q     
 assign add_in_A    = (op_q == `OP_INTT || op_q == `OP_ADD) ? A_q            :
                      (op_q == `OP_SUM                    ) ? A_q            :
                      (op_q == `OP_CHKNORM                ) ? A_q            :
+                     (op_q == `OP_USEHINT                ) ? shift_out_0    :
                      (op_q == `OP_MAKEHINT               ) ? A_q            :
                                                              shift_out_1    ;
 assign add_in_B    = (op_q == `OP_INTT                 ) ? B_q            :
@@ -173,17 +180,22 @@ assign add_in_B    = (op_q == `OP_INTT                 ) ? B_q            :
                      (op_q == `OP_ADD                  ) ? PSI_q          :
                      (op_q == `OP_CHKNORM              ) ? bound_q        :
                      (op_q == `OP_MAKEHINT             ) ? bound_q        :
+                     (op_q == `OP_USEHINT              ) ? use_hint_mux   :
                                                            mm_out_C       ;
+assign add_in_Q    = (op_q == `OP_USEHINT              ) ? inv2_q         :
+                                                           Q_q            ;
 assign sub_in_A    = (op_q == `OP_INTT || op_q == `OP_SUB) ? A_q            :
                      (op_q == `OP_DECOMPOSE              ) ? mm_out_C       :
                      (op_q == `OP_CHKNORM                ) ? bound_q << 1   :
                      (op_q == `OP_MAKEHINT               ) ? bound_q << 1   :
+                     (op_q == `OP_USEHINT                ) ? Q_half         :
                                                              shift_out_1    ;
 assign sub_in_B    = (op_q == `OP_INTT                 ) ? B_q            : 
                      (op_q == `OP_DECOMPOSE            ) ? bound_half     : 
                      (op_q == `OP_CHKNORM              ) ? shift_out_0    :
                      (op_q == `OP_MAKEHINT             ) ? shift_out_0    :
-                     (op_q == `OP_SUB                  ) ? PSI_q          : 
+                     (op_q == `OP_SUB                  ) ? PSI_q          :
+                     (op_q == `OP_USEHINT              ) ? B_q            :
                                                            mm_out_C       ;
 assign sub_in_Q    = Q_q;
 
@@ -191,6 +203,7 @@ assign shift_in_0  = (op_q == `OP_INTT                 ) ? add_out_C      :
                      (op_q == `OP_CHKNORM              ) ? add_out_C      :
                      (op_q == `OP_MAKEHINT             ) ? add_out_C      :
                      (op_q == `OP_DECOMPOSE            ) ? sub_out_C      :
+                     (op_q == `OP_USEHINT              ) ? PSI_q          :
                                                            A_q            ;
 assign shift_in_1  = (op_q == `OP_INTT                 ) ? mm_inv2_out    : 
                                                            shift_out_0    ;
@@ -202,6 +215,8 @@ assign decompose_pp_in_T  = bound_q;
 assign chknorm = sub_out_corr;
 assign makehint_specialcase = (A_q == inv2_q && PSI_q != 0);
 assign hint = chknorm | makehint_specialcase_q;
+
+assign use_hint_mux = (hint_q) ? ((chknorm_q) ? inv2_q - 1'b1 : 1'b1) : 1'b0;
 
 assign mm_inv2_in  = shift_out_0;
 
@@ -218,6 +233,7 @@ assign E_int       = (op_q == `OP_INTT      ) ? shift_out_1          :
                      (op_q == `OP_DECOMPRESS) ? asr_out_dual_masked  :
                      (op_q == `OP_DECOMPOSE ) ? decompose_pp_out_B0  :
                      (op_q == `OP_MAKEHINT  ) ? hint                 :
+                     (op_q == `OP_USEHINT   ) ? add_out_C            :
                      (op_q == `OP_CHKNORM   ) ? chknorm              :
                      (op_q == `OP_PWM       ) ? mm_out_C             :
                     /*op_q == `OP_NTT        */ add_out_C            ;
@@ -275,7 +291,7 @@ modadd  #(
     .A   (add_in_A ),
     .B   (add_in_B ),
     .dual(dual     ),
-    .Q   (Q_q      ),
+    .Q   (add_in_Q ),
     .C   (add_out_C) 
 );
 
@@ -363,6 +379,12 @@ end
 
 always @(posedge clk) begin
     makehint_specialcase_q <= makehint_specialcase;
+end
+
+
+always @(posedge clk) begin
+    chknorm_q <= chknorm;
+    hint_q    <= A_q[0];
 end
 
 
