@@ -49,7 +49,7 @@ reg [LOGN-1:0] cnt;
 reg cnt_up, cnt_rst;
 reg [2:0] cstate;
 
-always @(posedge clk or posedge rst)
+always @(posedge clk)
 begin
     if(rst)
     begin

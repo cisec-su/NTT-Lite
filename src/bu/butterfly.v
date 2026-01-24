@@ -3,7 +3,9 @@
 module butterfly
    #(
         parameter LOGQ    = 32,
-        parameter L       = 12,
+        parameter L_MUL   = 6,
+        parameter L_RED   = 6,
+        parameter L       = L_MUL + L_RED,
         parameter LOGLOGQ = $clog2(LOGQ + 1)
     )
     (
@@ -40,6 +42,8 @@ wire [LOGQ -1:0] mm_in_E;
 wire [LOGQ -1:0] mm_out_C;
 wire [LOGT -1:0] mm_out_T;
 wire [LOGT -1:0] mm_out_D;
+wire [LOGQ -1:0] mm_out_F;
+wire [LOGT-1:0]  MU_int;
 wire [LOGQ -1:0] add_in_A;
 wire [LOGQ -1:0] add_in_B;
 wire [LOGQ -1:0] add_out_C;
@@ -52,6 +56,8 @@ wire [LOGQ -1:0] shift_in_0;
 wire [LOGQ -1:0] shift_out_0;
 wire [LOGQ -1:0] shift_in_1;
 wire [LOGQ -1:0] shift_out_1;
+wire [LOGQ -1:0] shift_in_2;
+wire [LOGQ -1:0] shift_out_2;
 wire [LOGT -1:0] asr_in;
 wire [LOGT -1:0] asr_out;
 wire [LOGQ -1:0] asr_out_dual;
@@ -112,15 +118,17 @@ reg [LOGT-1:0] mm_out_D_q;
 reg [4:0] op_q;
 reg [1:0] mode_q;
 reg floor_q;
+reg en_z_q;
+reg mode_p2d_q;
 
 wire chknorm;
 reg  chknorm_q;
 reg  hint_q;
 
 
-assign mode_mul    = (mode_q == `MODE_POLY && op_q != `OP_PWM) ? `MODE_DUAL :
-                     (mode_p2d                               ) ? `MODE_DUAL :
-                                                                mode_q      ;
+assign mode_mul    = (mode_q == `MODE_POLY && op_q != `OP_PWM && op_q != `OP_MAC) ? `MODE_DUAL   :
+                     (en_z_q                                                    ) ? `MODE_SINGLE :
+                                                                                     mode_q      ;
 assign dual        =  mode_q == `MODE_DUAL || mode_q == `MODE_POLY;
 
 assign Q_half      = (dual) ? {Q_q[LOGQ0-1:0] >> 1, Q_q[LOGQ0-1:0] >> 1} : 
@@ -150,6 +158,7 @@ assign mask_k      = (k_q == 0) ?  {LOGQ{1'b1}}                          :
 assign mask_k_dual = (dual) ?    {mask_k[LOGQ0-1:0], mask_k[LOGQ0-1:0]} : 
                                   mask_k                                ;
 
+assign MU_int     =  (dual && !en_z_q) ? {MU_q[LOGT-1:LOGQ], MU_q[LOGT-1:LOGQ]} : MU_q;
 
 assign D_dual      = (dual) ? {mm_out_D[LOGQ+LOGQ0-1:LOGQ], mm_out_D[LOGQ0-1:0]} : 
                                mm_out_D                                          ;
@@ -165,16 +174,18 @@ assign mm_in_E     = (floor_q                                   ) ? {LOGQ{1'b0}}
                      (op_q == `OP_DECOMPOSE                     ) ? bound_half         :
                      (op_q == `OP_COMPRESS                      ) ? Q_half             :
                      (op_q == `OP_DECOMPRESS                    ) ? pow_2_d_shift_dual :
+                     (op_q == `OP_MAC && !en_z_q                ) ? A_q                :
                                                                   {LOGQ{1'b0}}       ;
 assign mm_in_Z     = A_q[LOGQ-1:LOGQ0];
-assign mm_in_Q     = (op_q == `OP_DECOMPOSE                     ) ? bound_q              : 
+assign mm_in_Q     = (op_q == `OP_DECOMPOSE                     ) ? bound_q              :
+                     (en_z_q                                    ) ? Q_q[LOGQ0-1:0]       : 
                                                                     Q_q                  ;
 assign add_in_A    = (op_q == `OP_INTT || op_q == `OP_ADD) ? A_q            :
                      (op_q == `OP_SUM                    ) ? A_q            :
                      (op_q == `OP_CHKNORM                ) ? A_q            :
                      (op_q == `OP_USEHINT                ) ? shift_out_0    :
                      (op_q == `OP_MAKEHINT               ) ? A_q            :
-                                                             shift_out_1    ;
+                                                             shift_out_2    ;
 assign add_in_B    = (op_q == `OP_INTT                 ) ? B_q            :
                      (op_q == `OP_SUM                  ) ? B_q            : 
                      (op_q == `OP_ADD                  ) ? PSI_q          :
@@ -189,7 +200,7 @@ assign sub_in_A    = (op_q == `OP_INTT || op_q == `OP_SUB) ? A_q            :
                      (op_q == `OP_CHKNORM                ) ? bound_q << 1   :
                      (op_q == `OP_MAKEHINT               ) ? bound_q << 1   :
                      (op_q == `OP_USEHINT                ) ? Q_half         :
-                                                             shift_out_1    ;
+                                                             shift_out_2    ;
 assign sub_in_B    = (op_q == `OP_INTT                 ) ? B_q            : 
                      (op_q == `OP_DECOMPOSE            ) ? bound_half     : 
                      (op_q == `OP_CHKNORM              ) ? shift_out_0    :
@@ -205,8 +216,11 @@ assign shift_in_0  = (op_q == `OP_INTT                 ) ? add_out_C      :
                      (op_q == `OP_DECOMPOSE            ) ? sub_out_C      :
                      (op_q == `OP_USEHINT              ) ? PSI_q          :
                                                            A_q            ;
-assign shift_in_1  = (op_q == `OP_INTT                 ) ? mm_inv2_out    : 
+assign shift_in_1  = (op_q == `OP_INTT                 ) ? mm_inv2_out    :
                                                            shift_out_0    ;
+
+assign shift_in_2  = (mode_p2d_q                 ) ? mm_out_F       :
+                                                     shift_out_1    ;
 
 assign decompose_pp_in_A0 = shift_out_0;
 assign decompose_pp_in_A1 = mm_out_D_q;
@@ -224,10 +238,9 @@ assign asr_in      = mm_out_T;
 
 assign asr_out_dual_masked = asr_out_dual & mask_k_dual;
 
-assign E_int       = (op_q == `OP_INTT      ) ? shift_out_1          :
+assign E_int       = (op_q == `OP_INTT      ) ? shift_out_2          :
                      (op_q == `OP_ADD       ) ? add_out_C            :
                      (op_q == `OP_SUM       ) ? add_out_C            :
-                     (op_q == `OP_MAC       ) ? add_out_C            :
                      (op_q == `OP_SUB       ) ? sub_out_C            :
                      (op_q == `OP_COMPRESS  ) ? D_dual_masked        :
                      (op_q == `OP_DECOMPRESS) ? asr_out_dual_masked  :
@@ -235,10 +248,13 @@ assign E_int       = (op_q == `OP_INTT      ) ? shift_out_1          :
                      (op_q == `OP_MAKEHINT  ) ? hint                 :
                      (op_q == `OP_USEHINT   ) ? add_out_C            :
                      (op_q == `OP_CHKNORM   ) ? chknorm              :
-                     (op_q == `OP_PWM       ) ? mm_out_C             :
+                     (op_q == `OP_PWM       ) ? ((en_z_q) ? add_out_C : mm_out_C) :
+                     (op_q == `OP_MAC       ) ? ((en_z_q) ? add_out_C : mm_out_C) :
                     /*op_q == `OP_NTT        */ add_out_C            ;
 assign O_int       = (op_q == `OP_INTT      ) ? mm_out_C             :
                      (op_q == `OP_DECOMPOSE ) ? decompose_pp_out_B1  :
+                     (op_q == `OP_PWM       ) ? shift_out_2          :
+                     (op_q == `OP_MAC       ) ? shift_out_2          :                     
                     /*op_q == `OP_NTT        */ sub_out_C            ;
 
 assign E = E_q;
@@ -257,7 +273,7 @@ shiftreg #(
 
 
 shiftreg #(
-    .SHIFT(L - 1),
+    .SHIFT(L_MUL - 1),
     .DATA (LOGQ )
 ) sre_1 (
     .clk     (clk        ),
@@ -267,21 +283,33 @@ shiftreg #(
 );
 
 
+shiftreg #(
+    .SHIFT(L_RED),
+    .DATA (LOGQ )
+) sre_2 (
+    .clk     (clk        ),
+    .rst     (1'b0       ),
+    .data_in (shift_in_2 ),
+    .data_out(shift_out_2)
+);
+
+
 modmul #(
     .LOGQ(LOGQ)
 ) mm (
     .clk (clk     ),
     .mode(mode_mul),
-    .en_z(en_z    ),
+    .en_z(en_z_q  ),
     .Q   (mm_in_Q ),
-    .MU  (MU_q    ),
+    .MU  (MU_int  ),
     .A   (mm_in_A ),
     .B   (mm_in_B ),
     .E   (mm_in_E ),
     .Z   (mm_in_Z ),
     .C   (mm_out_C),
     .T   (mm_out_T),
-    .D   (mm_out_D)
+    .D   (mm_out_D),
+    .F   (mm_out_F)
 );
 
 
@@ -352,6 +380,8 @@ always @(posedge clk) begin
     op_q    <= op;
     mode_q  <= mode;
     floor_q <= floor;
+    en_z_q <= en_z;
+    mode_p2d_q <= mode_p2d;
 end
 
 
