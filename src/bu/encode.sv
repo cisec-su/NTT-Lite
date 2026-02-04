@@ -16,6 +16,7 @@ module encode
         input                 i_valid,
         output                i_ready, // effective for decode
         output                o_valid,
+        output                busy   ,
         output [LOGQ    -1:0] C
     );
 
@@ -88,6 +89,8 @@ assign i_ready = (~decode) ? 1 : (ctr_read_next <= (K)) ? 1'b1 : 1'b0; // some b
 
 assign ctr_read = ctr - ((o_valid) ? d_out : 0);
 assign ctr_read_next = (i_valid) ? ctr_read + d_in : ctr_read;
+
+assign busy = i_valid | i_valid_q | o_valid;
 
 /////////////////////////////////////////////////////////////////////////
 

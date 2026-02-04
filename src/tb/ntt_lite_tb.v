@@ -62,11 +62,11 @@ wire         busy;
 wire         done;
 wire [LOGN+LOGQB-1:0] io_word;
 
-wire chknorm;
+wire chknorm, rej_samp_ip;
 
 always #HP clk = ~clk;
 
-integer flag, flag1;
+integer flag, flag1, i;
 
 
 ntt_lite #(
@@ -94,6 +94,7 @@ ntt_lite #(
     .op_switch(op_switch),
     .mu(mu),
     .chknorm(chknorm),
+    .rej_samp_ip(rej_samp_ip),
     .i_data(i_data),
     .i_valid(i_valid),
     .i_ready(i_ready),
@@ -396,7 +397,7 @@ initial begin
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    $stop;
+
     if (FORWARD_EN) begin
         $readmemh("../../../../../test/zeta_in.txt" , psi);
 
@@ -448,7 +449,7 @@ initial begin
         o_read = 1'b0;
         i_valid = 1'b0;
         rhs_const = 0;
-        $stop;
+
         op = 0;
         mode = `MODE_POLY;
         cmd = `CMD_LOAD_TWIDDLE;
@@ -504,7 +505,7 @@ initial begin
         end
         if (STOP_AT_EVERY_TEST)
             $stop;
-        $stop;
+
     end
 
 
@@ -2331,8 +2332,6 @@ initial begin
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
     $readmemh("../../../../../test/rejsampdual_meta.txt" , meta);
     $readmemh("../../../../../test/rej_samp_in_dual.txt", psi);
     $readmemh("../../../../../test/rej_samp_out_dual.txt", poly_out);
@@ -2371,12 +2370,12 @@ initial begin
     rhs_const = 1'b0;
 
     while(!done) begin
-        if (i_ready) begin
+        /*if (i_ready) begin
             i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
             i_valid = 1'b1;
             o_read = 1'b0;
         end
-        else if (o_valid) begin
+        else */if (o_valid) begin
             o_read = 1'b1;
             i_valid = 1'b0;
             $display("Output: %h", o_data);
@@ -2404,6 +2403,229 @@ initial begin
 
     if (STOP_AT_EVERY_TEST)
         $stop;
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    $readmemh("../../../../../test/rejsampdual_meta.txt" , meta);
+    $readmemh("../../../../../test/rej_samp_in_dual.txt", psi);
+    $readmemh("../../../../../test/rej_samp_out_dual.txt", poly_out);
+
+    mode = `MODE_POLY;
+    q = meta[0];
+    mu_64 = meta[1];
+    logn = meta[2];
+    k = meta[3];
+    d = meta[4];
+    inv2 = 20;
+    mu_32 = meta[6];
+    bound = meta[7];
+    rhs_const = 1'b1;
+    #FP;
+    cmd = 0;
+    flag = 0;
+    op = 0;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
+    cmd = `CMD_START;
+    op = `OP_REJ_SAMP;
+    #FP;
+    cmd = 0;
+    flag = 0;
+    rhs_const = 1'b0;
+
+    while(!done) begin
+        /*if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else */if (o_valid) begin
+            flag = 1;
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0 && rej_samp_ip) begin
+        $display("(SUCCESS REJ SAMP DUAL IP PART 1)");
+    end
+    else begin
+        $display("(FAIL REJ SAMP DUAL IP PART 1)");
+        flag1 = 1;
+    end
+
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+
+    inv2 = meta[5] - 20;
+    rhs_const = 1'b1;
+    #FP;
+    cmd = 0;
+    flag = 0;
+    op = 0;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[(io_word + 20) >> LOGQB] >> (((io_word + 20) & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
+    cmd = `CMD_START;
+    op = `OP_REJ_SAMP;
+    #FP;
+    cmd = 0;
+    flag = 0;
+    rhs_const = 1'b0;
+
+    while(!done) begin
+        /*if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else */if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0 && !rej_samp_ip) begin
+        $display("(SUCCESS REJ SAMP DUAL IP PART 2)");
+    end
+    else begin
+        $display("(FAIL REJ SAMP DUAL IP PART 2)");
+        flag1 = 1;
+    end
+
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    if (FORWARD_EN) begin
+        for (i = 10; i < 115; i = i + 1) begin
+            inv2 = i;
+            rhs_const = 1'b0;
+            #FP;
+            op = 0;
+            cmd = `CMD_LOAD_TWIDDLE;
+            op = `OP_REJ_SAMP;
+            #FP;
+            cmd = 0;
+            flag = 0;
+
+            while(!done) begin
+                if (i_ready) begin
+                    i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+                    i_valid = 1'b1;
+                    o_read = 1'b0;
+                end
+                else if (o_valid) begin
+                    flag = 1;
+                end
+                else begin
+                    o_read = 1'b0;
+                    i_valid = 1'b0;
+                end
+                #FP;
+            end
+            o_read = 1'b0;
+            i_valid = 1'b0;
+
+            if (flag == 0 && rej_samp_ip) begin
+                $display("(SUCCESS REJ SAMP DUAL IP PART 1 FORWARD) iter-%d", i);
+            end
+            else begin
+                $display("(FAIL REJ SAMP DUAL IP PART 1 FORWARD) iter-%d", i);
+                flag1 = 1;
+            end
+
+            if (STOP_AT_EVERY_TEST)
+                $stop;
+
+
+            inv2 = meta[5] - i;
+            #FP;
+            cmd = 0;
+            flag = 0;
+            cmd = `CMD_LOAD_TWIDDLE;
+            op = `OP_REJ_SAMP;
+            #FP;
+            cmd = 0;
+            flag = 0;
+            rhs_const = 1'b0;
+
+            while(!done) begin
+                if (i_ready) begin
+                    i_data = psi[(io_word + i) >> LOGQB] >> (((io_word + i) & QBMASK)*B);
+                    i_valid = 1'b1;
+                    o_read = 1'b0;
+                end
+                else if (o_valid) begin
+                    o_read = 1'b1;
+                    i_valid = 1'b0;
+                    $display("Output: %h", o_data);
+                    if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                        $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                        flag = 1;
+                    end
+                end
+                else begin
+                    o_read = 1'b0;
+                    i_valid = 1'b0;
+                end
+                #FP;
+            end
+            o_read = 1'b0;
+            i_valid = 1'b0;
+
+            if (flag == 0 && !rej_samp_ip) begin
+                $display("(SUCCESS REJ SAMP DUAL IP PART 2 FORWARD) iter-%d", i);
+            end
+            else begin
+                $display("(FAIL REJ SAMP DUAL IP PART 2 FORWARD) iter-%d", i);
+                flag1 = 1;
+            end
+
+            if (STOP_AT_EVERY_TEST)
+                $stop;
+        end
+    end
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

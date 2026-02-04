@@ -22,6 +22,7 @@ module ntt_lite_acc_fsm
         output reg [LOGQ-1:0]      fsm_i_data,
         input                      fsm_i_ready,
         output reg                 fsm_i_valid,
+        input                      fsm_i_done,
         input      [LOGQ-1:0]      fsm_o_data,
         output reg                 fsm_o_read,
         input                      fsm_o_valid,
@@ -31,9 +32,7 @@ module ntt_lite_acc_fsm
 
         input      [31:0]          ctrl_din_addr,
         input      [31:0]          ctrl_dout_addr,
-
-        input      [3:0]           ctrl_cmd,
-
+        input      [2:0]           ctrl_cmd,
         input      [LOGLOGN-1:0]   ctrl_logn
     );
 
@@ -42,7 +41,6 @@ localparam ST_IDLE = 3'd0;
 localparam ST_GET  = 3'd1;
 localparam ST_BUSY = 3'd2;
 localparam ST_PUT  = 3'd3;
-localparam ST_GET0 = 3'd4;
 
 
 reg [LOGN-1:0] cnt;
@@ -87,7 +85,7 @@ begin
         end
         ST_GET:
         begin
-            if(cnt >= (fsm_io_limit))
+            if(cnt_rst)
                 cstate <= ST_IDLE; 
         end
         
@@ -99,8 +97,9 @@ begin
         endcase
     end
     
-end        
-  
+end
+
+
 always @ (*)
 begin
     cnt_up = 0;
@@ -114,6 +113,7 @@ begin
     fsm_o_read = 0;
     mem_re = 0;
     mem_we = 0;
+
     case(cstate)
     ST_IDLE:
     begin
@@ -121,11 +121,14 @@ begin
     end
     ST_GET:
     begin
-        mem_addr = ctrl_din_addr + ({cnt, 2'b00});
-        if(fsm_i_ready)
+        if (fsm_i_done) begin
+            cnt_rst = 1;
+        end
+        else if(fsm_i_ready)
         begin
-            mem_re = 1;  
-            if (cnt >= (fsm_io_limit))
+            mem_addr = ctrl_din_addr + ({cnt, 2'b00});
+            mem_re = 1;
+            if (cnt >= (fsm_io_limit)) // counts read signals to DMA
                 cnt_rst = 1;
             else
                 cnt_up = 1;
