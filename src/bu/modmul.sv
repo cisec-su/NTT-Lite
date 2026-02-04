@@ -16,7 +16,8 @@ module modmul
         input  [ LOGQ    -1:0] B   ,
         output [(LOGQ<<1)-1:0] T   ,        
         output [(LOGQ<<1)-1:0] D   ,
-        output [ LOGQ    -1:0] C
+        output [ LOGQ    -1:0] C   ,
+        output [ LOGQ    -1:0] F
     );
 
 ///////////////////////////// input check ///////////////////////////////
@@ -53,7 +54,8 @@ mac_std_dual_32x34 #(
     .B       (B   ),
     .Z       (Z   ),
     .E       (E   ),
-    .C       (T   )
+    .C       (T   ),
+    .F       (F   )
 );
 
 

@@ -28,11 +28,12 @@ module mac_std_dual_32x34
         input               clk     ,
         input   mode_mul_t  mode_mul,
         input               en_z    ,
-        input   [LOGA-1:0]  A       ,
-        input   [LOGB-1:0]  B       ,
-        input   [LOGE-1:0]  E       ,
-        input   [LOGZ-1:0]  Z       ,
-        output  [LOGC-1:0]  C
+        input  [ LOGA-1:0]  A       ,
+        input  [ LOGB-1:0]  B       ,
+        input  [ LOGE-1:0]  E       ,
+        input  [ LOGZ-1:0]  Z       ,
+        output [ LOGC-1:0]  C       ,
+        output [LOGC0-1:0]  F
     );
 
 ///////////////////////////// input check ///////////////////////////////
@@ -99,6 +100,10 @@ reg  [LOGC-1:0] S_q;
 (* use_dsp = "no" *) wire [LOGD0+1:0] T;
 (* use_dsp = "no" *) reg  [LOGC-1:0] S_int;
 wire dual;
+
+reg  [LOGC0:0] F_q;
+wire [LOGC0:0] F_mx;
+
 
 wire c;
 reg  c_q;
@@ -167,6 +172,7 @@ if (MODE_E != DIS_E) begin
 end
 
 assign C = (FF_OUT) ? S_q : S;
+assign F = (FF_OUT) ? F_q : P_mx[1][1];
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -224,7 +230,7 @@ always @(*) begin
         MUL_POLY:
         begin
             if (OPT_HIGH == 0) begin
-                S_int[LOGC0-1:    0] = P_mx[0][0] + P_mx[1][1];
+                S_int[LOGC0-1:    0] = P_mx[0][0];// + P_mx[1][1];
                 S_int[LOGC -1:LOGC0] = T;                    
             end
         end
@@ -310,6 +316,9 @@ end
 if (FF_OUT) begin
     always @(posedge clk) begin
         S_q <= S;
+    end
+    always @(posedge clk) begin
+        F_q <= P_mx[1][1];
     end
 end
 

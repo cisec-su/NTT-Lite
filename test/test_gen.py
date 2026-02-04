@@ -66,7 +66,7 @@ with open("poly_in_B_dual.txt", "w") as f:
 
 with open("zeta_in.txt", "w") as f:
     for i in range(n):
-        f.write(hex((Z_1[i] << (b // 2)))[2:] + "\n")
+        f.write(hex((Z_1[i]))[2:] + "\n")
 
 
 # %%
@@ -90,6 +90,13 @@ with open("mul_out_single.txt", "w") as f:
 with open("mac_out_single.txt", "w") as f:
     for i in range(n):
         f.write(hex((A_0[i] * B_0[i] + A_0[i] * B_0[i]) % q )[2:] + "\n")
+
+
+with open("mac_out_poly.txt", "w") as f:
+    for i in range(n):
+        t0 = (A_0[i] * B_0[i] + A_1[i] * B_1[i] * Z_1[i] + A_0[i]) % q
+        t1 = (A_1[i] * B_0[i] + A_0[i] * B_1[i] + A_1[i]) % q
+        f.write(hex((t1 << (b // 2)) + t0)[2:] + "\n")
 
 
 with open("mul_out_dual.txt", "w") as f:
@@ -303,7 +310,7 @@ with open("encode_out_poly.txt", "w") as f:
 
 print("ZETAS C:")
 for i in range(n):
-    print(hex((zetas[i] << 16) + 1), end=", ")
+    print(hex((zetas[i])), end=", ")
 print("\n\n")
 
 
@@ -509,8 +516,6 @@ for i in range(n):
         if AD0[i] <= q//2:
             AD1[i] += 1
         else:
-            while 1:
-                pass            
             AD1[i] += 15
             AD1[i] = AD1[i] % 16
 
