@@ -1,12 +1,12 @@
-`include "ntt_lite.vh"
+`include "../ntt_lite.vh"
 
 module butterfly
    #(
-        parameter LOGQ    = 32,
-        parameter L_MUL   = 6,
-        parameter L_RED   = 6,
-        parameter L       = L_MUL + L_RED,
-        parameter LOGLOGQ = $clog2(LOGQ + 1)
+        parameter  LOGQ    = 32,
+        parameter  L_MUL   = 6,
+        parameter  L_RED   = 6,
+        parameter  L       = L_MUL + L_RED,
+        localparam LOGLOGQ = $clog2(LOGQ + 1)
     )
     (
         input                clk      ,

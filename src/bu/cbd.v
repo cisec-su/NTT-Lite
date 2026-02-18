@@ -1,9 +1,9 @@
-`include "ntt_lite.vh"
+`include "../ntt_lite.vh"
 
 module cbd
    #(
-        parameter LOGQ    = 32,
-        parameter LOGLOGQ = $clog2(LOGQ + 1)
+        parameter  LOGQ    = 32,
+        localparam LOGLOGQ = $clog2(LOGQ + 1)
     )
     (
         input                 clk     ,

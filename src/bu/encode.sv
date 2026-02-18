@@ -1,10 +1,10 @@
-`include "ntt_lite.vh"
+`include "../ntt_lite.vh"
 // WARNING: mode = dual not verified (single and poly modes are tested).
 module encode
    #(
-        parameter LOGQ    = 32,
-        parameter K       = 32,
-        parameter LOGLOGQ = $clog2(LOGQ + 1)
+        parameter  LOGQ    = 32,
+        parameter  K       = 32,
+        localparam LOGLOGQ = $clog2(LOGQ + 1)
     )
     (
         input                 clk    ,

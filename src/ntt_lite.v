@@ -2,14 +2,14 @@
 
 module ntt_lite
    #(   
-        parameter LOGN       = 8,
-        parameter LOGQ       = 32,
-        parameter L_RED      = 5, // BU  latency
-        parameter L_MUL      = 3, // MUL latency
-        parameter FORWARD_EN = 1,
-        parameter EN_NTT_OTF = 0,
-        parameter LOGLOGQ    = $clog2(LOGQ + 1),
-        parameter LOGLOGN    = $clog2(LOGN + 1)
+        parameter  LOGN       = 8,
+        parameter  LOGQ       = 32,
+        parameter  L_RED      = 5, // BU  latency
+        parameter  L_MUL      = 3, // MUL latency
+        parameter  FORWARD_EN = 1,
+        parameter  EN_NTT_OTF = 0,
+        localparam LOGLOGQ    = $clog2(LOGQ + 1),
+        localparam LOGLOGN    = $clog2(LOGN + 1)
     )
     (
         input                       clk      ,
