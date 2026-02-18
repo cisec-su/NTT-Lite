@@ -2,14 +2,14 @@
 
 module ntt_lite
    #(   
-        parameter LOGN       = 8,
-        parameter LOGQ       = 32,
-        parameter L_RED      = 5, // BU  latency
-        parameter L_MUL      = 3, // MUL latency
-        parameter FORWARD_EN = 1,
-        parameter EN_NTT_OTF = 0,
-        parameter LOGLOGQ    = $clog2(LOGQ + 1),
-        parameter LOGLOGN    = $clog2(LOGN + 1)
+        parameter  LOGN       = 8,
+        parameter  LOGQ       = 32,
+        parameter  L_RED      = 5, // BU  latency
+        parameter  L_MUL      = 3, // MUL latency
+        parameter  FORWARD_EN = 1,
+        parameter  EN_NTT_OTF = 0,
+        localparam LOGLOGQ    = $clog2(LOGQ + 1),
+        localparam LOGLOGN    = $clog2(LOGN + 1)
     )
     (
         input                       clk      ,
@@ -35,7 +35,9 @@ module ntt_lite
         output reg [      LOGQ-1:0] o_data   ,
         input                       o_read   ,
         output reg                  chknorm  ,
+        output reg                  rej_samp_ip,
         output reg                  o_valid  ,
+        output reg                  i_done   ,
         output reg [      LOGN-1:0] io_word  ,
         output reg [      LOGN-1:0] io_limit ,
         output reg                  done     ,
@@ -255,6 +257,7 @@ reg  encode_rst;
 wire encode_i_valid;
 wire encode_i_ready;
 wire encode_o_valid;
+wire encode_busy;
 
 // cbd signals
 wire [LOGQ-1:0] cbd_in;
@@ -265,7 +268,10 @@ wire cbd_mode;
 reg rej_samp;
 reg rej_samp_center;
 reg cbd_rst;
+wire cbd_busy;
+reg rej_samp_ip_set, rej_samp_ip_clr;
 
+reg rdone, rdone_set, rdone_clr;
 
 // parallel input and point-op
 reg [LOGQ-1:0] i_data_q;
@@ -460,10 +466,10 @@ assign cbd_mode    = d[1];
 always @(posedge clk) begin
     if (rst)
         ctr0 <= 0;
-    else if (ctr0_inc)
-        ctr0 <= ctr0_p1;
     else if (ctr0_rst || ctr_all_rst)
         ctr0 <= 0;
+    else if (ctr0_inc)
+        ctr0 <= ctr0_p1;
     else if (set_ctr0_poly_tail)
         ctr0 <= n_over2 - (L_REAL);
 end
@@ -645,6 +651,30 @@ always @(posedge clk) begin
     end
     else if (clr_twiddle_clr) begin
         clr_twiddle_q <= 0;
+    end
+end
+
+always @(posedge clk) begin
+    if (rst) begin
+        rej_samp_ip <= 0;
+    end
+    else if (rej_samp_ip_set) begin
+        rej_samp_ip <= 1;
+    end
+    else if (rej_samp_ip_clr) begin
+        rej_samp_ip <= 0;
+    end
+end
+
+always @(posedge clk) begin
+    if (rst) begin
+        rdone <= 0;
+    end
+    else if (rdone_set) begin
+        rdone <= 1;
+    end
+    else if (rdone_clr) begin
+        rdone <= 0;
     end
 end
 
@@ -832,6 +862,7 @@ encode #(
     .C      (encode_out      ),
     .d      (d               ),
     .mode   (mode            ),
+    .busy   (encode_busy     ),
     .i_valid(encode_i_valid  ),
     .i_ready(encode_i_ready  ),
     .o_valid(encode_o_valid  )
@@ -852,6 +883,7 @@ cbd #(
     .Q       (q          ),
     .C       (cbd_out    ),
     .k       (k          ),
+    .busy    (cbd_busy   ),
     .i_valid (cbd_i_valid),
     .o_valid (cbd_o_valid)
 );
@@ -884,7 +916,7 @@ always @(*) begin
     upsi = 0;
     wq = 0;
     sr_i = 0;
-    busy = 0;
+    busy = 1;
     o_valid_int = 0;
     pwm_idx = 0;
     pwm_zeta_idx = 0;
@@ -930,6 +962,11 @@ always @(*) begin
 
     rej_samp = 1'b0;
     rej_samp_center = rhs_const;
+    rej_samp_ip_set = 0;
+    rej_samp_ip_clr = 0;
+
+    rdone_set = 0;
+    rdone_clr = 0;
 
     pwm_idx_df = 0;
     ram_ren = 1;
@@ -940,9 +977,13 @@ always @(*) begin
     clr_twiddle_set = 0;
     clr_twiddle_clr = 0;
 
+    i_done = 0;
+
     case (state)
         ST_IDLE: begin
+            busy = 0;
             ram_ren = 0;
+            i_done = 1;
             if (cmd == `CMD_LOAD_TWIDDLE) begin
                 if (logn > LOGN) begin
                     error_set = 1;
@@ -1026,11 +1067,6 @@ always @(*) begin
                     next_state = ST_POLY_OUT;
                 end
             end
-            // else if (cmd == `CMD_RST) begin
-            //     next_state = ST_IDLE;
-            //     ctr_all_rst = 1;
-            //     done_set = 1;
-            // end
             else if (cmd == `CMD_START) begin
                 if (logn > LOGN) begin
                     error_set = 1;
@@ -1048,9 +1084,18 @@ always @(*) begin
                 end
             end
 
-            ctr_all_rst = 1;
-            encode_rst = 1;
-            cbd_rst = 1;
+            if (!rej_samp_ip) begin // todo :reset condition
+                ctr_all_rst = 1;
+                encode_rst = 1;
+                cbd_rst = 1;                
+            end
+            else begin
+                // ctr1 is output ptr (for writeback to internal memory)
+                // encode and cbd are also not reseted to preserve state
+                ctr2_rst = 1;
+                ctr0_rst = 1;
+            end
+            rdone_clr = 1;
         end
         ST_TWIDDLE_IN: begin
 
@@ -1182,9 +1227,14 @@ always @(*) begin
 
             rej_samp = (op == `OP_REJ_SAMP) ? 1'b1 : 1'b0;
 
-            if (encode_i_ready && (ctr1 != n_m1) && (ctr0_d >= ctr2) && (ctr0 != 0)) begin
-                ctr2_inc = 1;
-                sr_i = 1;
+            if (encode_i_ready && /*(ctr1 != n_m1) &&*/ (ctr0_d >= ctr2) && (ctr0 != 0)) begin
+                if (ctr2 == io_limit) begin
+                    rdone_set = 1;
+                end
+                else begin
+                    ctr2_inc = 1;                    
+                end
+                sr_i = !rdone;
             end
             if ((op == `OP_DECODE   && encode_o_valid) || 
                 (op == `OP_CBD      && cbd_o_valid   ) ||
@@ -1200,11 +1250,18 @@ always @(*) begin
                     ctr1_rst = 1;
                     ctr0_rst = 1;
                     ctr2_rst = 1;
+                    rej_samp_ip_clr = 1;
                     next_state = ST_POLY_OUT;
+                    i_done = 1;
                 end
                 else begin
                     ctr1_inc = 1;
                 end                
+            end
+            else if (op == `OP_REJ_SAMP && rdone && !encode_busy && !cbd_busy) begin
+                rej_samp_ip_set = 1;
+                next_state = ST_IDLE;
+                done_set = 1;
             end
 
             pwm_idx_df = 1;
@@ -1369,11 +1426,23 @@ always @(*) begin
         end
         ST_DECODE: begin
 
+            if ((op == `OP_DECODE) || (op == `OP_CBD)) begin
+                io_limit = decode_num_words;
+            end
+            else if (op == `OP_REJ_SAMP) begin
+                io_limit = rejsamp_num_words;
+            end
+
             pwm_idx = 1;
             rej_samp = (op == `OP_REJ_SAMP) ? 1'b1 : 1'b0;
             if (encode_i_ready && ctr1 != n_m1) begin
-                ctr0_inc = 1;
-                sr_i = 1;
+                if (ctr0 == io_limit) begin
+                    rdone_set = 1;
+                end
+                else begin
+                    ctr0_inc = 1;                    
+                end
+                sr_i = !rdone;
             end
             if (((op != `OP_CBD && op != `OP_REJ_SAMP) && encode_o_valid) || 
                 (op == `OP_CBD      && cbd_o_valid   ) ||
@@ -1386,6 +1455,7 @@ always @(*) begin
                     upoly_encode = 1;
                 end
                 if (ctr1 == n_m1) begin
+                    rej_samp_ip_clr = 1;
                     ctr1_rst = 1;
                     ctr0_rst = 1;
                     next_state = ST_POLY_OUT;
@@ -1394,6 +1464,13 @@ always @(*) begin
                     ctr1_inc = 1;
                 end                
             end
+            else if (op == `OP_REJ_SAMP && rdone && !encode_busy && !cbd_busy) begin
+                rej_samp_ip_set = 1;
+                ctr0_rst = 1;
+                next_state = ST_IDLE;
+                done_set = 1;
+            end
+
 
         end
         ST_ADDSUB: begin

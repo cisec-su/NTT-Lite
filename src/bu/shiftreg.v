@@ -14,7 +14,8 @@ module shiftreg
 reg [DATA-1:0] shift_array [SHIFT-1:0];
 
 generate
-    for(genvar shft = 0; shft < SHIFT; shft = shft + 1) begin: DELAY_BLOCK
+    genvar shft;
+    for(shft = 0; shft < SHIFT; shft = shft + 1) begin: DELAY_BLOCK
         always @(posedge clk) begin
             if (rst)
                 shift_array[shft] <= 0;

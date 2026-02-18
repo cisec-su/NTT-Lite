@@ -60,6 +60,7 @@ wire fsm_i_valid;
 wire [LOGQ-1:0] fsm_o_data;
 wire fsm_o_read;
 wire fsm_o_valid;
+wire fsm_i_done;
 wire [LOGN-1:0] fsm_io_word;
 wire [LOGN-1:0] fsm_io_limit;
 
@@ -83,6 +84,7 @@ wire ctrl_floor;
 wire ctrl_rhs_const;
 wire ctrl_op_switch;
 wire ctrl_chknorm;
+wire ctrl_rej_samp_ip;
 
 // CTRL & FSM
 wire [31:0] ctrl_din_addr;
@@ -102,6 +104,7 @@ ntt_lite #(
     .i_valid    (fsm_i_valid),
     .o_data     (fsm_o_data ),
     .o_valid    (fsm_o_valid),
+    .i_done     (fsm_i_done ),
     .o_read     (fsm_o_read ),
     .io_word    (fsm_io_word),
     .io_limit   (fsm_io_limit),
@@ -124,6 +127,7 @@ ntt_lite #(
     .done       (ctrl_done  ),
     .busy       (ctrl_busy  ),
     .chknorm    (ctrl_chknorm),
+    .rej_samp_ip(ctrl_rej_samp_ip),
     
     .error()
 );
@@ -157,6 +161,7 @@ ntt_lite_ctrl #(
     .otf        (ctrl_otf   ),
     .done       (ctrl_done  ),
     .chknorm    (ctrl_chknorm),
+    .rej_samp_ip(ctrl_rej_samp_ip),
     .busy       (ctrl_busy  ),
     // fsm <-> ctrl
     .din_addr   (ctrl_din_addr ),
@@ -237,6 +242,7 @@ ntt_lite_acc_fsm #(
     .fsm_i_data     (fsm_i_data     ),
     .fsm_i_ready    (fsm_i_ready    ),
     .fsm_i_valid    (fsm_i_valid    ),
+    .fsm_i_done     (fsm_i_done     ),
     .fsm_o_data     (fsm_o_data     ),
     .fsm_o_valid    (fsm_o_valid    ),
     .fsm_o_read     (fsm_o_read     ),

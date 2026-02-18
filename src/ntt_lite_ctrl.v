@@ -30,22 +30,24 @@ module ntt_lite_ctrl
         output reg [31:0]  din_addr,     // (Write)
         output reg [31:0]  dout_addr,    // (Write)
         output reg [31:0]  bound,       // (Read/Write)
-
-        input              chknorm,      // Check norm input
+        // status signals from core
+        input              chknorm,      // Check norm status input
+        input              rej_samp_ip,  // Reject sample status input
         input              busy,         // Busy status input
         input              done          // Done status input
     );
 
 // Register relative addresses
 localparam CTRL_ADDR      = 8'h00; // Offset for ctrl register
-localparam DIN_ADDR       = 8'h04; // Offset for din_addr register
-localparam DOUT_ADDR      = 8'h08; // Offset for dout_addr register
-localparam BOUND_ADDR     = 8'h0C; // Offset for bound register
-localparam Q_ADDR         = 8'h10; // Offset for coefficient modulus register
-localparam MU_ADDR_LOW    = 8'h14; // Offset for mu register lsb 32-bits
-localparam MU_ADDR_HIGH   = 8'h18; // Offset for mu register msb 2-bit
-localparam INV2_ADDR      = 8'h1C; // Offset for mu register lsb 32-bits
-localparam ACTRL_ADDR     = 8'h20; // Offset for advanced ctrl register
+localparam STATUS_ADDR    = 8'h04; // Offset for status register
+localparam DIN_ADDR       = 8'h08; // Offset for din_addr register
+localparam DOUT_ADDR      = 8'h0C; // Offset for dout_addr register
+localparam BOUND_ADDR     = 8'h10; // Offset for bound register
+localparam Q_ADDR         = 8'h14; // Offset for coefficient modulus register
+localparam MU_ADDR_LOW    = 8'h18; // Offset for mu register lsb 32-bits
+localparam MU_ADDR_HIGH   = 8'h1C; // Offset for mu register msb 2-bit
+localparam INV2_ADDR      = 8'h20; // Offset for mu register lsb 32-bits
+localparam ACTRL_ADDR     = 8'h24; // Offset for advanced ctrl register
 
 // Bit-fields for ctrl register
 localparam CTRL_CMD_LSB       = 0;
@@ -67,15 +69,21 @@ localparam CTRL_MODE_LEN      = CTRL_MODE_MSB - CTRL_MODE_LSB + 1;
 localparam CTRL_D_LSB         = 21;
 localparam CTRL_D_MSB         = 25;
 localparam CTRL_D_LEN         = CTRL_D_MSB - CTRL_D_LSB + 1;
-localparam CTRL_CHKNORM_BIT   = 26;
 localparam CTRL_RHS_CONST_BIT = 27;
 localparam CTRL_FLOOR_BIT     = 28;
-localparam CTRL_BUSY_BIT      = 30;
-localparam CTRL_DONE_BIT      = 31;
+
+// Bit-fields for status register
+localparam STATUS_CHKNORM_BIT     = 26;
+localparam STATUS_REJ_SAMP_IP_BIT = 27;
+localparam STATUS_BUSY_BIT        = 30;
+localparam STATUS_DONE_BIT        = 31;
 
 
 reg done_q;
 reg chknorm_q;
+
+reg [31:0] rdata_int;
+
 
 // DONE flag (Clear on Read)
 always @(posedge clk) begin
@@ -157,29 +165,41 @@ always @(posedge clk) begin
     end
 end
 
+
+always @(*) begin
+
+
+    rdata_int = 32'd0;
+    case (addr - BASE_ADDR)
+        CTRL_ADDR: begin
+            rdata_int[CTRL_LOGN_MSB:CTRL_LOGN_LSB] = logn;
+            rdata_int[CTRL_MODE_MSB:CTRL_MODE_LSB] = mode;
+            rdata_int[CTRL_K_MSB   :CTRL_K_LSB   ] = k;
+        end
+        STATUS_ADDR: begin
+            rdata_int[STATUS_CHKNORM_BIT]          = chknorm_q | chknorm;
+            rdata_int[STATUS_REJ_SAMP_IP_BIT]      = rej_samp_ip;
+            rdata_int[STATUS_BUSY_BIT]             = busy;
+            rdata_int[STATUS_DONE_BIT]             = done_q | done;
+        end
+        DIN_ADDR    : rdata_int = 32'd0;
+        DOUT_ADDR   : rdata_int = 32'd0;
+        BOUND_ADDR  : rdata_int = bound;
+        Q_ADDR      : rdata_int = q;
+        MU_ADDR_LOW : rdata_int = mu[31: 0];
+        MU_ADDR_HIGH: rdata_int = mu[63:32];
+        INV2_ADDR   : rdata_int = inv2;
+        default     : rdata_int = 32'd0;        
+    endcase
+end
+
+
 // (Read)
 always @(posedge clk) begin
     if (rst) begin
         rdata <= 32'd0;
     end else if (re) begin
-        case (addr - BASE_ADDR)
-            CTRL_ADDR: begin
-                rdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB] <= logn;
-                rdata[CTRL_MODE_MSB:CTRL_MODE_LSB] <= mode;
-                rdata[CTRL_K_MSB   :CTRL_K_LSB   ] <= k;
-                rdata[CTRL_CHKNORM_BIT]            <= chknorm_q | chknorm;
-                rdata[CTRL_BUSY_BIT]               <= busy;
-                rdata[CTRL_DONE_BIT]               <= done_q | done;
-            end
-            DIN_ADDR    : rdata <= 32'd0;
-            DOUT_ADDR   : rdata <= 32'd0;
-            BOUND_ADDR  : rdata <= bound;
-            Q_ADDR      : rdata <= q;
-            MU_ADDR_LOW : rdata <= mu[31: 0];
-            MU_ADDR_HIGH: rdata <= mu[63:32];
-            INV2_ADDR   : rdata <= inv2;
-            default     : rdata <= 32'd0;
-        endcase
+        rdata <= rdata_int;
     end
 end
 

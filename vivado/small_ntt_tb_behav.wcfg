@@ -13,15 +13,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="28,812.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="29,446.501 ns"></ZoomEndTime>
-      <Cursor1Time time="29,189.000 ns"></Cursor1Time>
+      <ZoomStartTime time="539,709.333 ns"></ZoomStartTime>
+      <ZoomEndTime time="543,569.334 ns"></ZoomEndTime>
+      <Cursor1Time time="542,926.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="161"></NameColumnWidth>
-      <ValueColumnWidth column_width="126"></ValueColumnWidth>
+      <ValueColumnWidth column_width="122"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="40" />
+   <WVObjectSize size="60" />
    <wave_markers>
       <marker label="" time="29030000" />
       <marker label="" time="30409900" />
@@ -29,6 +29,43 @@
       <marker label="" time="29709833" />
       <marker label="" time="27899700" />
    </wave_markers>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/o_read">
+      <obj_property name="ElementShortName">o_read</obj_property>
+      <obj_property name="ObjectShortName">o_read</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/i">
+      <obj_property name="ElementShortName">i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">i[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/mode">
+      <obj_property name="ElementShortName">mode[1:0]</obj_property>
+      <obj_property name="ObjectShortName">mode[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_rst">
+      <obj_property name="ElementShortName">cbd_rst</obj_property>
+      <obj_property name="ObjectShortName">cbd_rst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_rst">
+      <obj_property name="ElementShortName">encode_rst</obj_property>
+      <obj_property name="ObjectShortName">encode_rst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/cbd_mode">
+      <obj_property name="ElementShortName">cbd_mode</obj_property>
+      <obj_property name="ObjectShortName">cbd_mode</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/rej_samp">
+      <obj_property name="ElementShortName">rej_samp</obj_property>
+      <obj_property name="ObjectShortName">rej_samp</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/center">
+      <obj_property name="ElementShortName">center</obj_property>
+      <obj_property name="ObjectShortName">center</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_inst/k">
+      <obj_property name="ElementShortName">k[5:0]</obj_property>
+      <obj_property name="ObjectShortName">k[5:0]</obj_property>
+   </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/op">
       <obj_property name="ElementShortName">op[4:0]</obj_property>
       <obj_property name="ObjectShortName">op[4:0]</obj_property>
@@ -41,22 +78,77 @@
       <obj_property name="ElementShortName">clk</obj_property>
       <obj_property name="ObjectShortName">clk</obj_property>
    </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_o_valid">
+      <obj_property name="ElementShortName">cbd_o_valid</obj_property>
+      <obj_property name="ObjectShortName">cbd_o_valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_o_valid">
+      <obj_property name="ElementShortName">encode_o_valid</obj_property>
+      <obj_property name="ObjectShortName">encode_o_valid</obj_property>
+   </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/state">
       <obj_property name="ElementShortName">state[5:0]</obj_property>
       <obj_property name="ObjectShortName">state[5:0]</obj_property>
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      <obj_property name="CustomSignalColor">#0000FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/rej_samp_ip">
+      <obj_property name="ElementShortName">rej_samp_ip</obj_property>
+      <obj_property name="ObjectShortName">rej_samp_ip</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_busy">
+      <obj_property name="ElementShortName">encode_busy</obj_property>
+      <obj_property name="ObjectShortName">encode_busy</obj_property>
+      <obj_property name="CustomSignalColor">#FF0080</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/cbd_busy">
+      <obj_property name="ElementShortName">cbd_busy</obj_property>
+      <obj_property name="ObjectShortName">cbd_busy</obj_property>
+      <obj_property name="CustomSignalColor">#FF0080</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_i_ready">
+      <obj_property name="ElementShortName">encode_i_ready</obj_property>
+      <obj_property name="ObjectShortName">encode_i_ready</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0_inc">
+      <obj_property name="ElementShortName">ctr0_inc</obj_property>
+      <obj_property name="ObjectShortName">ctr0_inc</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0_rst">
+      <obj_property name="ElementShortName">ctr0_rst</obj_property>
+      <obj_property name="ObjectShortName">ctr0_rst</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr0">
       <obj_property name="ElementShortName">ctr0[7:0]</obj_property>
       <obj_property name="ObjectShortName">ctr0[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr1">
       <obj_property name="ElementShortName">ctr1[7:0]</obj_property>
       <obj_property name="ObjectShortName">ctr1[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/ctr2">
       <obj_property name="ElementShortName">ctr2[7:0]</obj_property>
       <obj_property name="ObjectShortName">ctr2[7:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFD700</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_in">
+      <obj_property name="ElementShortName">encode_in[31:0]</obj_property>
+      <obj_property name="ObjectShortName">encode_in[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/rdone">
+      <obj_property name="ElementShortName">rdone</obj_property>
+      <obj_property name="ObjectShortName">rdone</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/rdone_set">
+      <obj_property name="ElementShortName">rdone_set</obj_property>
+      <obj_property name="ObjectShortName">rdone_set</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/mode_mul">
       <obj_property name="ElementShortName">mode_mul[1:0]</obj_property>

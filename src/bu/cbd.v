@@ -1,9 +1,9 @@
-`include "ntt_lite.vh"
+`include "../ntt_lite.vh"
 
 module cbd
    #(
-        parameter LOGQ    = 32,
-        parameter LOGLOGQ = $clog2(LOGQ + 1)
+        parameter  LOGQ    = 32,
+        localparam LOGLOGQ = $clog2(LOGQ + 1)
     )
     (
         input                 clk     ,
@@ -18,6 +18,7 @@ module cbd
         input                 center  ,
         input  [LOGLOGQ -1:0] k       ,
         output                o_valid ,
+        output                busy    ,
         output [LOGQ    -1:0] C
     );
 
@@ -168,6 +169,8 @@ end
 assign T0 = (T0H << LOGQ0) | T0L;
 assign T1 = (T1H << LOGQ0) | T1L;
 assign C = C_q;
+
+assign busy = i_valid | i_valid_d | o_valid;
 
 /////////////////////////////////////////////////////////////////////////
 
