@@ -354,6 +354,86 @@ with open("cbd_out_dual.txt", "w") as f:
         f.write(hex((cbd_out[(2*i) + 1] << (b // 2)) + cbd_out[2*i])[2:] + "\n")
 
 
+######################### HELPERS FOR DECODE BIGEND ######################
+
+def poly_modq_decode_ours(data: bytes, n: int = 512, q: int = 12289):
+    acc = 0
+    acc_len = 0
+    u = 0
+    coeffs = [0] * n
+    idx = 0
+    logq = math.ceil(math.log2(q))
+    brt = 16 if logq <= 16 else 32
+
+    while u < n: 
+        if (idx >= len(data)):
+            return coeffs
+               
+        acc = acc | ((_br(data[idx], 8) << acc_len))
+        idx += 1
+        acc_len += 8
+
+        if acc_len >= logq:
+            acc_len -= logq
+            w = acc & ((1 << logq) - 1)
+            w = _br(w, brt) >> (brt - logq)
+            acc >>= logq
+            if w >= q:
+                return None, 0
+            coeffs[u] = w
+            u += 1
+
+    # Unused tail bits must be zero
+
+    return coeffs
+
+def poly_modq_encode_ours(coeffs, q: int = 12289) -> bytes:
+    acc = 0
+    acc_len = 0
+    out = bytearray()
+    logq = math.ceil(math.log2(q))
+    brt = 16 if logq <= 16 else 32
+
+    for w in coeffs:
+        if w < 0 or w >= q:
+            raise ValueError(f"coefficient out of range: {w}")
+
+        raw14 = _br(w, logq)
+
+        acc |= (raw14 << acc_len)
+        acc_len += logq
+
+        while acc_len >= 8:
+            b = acc & 0xFF
+            out.append(_br(b, 8))
+            acc >>= 8
+            acc_len -= 8
+
+    # flush remaining bits (if any), must be padded with zeros
+    if acc_len > 0:
+        b = acc & 0xFF
+        out.append(_br(b, 8))
+
+    return bytes(out)
+######################### HELPERS FOR DECODE BIGEND ######################
+
+
+encode_in = []
+for i in range(n):
+    encode_in.append(A_0[i])
+    encode_in.append(A_1[i])
+encode_bigend = poly_modq_encode_ours(encode_in, q)
+with open("encode_out_bigend.txt", "w") as f:
+    for i in range(n):
+        temp = int.from_bytes(encode_bigend[i*4: i*4+4], 'little')
+        f.write(hex(temp)[2:] + "\n")
+
+decoded= poly_modq_decode_ours(encode_bigend, n, q)
+
+############################# rej sample test ##########################
+
+
+
 
 ############################# DECOMPOSE TEST ###########################
 
@@ -566,7 +646,6 @@ with open("usehint_out.txt", "w") as f:
         f.write(hex(AD1[i])[2:] + "\n")
 
 
-############################# rej sample test ##########################
 
 
 q = 0x77e001

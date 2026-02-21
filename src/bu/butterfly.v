@@ -190,6 +190,8 @@ assign add_in_A    = (op_q == `OP_INTT || op_q == `OP_ADD) ? A_q            :
                      (op_q == `OP_CHKL1NORM              ) ? A_q            :
                      (op_q == `OP_USEHINT                ) ? shift_out_0    :
                      (op_q == `OP_MAKEHINT               ) ? A_q            :
+                     (op_q == `OP_TOCENTER               ) ? A_q            :
+                     (op_q == `OP_FROMCENTER             ) ? A_q            :
                                                              shift_out_2    ;
 assign add_in_B    = (op_q == `OP_INTT                 ) ? B_q            :
                      (op_q == `OP_SUM                  ) ? B_q            : 
@@ -197,9 +199,12 @@ assign add_in_B    = (op_q == `OP_INTT                 ) ? B_q            :
                      (op_q == `OP_ADD                  ) ? PSI_q          :
                      (op_q == `OP_CHKINFNORM           ) ? bound_q        :
                      (op_q == `OP_MAKEHINT             ) ? bound_q        :
+                     (op_q == `OP_TOCENTER             ) ? bound_q        :
+                     (op_q == `OP_FROMCENTER           ) ? bound_q        :
                      (op_q == `OP_USEHINT              ) ? use_hint_mux   :
                                                            mm_out_C       ;
 assign add_in_Q    = (op_q == `OP_USEHINT              ) ? inv2_q         :
+                     (op_q == `OP_FROMCENTER           ) ? 0              :
                                                            Q_q            ;
 assign sub_in_A    = (op_q == `OP_INTT || op_q == `OP_SUB) ? A_q            :
                      (op_q == `OP_DECOMPOSE              ) ? mm_out_C       :
@@ -207,6 +212,8 @@ assign sub_in_A    = (op_q == `OP_INTT || op_q == `OP_SUB) ? A_q            :
                      (op_q == `OP_CHKL1NORM              ) ? bound_q        :
                      (op_q == `OP_MAKEHINT               ) ? bound_q << 1   :
                      (op_q == `OP_USEHINT                ) ? Q_half         :
+                     (op_q == `OP_TOCENTER               ) ? shift_out_0    :
+                     (op_q == `OP_FROMCENTER             ) ? shift_out_0    :
                                                              shift_out_2    ;
 assign sub_in_B    = (op_q == `OP_INTT                 ) ? B_q            : 
                      (op_q == `OP_DECOMPOSE            ) ? bound_half     : 
@@ -215,13 +222,17 @@ assign sub_in_B    = (op_q == `OP_INTT                 ) ? B_q            :
                      (op_q == `OP_MAKEHINT             ) ? shift_out_0    :
                      (op_q == `OP_SUB                  ) ? PSI_q          :
                      (op_q == `OP_USEHINT              ) ? B_q            :
+                     (op_q == `OP_TOCENTER             ) ? bound_q        :
+                     (op_q == `OP_FROMCENTER           ) ? bound_q        :
                                                            mm_out_C       ;
-assign sub_in_Q    = Q_q;
+assign sub_in_Q    = (op_q == `OP_TOCENTER             ) ? 0 : Q_q        ;
 
 assign shift_in_0  = (op_q == `OP_INTT                 ) ? add_out_C      :
                      (op_q == `OP_CHKINFNORM           ) ? add_out_C      :
                      (op_q == `OP_CHKL1NORM            ) ? add_out_C      :
                      (op_q == `OP_MAKEHINT             ) ? add_out_C      :
+                     (op_q == `OP_TOCENTER             ) ? add_out_C      :
+                     (op_q == `OP_FROMCENTER           ) ? add_out_C      :
                      (op_q == `OP_DECOMPOSE            ) ? sub_out_C      :
                      (op_q == `OP_USEHINT              ) ? PSI_q          :
                                                            A_q            ;
@@ -252,6 +263,8 @@ assign E_int       = (op_q == `OP_INTT      ) ? shift_out_2          :
                      (op_q == `OP_SUM       ) ? add_out_C            :
                      (op_q == `OP_CHKL1NORM ) ? add_out_C            :
                      (op_q == `OP_SUB       ) ? sub_out_C            :
+                     (op_q == `OP_TOCENTER  ) ? sub_out_C            :
+                     (op_q == `OP_FROMCENTER) ? sub_out_C            :
                      (op_q == `OP_COMPRESS  ) ? D_dual_masked        :
                      (op_q == `OP_DECOMPRESS) ? asr_out_dual_masked  :
                      (op_q == `OP_DECOMPOSE ) ? decompose_pp_out_B0  :

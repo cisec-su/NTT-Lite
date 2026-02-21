@@ -22,7 +22,8 @@ module ntt_lite_ctrl
         output reg         floor,        // (Write)        
         output reg         o_dis,        // (Write)        
         output reg         rhs_const,    // (Write)        
-        output reg         op_switch,    // (Write)        
+        output reg         op_switch,    // (Write)
+        output reg         bigend,       // (Write)
         output reg [31:0]  q,            // (Read/Write)
         output reg [31:0]  inv2,         // (Read/Write)        
         output reg [63:0]  mu,           // (Read/Write)
@@ -71,6 +72,7 @@ localparam CTRL_D_MSB         = 25;
 localparam CTRL_D_LEN         = CTRL_D_MSB - CTRL_D_LSB + 1;
 localparam CTRL_RHS_CONST_BIT = 27;
 localparam CTRL_FLOOR_BIT     = 28;
+localparam CTRL_BIGEND_BIT    = 29;
 
 // Bit-fields for status register
 localparam STATUS_CHKNORM_BIT     = 26;
@@ -139,6 +141,7 @@ always @(posedge clk) begin
         floor     <= 1'b0;
         rhs_const <= 1'b0;
         op_switch <= 1'b0;
+        bigend    <= 1'b0;
         o_dis     <= 1'b0;
     end else if (we) begin
         case (addr - BASE_ADDR)
@@ -146,6 +149,7 @@ always @(posedge clk) begin
                 logn      <= wdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB];
                 mode      <= wdata[CTRL_MODE_MSB:CTRL_MODE_LSB];
                 op_switch <= wdata[CTRL_OP_SWITCH_BIT];
+                bigend    <= wdata[CTRL_BIGEND_BIT];
                 k         <= {1'b0, wdata[CTRL_K_MSB:CTRL_K_LSB]};
                 op        <= wdata[CTRL_OP_MSB  :CTRL_OP_LSB  ];
                 d         <= {1'b0, wdata[CTRL_D_MSB:CTRL_D_LSB]};

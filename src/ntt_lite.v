@@ -32,6 +32,7 @@ module ntt_lite
         input                       i_valid  ,
         input                       o_dis    ,
         input                       floor    ,
+        input                       bigend   ,
         output reg [      LOGQ-1:0] o_data   ,
         input                       o_read   ,
         output reg                  chknorm  ,
@@ -242,6 +243,7 @@ wire ntt_flag_i;
 reg  ntt_flag_i_d;
 wire is_ntt;
 wire is_sum;
+wire is_srz;
 wire [LOGQ-1:0] ntt_A_i;
 wire [LOGQ-1:0] ntt_B_i;
 wire [LOGQ-1:0] ntt_psi_i;
@@ -348,6 +350,7 @@ assign psi_i    = (op_switch) ? poly_in_mx_A : twiddle_in_mx;
 
 assign is_sum = (state == ST_SUM0 || state == ST_SUM1);
 assign is_ntt = (state == ST_NTT0 || state == ST_NTT1 || state == ST_POLY_FORWARD_NTT) ? 1'b1 : 1'b0;
+assign is_srz = (op == `OP_MAKEHINT || op == `OP_USEHINT || op == `OP_TOCENTER || op == `OP_FROMCENTER) ? 1'b1 : 1'b0;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -861,6 +864,7 @@ encode #(
     .rst    (rst | encode_rst),
     .A      (encode_in       ),
     .decode (decode          ),
+    .bigend (bigend          ),
     .C      (encode_out      ),
     .d      (d               ),
     .mode   (mode            ),
@@ -1485,8 +1489,8 @@ always @(*) begin
                 ctr0_inc = 1;
             end
 
-            if ((sr_t && (op != `OP_MAKEHINT && op != `OP_USEHINT)) || 
-                (sr_z && (op == `OP_MAKEHINT || op == `OP_USEHINT))) begin
+            if ((sr_t && (!is_srz)) || 
+                (sr_z && (is_srz))) begin
                 if (ctr1 == n_m1) begin
                     ctr0_rst = 1;
                     next_state = ST_POLY_OUT;
@@ -1795,7 +1799,7 @@ always @(*) begin
         end
     end
     else if (addsub_rcv_bu) begin
-        if (op == `OP_MAKEHINT || op == `OP_USEHINT) begin
+        if (is_srz) begin
             if (sr_z) begin
                 upoly_mul = 1;
                 if (ctr1 == n_m1) begin
@@ -1854,6 +1858,8 @@ always @(*) begin
         `OP_ADD        : next_state_op = ST_ADDSUB;
         `OP_SUB        : next_state_op = ST_ADDSUB;
         `OP_USEHINT    : next_state_op = ST_ADDSUB;
+        `OP_TOCENTER   : next_state_op = ST_ADDSUB;
+        `OP_FROMCENTER : next_state_op = ST_ADDSUB;
         `OP_SUM        : next_state_op = ST_SUM0;
         `OP_CHKL1NORM  : next_state_op = ST_SUM0;    
         `OP_COMPRESS   : next_state_op = ST_PWM0;

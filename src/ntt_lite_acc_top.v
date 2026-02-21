@@ -85,6 +85,7 @@ wire ctrl_rhs_const;
 wire ctrl_op_switch;
 wire ctrl_chknorm;
 wire ctrl_rej_samp_ip;
+wire ctrl_bigend;
 
 // CTRL & FSM
 wire [31:0] ctrl_din_addr;
@@ -117,6 +118,7 @@ ntt_lite #(
     .floor      (ctrl_floor ),
     .rhs_const  (ctrl_rhs_const),
     .op_switch  (ctrl_op_switch),
+    .bigend     (ctrl_bigend),
     .q          (ctrl_q     ),
     .mu         (ctrl_mu    ),
     .inv2       (ctrl_inv2  ),
@@ -152,6 +154,7 @@ ntt_lite_ctrl #(
     .o_dis      (ctrl_o_dis ),
     .rhs_const  (ctrl_rhs_const),
     .op_switch  (ctrl_op_switch),
+    .bigend     (ctrl_bigend),
     .floor      (ctrl_floor ),
     .mode       (ctrl_mode  ),
     .op         (ctrl_op    ),

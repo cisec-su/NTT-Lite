@@ -47,6 +47,7 @@ reg  [4  :0] op;
 reg          otf;
 reg          rhs_const;
 reg          op_switch;
+reg          bigend;
 reg          dual;
 reg  [1  :0] mode;
 reg  [LOGLOGN-1:0] logn;
@@ -92,6 +93,7 @@ ntt_lite #(
     .o_dis(1'b0),
     .rhs_const(rhs_const),
     .op_switch(op_switch),
+    .bigend(bigend),
     .mu(mu),
     .chknorm(chknorm),
     .rej_samp_ip(rej_samp_ip),
@@ -131,6 +133,7 @@ initial begin
     o_read = 1'b0;
     rhs_const = 1'b0;
     op_switch = 1'b0;
+    bigend = 1'b0;
 
     q_single = meta[0];
     q_dual = (meta[0] << (LOGQ >> 1)) + meta[0];
@@ -442,7 +445,6 @@ initial begin
     end
     if (STOP_AT_EVERY_TEST)
         $stop;
-    $stop;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -507,7 +509,6 @@ initial begin
     end
     if (STOP_AT_EVERY_TEST)
         $stop;
-    $stop;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1588,6 +1589,128 @@ initial begin
     d = meta[4];
     if (STOP_AT_EVERY_TEST)
         $stop;
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    $readmemh("../../../../../test/encode_out_bigend.txt", psi);
+    $readmemh("../../../../../test/poly_in_dual.txt", poly_out);
+
+    q = q_dual;
+    op = 0;
+    mode = `MODE_POLY;
+    cmd = `CMD_LOAD_TWIDDLE;
+    op_switch = 1;
+    bigend = 1;
+    d = k;
+
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+
+    cmd = `CMD_START;
+    op = `OP_DECODE;
+    #FP;
+    cmd = 0;
+    flag = 0;
+    op_switch = 0;
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0) begin
+        $display("(SUCCESS POLY DECODE BIGEND)");
+    end
+    else begin
+        $display("(FAIL POLY DECODE BIGEND)");
+        flag1 = 1;
+    end
+
+    d = meta[4];
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+
+    bigend = 0;
+
+
+    if (FORWARD_EN) begin
+
+        q = q_dual;
+        op = `OP_DECODE;
+        mode = `MODE_POLY;
+        cmd = `CMD_LOAD_TWIDDLE;
+        bigend = 1;
+        d = k;
+        #FP;
+        cmd = 0;
+        flag = 0;
+        op_switch = 0;
+        while(!done) begin
+            if (i_ready) begin
+                i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+                i_valid = 1'b1;
+                o_read = 1'b0;
+            end
+            else if (o_valid) begin
+                o_read = 1'b1;
+                i_valid = 1'b0;
+                $display("Output: %h", o_data);
+                if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                    $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                    flag = 1;
+                end
+            end
+            else begin
+                o_read = 1'b0;
+                i_valid = 1'b0;
+            end
+            #FP;
+        end
+        o_read = 1'b0;
+        i_valid = 1'b0;
+
+        if (flag == 0) begin
+            $display("(SUCCESS POLY DECODE BIGEND FORWARD)");
+        end
+        else begin
+            $display("(FAIL POLY DECODE BIGEND FORWARD)");
+            flag1 = 1;
+        end
+
+        d = meta[4];
+        if (STOP_AT_EVERY_TEST)
+            $stop;
+
+        bigend = 0;
+    end
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
