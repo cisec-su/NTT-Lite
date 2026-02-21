@@ -6,28 +6,29 @@
       <db_ref path="ntt_lite_tb_behav.wdb" id="1">
          <top_modules>
             <top_module name="\$unit_asr_sv_1958671752 " />
-            <top_module name="\$unit_mac_std_dual_32x34_sv_3753902633 " />
+            <top_module name="\$unit_mac_std_dual_32x34_sv " />
             <top_module name="glbl" />
             <top_module name="ntt_lite_tb" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="539,709.333 ns"></ZoomStartTime>
-      <ZoomEndTime time="543,569.334 ns"></ZoomEndTime>
-      <Cursor1Time time="542,926.000 ns"></Cursor1Time>
+      <ZoomStartTime time="155,229.666 ns"></ZoomStartTime>
+      <ZoomEndTime time="155,489.267 ns"></ZoomEndTime>
+      <Cursor1Time time="155,440.866 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="161"></NameColumnWidth>
-      <ValueColumnWidth column_width="122"></ValueColumnWidth>
+      <ValueColumnWidth column_width="118"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="60" />
+   <WVObjectSize size="74" />
    <wave_markers>
       <marker label="" time="29030000" />
       <marker label="" time="30409900" />
       <marker label="" time="30510580" />
       <marker label="" time="29709833" />
       <marker label="" time="27899700" />
+      <marker label="" time="151459400" />
    </wave_markers>
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/o_read">
       <obj_property name="ElementShortName">o_read</obj_property>
@@ -85,6 +86,58 @@
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_o_valid">
       <obj_property name="ElementShortName">encode_o_valid</obj_property>
       <obj_property name="ObjectShortName">encode_o_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/A">
+      <obj_property name="ElementShortName">A[31:0]</obj_property>
+      <obj_property name="ObjectShortName">A[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/B">
+      <obj_property name="ElementShortName">B[31:0]</obj_property>
+      <obj_property name="ObjectShortName">B[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/E">
+      <obj_property name="ElementShortName">E[31:0]</obj_property>
+      <obj_property name="ObjectShortName">E[31:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/O">
+      <obj_property name="ElementShortName">O[31:0]</obj_property>
+      <obj_property name="ObjectShortName">O[31:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/sub_in_A">
+      <obj_property name="ElementShortName">sub_in_A[31:0]</obj_property>
+      <obj_property name="ObjectShortName">sub_in_A[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/btfu/sub_in_B">
+      <obj_property name="ElementShortName">sub_in_B[31:0]</obj_property>
+      <obj_property name="ObjectShortName">sub_in_B[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_i">
+      <obj_property name="ElementShortName">sr_i</obj_property>
+      <obj_property name="ObjectShortName">sr_i</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_z">
+      <obj_property name="ElementShortName">sr_z</obj_property>
+      <obj_property name="ObjectShortName">sr_z</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_sum">
+      <obj_property name="ElementShortName">sr_sum</obj_property>
+      <obj_property name="ObjectShortName">sr_sum</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/chknorm_bu">
+      <obj_property name="ElementShortName">chknorm_bu</obj_property>
+      <obj_property name="ObjectShortName">chknorm_bu</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/chknorm">
+      <obj_property name="ElementShortName">chknorm</obj_property>
+      <obj_property name="ObjectShortName">chknorm</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/done">
+      <obj_property name="ElementShortName">done</obj_property>
+      <obj_property name="ObjectShortName">done</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/state">
       <obj_property name="ElementShortName">state[5:0]</obj_property>
@@ -161,6 +214,14 @@
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_i">
       <obj_property name="ElementShortName">sr_i</obj_property>
       <obj_property name="ObjectShortName">sr_i</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_sum">
+      <obj_property name="ElementShortName">sr_sum</obj_property>
+      <obj_property name="ObjectShortName">sr_sum</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_z">
+      <obj_property name="ElementShortName">sr_z</obj_property>
+      <obj_property name="ObjectShortName">sr_z</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/sr_o">
       <obj_property name="ElementShortName">sr_o</obj_property>

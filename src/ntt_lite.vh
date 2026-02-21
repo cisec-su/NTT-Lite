@@ -25,11 +25,14 @@
 `define OP_MAC                5'd15
 `define OP_CBD                5'd13
 `define OP_REJ_SAMP           5'd14
+`define OP_SQ                 5'd18
+`define OP_SQADD              5'd19
 // below OPs are only valid for MODE_SINGLE
 `define OP_DECOMPOSE          5'd10
-`define OP_CHKNORM            5'd11
+`define OP_CHKINFNORM         5'd11
 `define OP_MAKEHINT           5'd12
 `define OP_USEHINT            5'd16
+`define OP_CHKL1NORM          5'd17
 
 `define MODE_SINGLE           2'd0
 `define MODE_DUAL             2'd2

@@ -10,7 +10,6 @@ def _br(i, k):
     return int(bin_i[::-1], 2)
 
 
-# %%
 q = 3329
 logq = math.ceil(math.log2(q))
 psi = 17
@@ -23,7 +22,7 @@ b = 32
 d = 10
 inv2 = pow(2, -1, q)
 
-_zetas = [pow(psi, _br(i, 7), q) for i in range(n)]
+_zetas = [pow(psi, _br(i, logn), q) for i in range(n)]
 zetas = []
 for i in range(n//2):
     zetas.append(_zetas[n//2 + i])
@@ -69,7 +68,6 @@ with open("zeta_in.txt", "w") as f:
         f.write(hex((Z_1[i]))[2:] + "\n")
 
 
-# %%
 with open("intt_out_single.txt", "w") as f:
     for i in range(n):
         f.write(hex((A_0[i] * n) % q)[2:] + "\n")
@@ -82,14 +80,24 @@ with open("intt_out_dual.txt", "w") as f:
         f.write(hex((t1 << (b // 2)) + t0)[2:] + "\n")
 
 
-# %%
 with open("mul_out_single.txt", "w") as f:
     for i in range(n):
         f.write(hex((A_0[i] * B_0[i]) % q )[2:] + "\n")
 
+
+with open("sq_out_single.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((A_0[i] * A_0[i]) % q )[2:] + "\n")
+
+
 with open("mac_out_single.txt", "w") as f:
     for i in range(n):
         f.write(hex((A_0[i] * B_0[i] + A_0[i] * B_0[i]) % q )[2:] + "\n")
+
+
+with open("sqadd_out_single.txt", "w") as f:
+    for i in range(n):
+        f.write(hex((A_0[i] * A_0[i] + B_0[i]) % q )[2:] + "\n")
 
 
 with open("mac_out_poly.txt", "w") as f:
@@ -427,6 +435,40 @@ with open("decompose_out_low.txt", "w") as f:
 with open("decompose_out_high.txt", "w") as f:
     for i in range(n):
         f.write(hex(AD1[i])[2:] + "\n")
+
+
+
+
+q = 8380417
+logq = math.ceil(math.log2(q))
+logn = 8
+n = 1 << logn
+mu_64 = (1 << 64) // inv2
+mu_32 = (1 << 32) // inv2
+
+T = 1023
+A =  [random.randint(0, T) % q for _ in range(n)]
+A_sum = 0
+for i in range(n):
+    A_sum += A[i]
+
+bound =  A_sum ## will use + 1 - 1 in the testbench
+
+with open("chkl1norm_meta.txt", "w") as f:
+    f.write(hex(q)[2:] + "\n")
+    f.write(hex(mu_64)[2:] + "\n")
+    f.write(hex(logn)[2:] + "\n")
+    f.write(hex(logq)[2:] + "\n")
+    f.write(hex(d)[2:] + "\n")
+    f.write(hex(inv2)[2:] + "\n")
+    f.write(hex(mu_32)[2:] + "\n")
+    f.write(hex(bound)[2:] + "\n")
+
+
+with open("chkl1norm_in.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(A[i])[2:] + "\n")
+
 
 
 q = 8380417

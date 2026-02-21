@@ -73,7 +73,7 @@ localparam ST_DECODE                    = 6'd15;
 localparam ST_SUM0                      = 6'd16;
 localparam ST_SUM1                      = 6'd17;
 localparam ST_TWIDDLE_OUT               = 6'd18;
-localparam ST_CHKNORM                   = 6'd19;
+localparam ST_CHKINFNORM                = 6'd19;
 localparam ST_POLY_FORWARD_PWM          = 6'd20;
 localparam ST_POLY_FORWARD_ADDSUB       = 6'd21;
 localparam ST_POLY_FORWARD_NTT          = 6'd22;
@@ -87,6 +87,7 @@ localparam ST_POLY_PWM2                 = 6'd29;
 localparam ST_POLY_PWM3                 = 6'd30;
 localparam ST_POLY_FORWARD_POLY_PWM     = 6'd31;
 localparam ST_TWIDDLE_FORWARD_POLY_PWM  = 6'd32;
+localparam ST_CHKL1NORM_TAIL            = 6'd33;
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -168,6 +169,7 @@ reg  [LOGQ-1:0] B_o_q;
 // chk norm
 wire chknorm_bu;
 reg chknorm_int, chknorm_set;
+reg chkl1norm_rcv_bu;
 
 reg  sr_i;
 wire sr_e;
@@ -427,7 +429,7 @@ assign twiddle_ram_raddr = (pwm_zeta_idx                 ) ? (               {1'
 
 ///////////////////// misc. assignments /////////////////////////////////
 
-assign chknorm_bu = A_o[0];
+assign chknorm_bu = B_o[0];
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -944,6 +946,7 @@ always @(*) begin
     twiddle_out_set = 0;
 
     chknorm_set = 0;
+    chkl1norm_rcv_bu = 0;
 
     poly_in_frwrd_A = 0;
     poly_in_frwrd_B = 0;
@@ -1493,7 +1496,7 @@ always @(*) begin
             addsub_rcv_bu = 1;
             
         end
-        ST_CHKNORM: begin
+        ST_CHKINFNORM: begin
 
             pwm_idx = 1;
             busy = 1;
@@ -1654,7 +1657,6 @@ always @(*) begin
             if (ctr0 == (logn_m1_shft_m1_ctr2)) begin
                 ctr0_rst = 1;
                 next_state = ST_SUM1;
-                // ctr2_d_set = 1;
             end
             else begin
                 ctr0_inc = 1;                
@@ -1662,6 +1664,8 @@ always @(*) begin
             ctr2_d_set = ~sr_sum;
 
             sum_rcv_bu = 1;
+
+            chkl1norm_rcv_bu = (op == `OP_CHKL1NORM) ? 1 : 0;
 
         end
         ST_SUM1: begin
@@ -1673,14 +1677,25 @@ always @(*) begin
                     ctr2_inc = 1; // go to next stage                        
                 end
                 else begin
-                    next_state = ST_POLY_OUT;                    
+                    next_state = (op == `OP_CHKL1NORM) ? ST_CHKL1NORM_TAIL : ST_POLY_OUT;
                 end
             end
             ctr2_d_set = ~sr_sum;
 
             sum_rcv_bu = 1;
 
-        end        
+            chkl1norm_rcv_bu = (op == `OP_CHKL1NORM) ? 1 : 0;
+
+        end    
+        ST_CHKL1NORM_TAIL: begin
+
+            busy = 1;
+            ctr_all_rst = 1;
+            done_set   = 1;
+            next_state = ST_IDLE;
+            chknorm_set = /*sr_z && */(chknorm_bu | chknorm_int); // sr_z must be 1 by design
+
+        end    
         ST_POLY_OUT: begin
 
             if (!o_dis) begin
@@ -1816,6 +1831,12 @@ always @(*) begin
         end
     end
 
+    if (chkl1norm_rcv_bu) begin
+        if (sr_z && chknorm_bu) begin
+            chknorm_set = 1;
+            next_state = ST_CHKL1NORM_TAIL; // could be idle, but will be problematic to reset counters since reset is not prior than increment
+        end
+    end
 
 end
 
@@ -1828,14 +1849,17 @@ always @(*) begin
         `OP_INTT       : next_state_op = ST_NTT0;
         `OP_PWM        : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
         `OP_MAC        : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
+        `OP_SQ         : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
+        `OP_SQADD      : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
         `OP_ADD        : next_state_op = ST_ADDSUB;
         `OP_SUB        : next_state_op = ST_ADDSUB;
         `OP_USEHINT    : next_state_op = ST_ADDSUB;
         `OP_SUM        : next_state_op = ST_SUM0;
+        `OP_CHKL1NORM  : next_state_op = ST_SUM0;    
         `OP_COMPRESS   : next_state_op = ST_PWM0;
         `OP_DECOMPRESS : next_state_op = ST_PWM0;
         `OP_DECOMPOSE  : next_state_op = ST_PWM0;
-        `OP_CHKNORM    : next_state_op = ST_CHKNORM;
+        `OP_CHKINFNORM : next_state_op = ST_CHKINFNORM;
         `OP_MAKEHINT   : next_state_op = ST_ADDSUB;
         `OP_ENCODE     : next_state_op = ST_ENCODE0;
         `OP_DECODE     : next_state_op = ST_DECODE;

@@ -45,7 +45,7 @@
     <Option Name="SimulatorGccVersionActiveHdl" Val="9.3.0"/>
     <Option Name="BoardPart" Val="xilinx.com:au280:part0:1.2"/>
     <Option Name="SourceMgmtMode" Val="DisplayOnly"/>
-    <Option Name="ActiveSimSet" Val="sim_acc"/>
+    <Option Name="ActiveSimSet" Val="sim_1"/>
     <Option Name="DefaultLib" Val="xil_defaultlib"/>
     <Option Name="ProjectType" Val="Default"/>
     <Option Name="IPOutputRepo" Val="$PCACHEDIR/ip"/>
@@ -60,7 +60,7 @@
     <Option Name="IPStaticSourceDir" Val="$PIPUSERFILESDIR/ipstatic"/>
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="DSABoardId" Val="au280"/>
-    <Option Name="WTXSimLaunchSim" Val="3932"/>
+    <Option Name="WTXSimLaunchSim" Val="3970"/>
     <Option Name="WTModelSimLaunchSim" Val="0"/>
     <Option Name="WTQuestaLaunchSim" Val="0"/>
     <Option Name="WTIesLaunchSim" Val="0"/>
@@ -434,6 +434,7 @@
       </Config>
     </FileSet>
     <FileSet Name="sim_acc" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_acc" RelGenDir="$PGENDIR/sim_acc">
+      <Filter Type="Srcs"/>
       <File Path="$PPRDIR/../src/tb/ntt_lite_acc_tb.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>

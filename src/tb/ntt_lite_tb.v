@@ -398,6 +398,121 @@ initial begin
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+    $readmemh("../../../../../test/poly_in_single.txt" , poly_in);
+    $readmemh("../../../../../test/sq_out_single.txt" , poly_out);
+
+    q = q_single;
+
+    op = `OP_SQ;
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0) begin
+        $display("(SUCCESS SINGLE SQ)");
+    end
+    else begin
+        $display("(FAIL SINGLE SQ)");
+        flag1 = 1;
+    end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+    $stop;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    $readmemh("../../../../../test/poly_in_single.txt" , poly_in);
+    $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
+    $readmemh("../../../../../test/sqadd_out_single.txt" , poly_out);
+
+
+    q = q_single;
+    op = 0;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_TWIDDLE;
+    #FP;
+    cmd = 0;
+
+    while (!done) begin
+        if (i_ready) begin
+            i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+        end
+        #FP;
+    end
+    i_valid = 1'b0;
+
+    q = q_single;
+    op = `OP_SQADD;
+    cmd = `CMD_LOAD_POLY;
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        else if (o_valid) begin
+            o_read = 1'b1;
+            i_valid = 1'b0;
+            $display("Output: %h", o_data);
+            if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                flag = 1;
+            end
+        end
+        else begin
+            o_read = 1'b0;
+            i_valid = 1'b0;
+        end
+        #FP;
+    end
+    o_read = 1'b0;
+    i_valid = 1'b0;
+
+    if (flag == 0) begin
+        $display("(SUCCESS SINGLE SQADD)");
+    end
+    else begin
+        $display("(FAIL SINGLE SQADD)");
+        flag1 = 1;
+    end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+    $stop;
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     if (FORWARD_EN) begin
         $readmemh("../../../../../test/zeta_in.txt" , psi);
 
@@ -1987,6 +2102,101 @@ initial begin
     
     end
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    $readmemh("../../../../../test/chkl1norm_in.txt" , poly_in);
+    $readmemh("../../../../../test/chkl1norm_meta.txt" , meta);
+
+    op = `OP_CHKL1NORM;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_POLY;
+    q = meta[0];
+    mu_64 = meta[1];
+    logn = meta[2];
+    k = meta[3];
+    d = meta[4];
+    inv2 = meta[5];
+    mu_32 = meta[6];
+    bound = meta[7]; // for success case
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        #FP;
+    end
+    if (chknorm == 0) begin
+        $display("(SUCCESS CHKL1NORM CORRECT CASE)");
+    end
+    else begin
+        $display("(FAIL CHKL1NORM CORRECT CASE)");
+        flag1 = 1;
+    end
+    if (STOP_AT_EVERY_TEST)
+        $stop;
+    $stop;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    op = `OP_CHKL1NORM;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_POLY;
+    bound = meta[7] - 1; // for failing case
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        #FP;
+    end
+    if (chknorm == 1) begin
+        $display("(SUCCESS CHKL1NORM INCORRECT CASE)");
+    end
+    else begin
+        $display("(FAIL CHKL1NORM INCORRECT CASE)");
+        flag1 = 1;
+    end
+    $stop;
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    op = `OP_CHKL1NORM;
+    mode = `MODE_SINGLE;
+    cmd = `CMD_LOAD_POLY;
+    bound = (2000 < (meta[7] - 2000)) ? 2000 : (meta[7] - 2000); // for failing case
+    #FP;
+    cmd = 0;
+    flag = 0;
+
+    while(!done) begin
+        if (i_ready) begin
+            i_data = poly_in[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+            i_valid = 1'b1;
+            o_read = 1'b0;
+        end
+        #FP;
+    end
+    if (chknorm == 1) begin
+        $display("(SUCCESS CHKL1NORM INCORRECT CASE 2)");
+    end
+    else begin
+        $display("(FAIL CHKL1NORM INCORRECT CASE 2)");
+        flag1 = 1;
+    end
+    $stop;
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1994,7 +2204,7 @@ initial begin
     $readmemh("../../../../../test/chknorm_in_succ.txt" , poly_in);
     $readmemh("../../../../../test/chknorm_makehint_meta.txt" , meta);
 
-    op = `OP_CHKNORM;
+    op = `OP_CHKINFNORM;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_POLY;
     q = meta[0];
@@ -2032,7 +2242,7 @@ initial begin
 
     $readmemh("../../../../../test/chknorm_in_fail.txt" , poly_in);
 
-    op = `OP_CHKNORM;
+    op = `OP_CHKINFNORM;
     mode = `MODE_SINGLE;
     cmd = `CMD_LOAD_POLY;
     #FP;
