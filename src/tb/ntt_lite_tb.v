@@ -11,7 +11,7 @@ parameter LOGQ = 32;
 parameter LOGN = 8;
 //parameter L = 11;
 parameter EN_NTT_OTF = 1;
-parameter FORWARD_EN = 1;
+parameter FORWARD_EN = 0;
 parameter STOP_AT_EVERY_TEST = 0;
 localparam N = 1 << LOGN;
 localparam LOGLOGN = $clog2(LOGN+1); 
@@ -1712,6 +1712,61 @@ initial begin
         bigend = 0;
     end
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    if (FORWARD_EN) begin
+        $readmemh("../../../../../test/fn_decomp_in.txt", psi);
+        $readmemh("../../../../../test/fn_decomp_out.txt", poly_out);
+
+        q = q_dual;
+        op = `OP_FNDECOMPRESS;
+        mode = `MODE_POLY;
+        cmd = `CMD_LOAD_TWIDDLE;
+        d = k;
+        #FP;
+        cmd = 0;
+        flag = 0;
+        op_switch = 0;
+        inv2 = 200;
+        bigend = 1;
+        while(!done) begin
+            if (i_ready) begin
+                i_data = psi[io_word >> LOGQB] >> ((io_word & QBMASK)*B);
+                i_valid = 1'b1;
+                o_read = 1'b0;
+            end
+            else if (o_valid) begin
+                o_read = 1'b1;
+                i_valid = 1'b0;
+                $display("Output: %h", o_data);
+                if (o_data != poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]) begin
+                    $display("Output mismatch at index %d: %h != %h", io_word, o_data, poly_out[io_word >> LOGQB][(io_word & QBMASK) * B +: B]);
+                    flag = 1;
+                end
+            end
+            else begin
+                o_read = 1'b0;
+                i_valid = 1'b0;
+            end
+            #FP;
+        end
+        o_read = 1'b0;
+        i_valid = 1'b0;
+
+        if (flag == 0) begin
+            $display("(SUCCESS POLY FNDECOMP FORWARD)");
+        end
+        else begin
+            $display("(FAIL POLY FNDECOMP FORWARD)");
+            flag1 = 1;
+        end
+
+        d = meta[4];
+        if (STOP_AT_EVERY_TEST)
+            $stop;
+        $stop;
+        bigend = 0;
+    end
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

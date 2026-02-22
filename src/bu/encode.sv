@@ -1,5 +1,4 @@
 `include "../ntt_lite.vh"
-// WARNING: mode = dual not verified (single and poly modes are tested).
 module encode
    #(
         parameter  LOGQ    = 32,
@@ -12,6 +11,7 @@ module encode
         input  [LOGQ    -1:0] A      ,
         input  [LOGLOGQ -1:0] d      ,
         input                 decode ,
+        input                 fn_decomp, // effective for decode
         input  [         1:0] mode   ,
         input                 i_valid,
         input                 bigend , // effective for decode
@@ -40,11 +40,16 @@ reg  [K+LOGQ -1:0] C_q;
 wire [LOGQ   -1:0] C_int;
 wire [LOGQ   -1:0] C_rev;
 wire [LOGQ   -1:0] C_rev_dual;
+wire [LOGQ   -1:0] C_mx;
+reg  [LOGQ   -1:0] C_d;
 wire [LOGQ   -1:0] A_rev;
 wire [LOGQ   -1:0] A_dual;
 wire [LOGLOGQ-2:0] logq0_m_d;
 wire [LOGQ-1  :0] d_mask_l;
 wire [LOGQ-1  :0] d_mask_h;
+
+reg  o_valid_q;
+wire o_valid_int;
 
 wire [LOGQ+K-1:0] asr_out;
 wire [LOGQ  -1:0] asr_out1;
@@ -63,6 +68,10 @@ wire [LOGLOGQ:0] d_out;
 wire [LOGLOGQ:0] d_in_h;
 wire [LOGLOGQ:0] d_out_h;
 
+reg fn_decomp_q;
+wire [LOGLOGQ:0] fn_decomp_d;
+wire [LOGQ -1:0] fn_decomp_B;
+wire             fn_decomp_o_valid;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -74,8 +83,8 @@ wire [LOGLOGQ:0] d_out_h;
 assign dual = (mode_q != `MODE_SINGLE);
 
 
-assign d_in     = ( decode) ? (LOGQ) : ((dual) ? {d_q,1'b0} : d_q);
-assign d_out    = (~decode) ? (LOGQ) : ((dual) ? {d_q,1'b0} : d_q);
+assign d_in     = ( decode) ? (LOGQ) :                                ((dual) ? {d_q,1'b0} : d_q);
+assign d_out    = (~decode) ? (LOGQ) : ((fn_decomp_q) ? fn_decomp_d : ((dual) ? {d_q,1'b0} : d_q));
 assign d_in_h   = d_in >> 1;
 assign d_out_h  = ( decode) ? d_q : (LOGQ>>1);
 
@@ -115,9 +124,10 @@ for (genvar i = 0; i < LOGQ; i++) begin
 end
 // big-endian logic end
 
-assign C = (bigend_q) ? asr_out1 : C_int[LOGQ-1:0];
+assign C = (fn_decomp_q) ? fn_decomp_B : (bigend_q) ? asr_out1 : C_int[LOGQ-1:0];
 
-assign o_valid = ctr >= d_out;                                              
+
+assign o_valid = (ctr >= d_out) && (fn_decomp_o_valid || (!fn_decomp_q));
 
 assign i_ready = (~decode) ? 1 : (ctr_read_next <= (K)) ? 1'b1 : 1'b0; // some buffer is allowed
 
@@ -140,6 +150,22 @@ asr #(
     .d   ({1'b0,logq0_m_d}),
     .dual(dual            ),
     .C   (asr_out1        )
+);
+
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////////////// ASR with dual mode for Big-Endian /////////
+
+fndecomp_pp #(
+    .LOGQ  (LOGQ)
+) fndecomp_pp_inst (
+    .A   (C_q),
+    .o_valid (fn_decomp_o_valid),
+    .d  (fn_decomp_d),
+    .B  (fn_decomp_B)
 );
 
 /////////////////////////////////////////////////////////////////////////
@@ -186,6 +212,12 @@ always @(posedge clk) begin
     bigend_q <= bigend;
     d_q <= d;
     mode_q <= mode;
+    fn_decomp_q <= fn_decomp;
+end
+
+always @(posedge clk) begin
+    C_d <= C_mx;
+    o_valid_q <= o_valid_int;
 end
 
 

@@ -29,6 +29,7 @@
 `define OP_SQADD              5'd19
 `define OP_TOCENTER           5'd20
 `define OP_FROMCENTER         5'd21
+`define OP_FNDECOMPRESS       5'd22
 // below OPs are only valid for MODE_SINGLE
 `define OP_DECOMPOSE          5'd10
 `define OP_CHKINFNORM         5'd11

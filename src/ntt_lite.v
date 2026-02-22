@@ -262,6 +262,7 @@ wire encode_i_valid;
 wire encode_i_ready;
 wire encode_o_valid;
 wire encode_busy;
+wire fn_decomp;
 
 // cbd signals
 wire [LOGQ-1:0] cbd_in;
@@ -444,11 +445,12 @@ assign chknorm_bu = B_o[0];
 assign encode_i_valid = sr_e;
 assign encode_in      = (decode) ? twiddle_ram_dout  :
                                    poly_in_mx_A      ;
-assign decode         = (op == `OP_DECODE  ) ? 1'b1 :
-                        (op == `OP_CBD     ) ? 1'b1 :
-                        (op == `OP_REJ_SAMP) ? 1'b1 :
-                                               1'b0 ;
-
+assign decode         = (op == `OP_DECODE      ) ? 1'b1 :
+                        (op == `OP_FNDECOMPRESS) ? 1'b1 :
+                        (op == `OP_CBD         ) ? 1'b1 :
+                        (op == `OP_REJ_SAMP    ) ? 1'b1 :
+                                                   1'b0 ;
+assign fn_decomp      = (op == `OP_FNDECOMPRESS) ? 1'b1 : 1'b0;
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -860,18 +862,19 @@ shiftreg #(
 encode #(
     .LOGQ(LOGQ)
 ) encode_inst (
-    .clk    (clk             ),
-    .rst    (rst | encode_rst),
-    .A      (encode_in       ),
-    .decode (decode          ),
-    .bigend (bigend          ),
-    .C      (encode_out      ),
-    .d      (d               ),
-    .mode   (mode            ),
-    .busy   (encode_busy     ),
-    .i_valid(encode_i_valid  ),
-    .i_ready(encode_i_ready  ),
-    .o_valid(encode_o_valid  )
+    .clk      (clk             ),
+    .rst      (rst | encode_rst),
+    .A        (encode_in       ),
+    .decode   (decode          ),
+    .bigend   (bigend          ),
+    .fn_decomp(fn_decomp       ),
+    .C        (encode_out      ),
+    .d        (d               ),
+    .mode     (mode            ),
+    .busy     (encode_busy     ),
+    .i_valid  (encode_i_valid  ),
+    .i_ready  (encode_i_ready  ),
+    .o_valid  (encode_o_valid  )
 );
 
 
@@ -1217,7 +1220,7 @@ always @(*) begin
             if ((op == `OP_DECODE) || (op == `OP_CBD)) begin
                 io_limit = decode_num_words;
             end
-            else if (op == `OP_REJ_SAMP) begin
+            else if ((op == `OP_REJ_SAMP) || (op == `OP_FNDECOMPRESS)) begin
                 io_limit = rejsamp_num_words;
             end
 
@@ -1243,9 +1246,10 @@ always @(*) begin
                 end
                 sr_i = !rdone;
             end
-            if ((op == `OP_DECODE   && encode_o_valid) || 
-                (op == `OP_CBD      && cbd_o_valid   ) ||
-                (op == `OP_REJ_SAMP && cbd_o_valid   ))
+            if ((op == `OP_DECODE       && encode_o_valid) ||
+                (op == `OP_FNDECOMPRESS && encode_o_valid) || 
+                (op == `OP_CBD          && cbd_o_valid   ) ||
+                (op == `OP_REJ_SAMP     && cbd_o_valid   ))
             begin
                 if (op == `OP_CBD || op == `OP_REJ_SAMP) begin
                     upoly_cbd = 1;
@@ -1436,7 +1440,7 @@ always @(*) begin
             if ((op == `OP_DECODE) || (op == `OP_CBD)) begin
                 io_limit = decode_num_words;
             end
-            else if (op == `OP_REJ_SAMP) begin
+            else if ((op == `OP_REJ_SAMP) || (op == `OP_FNDECOMPRESS)) begin
                 io_limit = rejsamp_num_words;
             end
 
@@ -1849,29 +1853,30 @@ end
 
 always @(*) begin
     case (op)
-        `OP_NTT        : next_state_op = ST_NTT0;
-        `OP_INTT       : next_state_op = ST_NTT0;
-        `OP_PWM        : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
-        `OP_MAC        : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
-        `OP_SQ         : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
-        `OP_SQADD      : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
-        `OP_ADD        : next_state_op = ST_ADDSUB;
-        `OP_SUB        : next_state_op = ST_ADDSUB;
-        `OP_USEHINT    : next_state_op = ST_ADDSUB;
-        `OP_TOCENTER   : next_state_op = ST_ADDSUB;
-        `OP_FROMCENTER : next_state_op = ST_ADDSUB;
-        `OP_SUM        : next_state_op = ST_SUM0;
-        `OP_CHKL1NORM  : next_state_op = ST_SUM0;    
-        `OP_COMPRESS   : next_state_op = ST_PWM0;
-        `OP_DECOMPRESS : next_state_op = ST_PWM0;
-        `OP_DECOMPOSE  : next_state_op = ST_PWM0;
-        `OP_CHKINFNORM : next_state_op = ST_CHKINFNORM;
-        `OP_MAKEHINT   : next_state_op = ST_ADDSUB;
-        `OP_ENCODE     : next_state_op = ST_ENCODE0;
-        `OP_DECODE     : next_state_op = ST_DECODE;
-        `OP_CBD        : next_state_op = ST_DECODE;
-        `OP_REJ_SAMP   : next_state_op = ST_DECODE;
-        default        : next_state_op = ST_IDLE;
+        `OP_NTT          : next_state_op = ST_NTT0;
+        `OP_INTT         : next_state_op = ST_NTT0;
+        `OP_PWM          : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
+        `OP_MAC          : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
+        `OP_SQ           : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
+        `OP_SQADD        : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
+        `OP_ADD          : next_state_op = ST_ADDSUB;
+        `OP_SUB          : next_state_op = ST_ADDSUB;
+        `OP_USEHINT      : next_state_op = ST_ADDSUB;
+        `OP_TOCENTER     : next_state_op = ST_ADDSUB;
+        `OP_FROMCENTER   : next_state_op = ST_ADDSUB;
+        `OP_SUM          : next_state_op = ST_SUM0;
+        `OP_CHKL1NORM    : next_state_op = ST_SUM0;    
+        `OP_COMPRESS     : next_state_op = ST_PWM0;
+        `OP_DECOMPRESS   : next_state_op = ST_PWM0;
+        `OP_DECOMPOSE    : next_state_op = ST_PWM0;
+        `OP_CHKINFNORM   : next_state_op = ST_CHKINFNORM;
+        `OP_MAKEHINT     : next_state_op = ST_ADDSUB;
+        `OP_ENCODE       : next_state_op = ST_ENCODE0;
+        `OP_DECODE       : next_state_op = ST_DECODE;
+        `OP_CBD          : next_state_op = ST_DECODE;
+        `OP_REJ_SAMP     : next_state_op = ST_DECODE;
+        `OP_FNDECOMPRESS : next_state_op = ST_DECODE;
+        default          : next_state_op = ST_IDLE;
     endcase
 end
 

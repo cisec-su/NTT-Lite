@@ -417,6 +417,62 @@ def poly_modq_encode_ours(coeffs, q: int = 12289) -> bytes:
     return bytes(out)
 ######################### HELPERS FOR DECODE BIGEND ######################
 
+######################### HELPERS FOR FNDECOMP ###########################
+def poly_comp_decode(data: bytes, n: int = 512):
+    """
+    Python equivalent of the C poly_comp_decode() logic.
+
+    Returns:
+        (coeffs, used_len) on success
+        (None, 0) on failure
+    """
+    v = 0
+    acc = 0
+    acc_len = 0
+    coeffs = [0] * n
+
+    for u in range(n):
+        # Need next 8 bits: sign + low 7 bits
+        if v >= len(data):
+            return None, 0
+
+        acc = ((acc << 8) | data[v]) & 0xFFFFFFFF
+        v += 1
+
+        b = (acc >> acc_len) & 0xFF
+        s = b & 0x80
+        m = b & 0x7F
+
+        # Read unary tail: zeros add 128, stop at first 1
+        while True:
+            if acc_len == 0:
+                if v >= len(data):
+                    return None, 0
+                acc = ((acc << 8) | data[v]) & 0xFFFFFFFF
+                v += 1
+                acc_len = 8
+
+            acc_len -= 1
+            bit = (acc >> acc_len) & 1
+            if bit != 0:
+                break
+
+            m += 128
+            if m > 2047:
+                return None, 0
+
+        # "-0" forbidden
+        # if s and m == 0:
+        #     return None, 0
+
+        coeffs[u] = -m if s else m
+
+    # Unused bits in last byte must be zero
+    # if acc_len > 0 and (acc & ((1 << acc_len) - 1)) != 0:
+    #     return None, 0
+
+    return coeffs, v
+######################### HELPERS FOR END ###########################
 
 encode_in = []
 for i in range(n):
@@ -429,6 +485,23 @@ with open("encode_out_bigend.txt", "w") as f:
         f.write(hex(temp)[2:] + "\n")
 
 decoded= poly_modq_decode_ours(encode_bigend, n, q)
+
+
+
+fn_encoded = bytes([random.randint(0, 255) for _ in range(1600)])
+fn_decoded, _ = poly_comp_decode(fn_encoded, 2*n)
+
+
+with open("fn_decomp_in.txt", "w") as f:
+    for i in range(200):
+        temp = int.from_bytes(fn_encoded[i*4: i*4+4], 'little')
+        f.write(hex(temp)[2:] + "\n")
+
+print(len(fn_decoded))
+with open("fn_decomp_out.txt", "w") as f:
+    for i in range(n):
+        temp = (fn_decoded[2*i] & 0xffff) | ((fn_decoded[2*i + 1] & 0xffff) << 16)
+        f.write(hex(temp)[2:] + "\n")
 
 ############################# rej sample test ##########################
 
