@@ -7,8 +7,11 @@ module fndecomp_pp
         localparam LOGLOGQ = $clog2(LOGQ + 1)
     )
     (
+        input                     clk    ,
+        input                     rst    ,
         input      [LOGQ    -1:0] A      ,
         output                    o_valid,
+        output reg                o_valid0,
         output     [LOGLOGQ   :0] d      ,
         output reg [LOGQ    -1:0] B
     );
@@ -19,14 +22,16 @@ localparam LOGQ0   = LOGQ >> 1;
 
 ///////////////////////// Signals Declaration ///////////////////////////
 
-reg o_valid0, o_valid1;
+
 reg  [LOGLOGQ :0] d0_int ;
-reg  [LOGLOGQ :0] d1_int ;
 reg  [LOGLOGQ :0] d0_int_;
-reg  [LOGLOGQ :0] d1_int_;
 wire [LOGQ  -1:0] A_int  ;
 wire [LOGM  -2:0] A0_rev ;
-wire [LOGM  -2:0] A1_rev ;
+
+reg [LOGQ0-1:0] B0;
+reg [LOGQ0-1:0] B0_q;
+
+reg full;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -34,14 +39,16 @@ wire [LOGM  -2:0] A1_rev ;
 
 ///////////////////////////// Assignments ///////////////////////////////
 
-assign A_int = A >> d0_int;
-assign o_valid = o_valid0 & o_valid1;
-assign d = d0_int + d1_int;
+assign o_valid = o_valid0 & full;
+assign d = d0_int;
 
 for (genvar i = 0; i < LOGM - 1; i++) begin
     assign A0_rev[i] = A    [LOGM-1-i];
-    assign A1_rev[i] = A_int[LOGM-1-i];
 end
+
+
+assign B[LOGQ0-1:0] = B0_q;
+assign B[LOGQ-1:LOGQ0] = B0;
 
 
 always @(*) begin
@@ -56,28 +63,24 @@ always @(*) begin
             break; 
         end
     end
-    B[LOGQ0-1:0] = A0_rev + (d0_int_ << (LOGM - 1));
+    B0 = A0_rev + (d0_int_ << (LOGM - 1));
     if (A[0] == 1) begin
-        B[LOGQ0-1:0] = ~B[LOGQ0-1:0] + 1;
+        B0 = ~B0 + 1;
     end
-
-    d1_int_ = 0;
-    o_valid1 = 0;
-    d1_int = 0;
-    for (int i = LOGM; i < 3*LOGM; i++) begin
-        if (A_int[i] == 1) begin
-            d1_int_ = i - LOGM;
-            o_valid1 = 1'b1;
-            d1_int = LOGM + d1_int_ + 1;
-            break; 
-        end
-    end
-    B[LOGQ-1:LOGQ0] = A1_rev + (d1_int_ << (LOGM - 1));
-    if (A_int[0] == 1) begin
-        B[LOGQ-1:LOGQ0] = ~B[LOGQ-1:LOGQ0] + 1;
-    end
-
 end
+
+
+always @(posedge clk) begin
+    if (rst) begin
+        B0_q <= 0;
+        full <= 0;
+    end
+    else if (o_valid0) begin
+        B0_q <= B0;
+        full <= (full) ? 0 : 1;
+    end
+end
+
 
 /////////////////////////////////////////////////////////////////////////
 

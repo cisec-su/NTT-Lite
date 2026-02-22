@@ -40,16 +40,12 @@ reg  [K+LOGQ -1:0] C_q;
 wire [LOGQ   -1:0] C_int;
 wire [LOGQ   -1:0] C_rev;
 wire [LOGQ   -1:0] C_rev_dual;
-wire [LOGQ   -1:0] C_mx;
-reg  [LOGQ   -1:0] C_d;
 wire [LOGQ   -1:0] A_rev;
 wire [LOGQ   -1:0] A_dual;
 wire [LOGLOGQ-2:0] logq0_m_d;
 wire [LOGQ-1  :0] d_mask_l;
 wire [LOGQ-1  :0] d_mask_h;
 
-reg  o_valid_q;
-wire o_valid_int;
 
 wire [LOGQ+K-1:0] asr_out;
 wire [LOGQ  -1:0] asr_out1;
@@ -71,7 +67,9 @@ wire [LOGLOGQ:0] d_out_h;
 reg fn_decomp_q;
 wire [LOGLOGQ:0] fn_decomp_d;
 wire [LOGQ -1:0] fn_decomp_B;
-wire             fn_decomp_o_valid;
+wire             fn_decomp_o_valid, fn_decomp_o_valid0;
+
+wire o_valid_int;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -127,14 +125,15 @@ end
 assign C = (fn_decomp_q) ? fn_decomp_B : (bigend_q) ? asr_out1 : C_int[LOGQ-1:0];
 
 
-assign o_valid = (ctr >= d_out) && (fn_decomp_o_valid || (!fn_decomp_q));
+assign o_valid_int = (ctr >= d_out) && (fn_decomp_o_valid0 || (!fn_decomp_q));
 
 assign i_ready = (~decode) ? 1 : (ctr_read_next <= (K)) ? 1'b1 : 1'b0; // some buffer is allowed
 
-assign ctr_read = ctr - ((o_valid) ? d_out : 0);
+assign ctr_read = ctr - ((o_valid_int) ? d_out : 0);
 assign ctr_read_next = (i_valid) ? ctr_read + d_in : ctr_read;
 
-assign busy = i_valid | i_valid_q | o_valid;
+assign busy = i_valid | i_valid_q | o_valid_int;
+assign o_valid = (fn_decomp_q) ? (fn_decomp_o_valid && o_valid_int) : o_valid_int;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -162,8 +161,11 @@ asr #(
 fndecomp_pp #(
     .LOGQ  (LOGQ)
 ) fndecomp_pp_inst (
-    .A   (C_q),
-    .o_valid (fn_decomp_o_valid),
+    .clk(clk),
+    .rst(rst),
+    .A  (C_q),
+    .o_valid0(fn_decomp_o_valid0),
+    .o_valid (fn_decomp_o_valid ),
     .d  (fn_decomp_d),
     .B  (fn_decomp_B)
 );
@@ -181,7 +183,7 @@ always @(posedge clk) begin
         C_q <= 0;
     end
     else begin
-        C_q <= ((i_valid & i_ready_q) ? (A_dual << ctr_read) : 0) ^ ((o_valid) ? asr_out : C_q);
+        C_q <= ((i_valid & i_ready_q) ? (A_dual << ctr_read) : 0) ^ ((o_valid_int) ? asr_out : C_q);
     end
 end
 
@@ -213,11 +215,6 @@ always @(posedge clk) begin
     d_q <= d;
     mode_q <= mode;
     fn_decomp_q <= fn_decomp;
-end
-
-always @(posedge clk) begin
-    C_d <= C_mx;
-    o_valid_q <= o_valid_int;
 end
 
 

@@ -13,13 +13,13 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="120,871.156 ns"></ZoomStartTime>
-      <ZoomEndTime time="121,080.969 ns"></ZoomEndTime>
-      <Cursor1Time time="121,046.000 ns"></Cursor1Time>
+      <ZoomStartTime time="121,627.666 ns"></ZoomStartTime>
+      <ZoomEndTime time="121,961.667 ns"></ZoomEndTime>
+      <Cursor1Time time="121,906.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="150"></NameColumnWidth>
-      <ValueColumnWidth column_width="125"></ValueColumnWidth>
+      <NameColumnWidth column_width="153"></NameColumnWidth>
+      <ValueColumnWidth column_width="157"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="82" />
    <wave_markers>
@@ -29,6 +29,7 @@
       <marker label="" time="29709833" />
       <marker label="" time="27899700" />
       <marker label="" time="151459400" />
+      <marker label="" time="118016000" />
    </wave_markers>
    <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/o_read">
       <obj_property name="ElementShortName">o_read</obj_property>
@@ -603,6 +604,30 @@
          <obj_property name="ElementShortName">d_out_h[6:0]</obj_property>
          <obj_property name="ObjectShortName">d_out_h[6:0]</obj_property>
       </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/i_valid">
+         <obj_property name="ElementShortName">i_valid</obj_property>
+         <obj_property name="ObjectShortName">i_valid</obj_property>
+         <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/A">
+         <obj_property name="ElementShortName">A[31:0]</obj_property>
+         <obj_property name="ObjectShortName">A[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/B0">
+         <obj_property name="ElementShortName">B0[15:0]</obj_property>
+         <obj_property name="ObjectShortName">B0[15:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/B0_q">
+         <obj_property name="ElementShortName">B0_q[15:0]</obj_property>
+         <obj_property name="ObjectShortName">B0_q[15:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/full">
+         <obj_property name="ElementShortName">full</obj_property>
+         <obj_property name="ObjectShortName">full</obj_property>
+      </wvobject>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fn_decomp">
          <obj_property name="ElementShortName">fn_decomp</obj_property>
          <obj_property name="ObjectShortName">fn_decomp</obj_property>
@@ -614,6 +639,8 @@
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fn_decomp_B">
          <obj_property name="ElementShortName">fn_decomp_B[31:0]</obj_property>
          <obj_property name="ObjectShortName">fn_decomp_B[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fn_decomp_o_valid">
          <obj_property name="ElementShortName">fn_decomp_o_valid</obj_property>
@@ -626,6 +653,8 @@
       <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/o_valid">
          <obj_property name="ElementShortName">o_valid</obj_property>
          <obj_property name="ObjectShortName">o_valid</obj_property>
+         <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/d">
          <obj_property name="ElementShortName">d[6:0]</obj_property>
@@ -639,25 +668,13 @@
          <obj_property name="ElementShortName">o_valid0</obj_property>
          <obj_property name="ObjectShortName">o_valid0</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/o_valid1">
-         <obj_property name="ElementShortName">o_valid1</obj_property>
-         <obj_property name="ObjectShortName">o_valid1</obj_property>
-      </wvobject>
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/d0_int">
          <obj_property name="ElementShortName">d0_int[6:0]</obj_property>
          <obj_property name="ObjectShortName">d0_int[6:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/d1_int">
-         <obj_property name="ElementShortName">d1_int[6:0]</obj_property>
-         <obj_property name="ObjectShortName">d1_int[6:0]</obj_property>
-      </wvobject>
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/d0_int_">
          <obj_property name="ElementShortName">d0_int_[6:0]</obj_property>
          <obj_property name="ObjectShortName">d0_int_[6:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/d1_int_">
-         <obj_property name="ElementShortName">d1_int_[6:0]</obj_property>
-         <obj_property name="ObjectShortName">d1_int_[6:0]</obj_property>
       </wvobject>
       <wvobject type="array" fp_name="/ntt_lite_tb/ntt_lite_inst/encode_inst/fndecomp_pp_inst/A_int">
          <obj_property name="ElementShortName">A_int[31:0]</obj_property>

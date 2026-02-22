@@ -1455,9 +1455,10 @@ always @(*) begin
                 end
                 sr_i = !rdone;
             end
-            if (((op != `OP_CBD && op != `OP_REJ_SAMP) && encode_o_valid) || 
-                (op == `OP_CBD      && cbd_o_valid   ) ||
-                (op == `OP_REJ_SAMP && cbd_o_valid   ))
+            if ((op == `OP_DECODE       && encode_o_valid) ||
+                (op == `OP_FNDECOMPRESS && encode_o_valid) || 
+                (op == `OP_CBD          && cbd_o_valid   ) ||
+                (op == `OP_REJ_SAMP     && cbd_o_valid   ))
             begin
                 if (op == `OP_CBD || op == `OP_REJ_SAMP) begin
                     upoly_cbd = 1;
