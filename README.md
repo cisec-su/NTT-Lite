@@ -1,2 +1,2 @@
 # lightweight-ntt
-A lighweight NTT core for FHE applications in edge devices
+A lighweight NTT core for PQC and FHE applications in edge devices
