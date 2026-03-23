@@ -1,2 +1,2 @@
-# lightweight-ntt
-A lighweight NTT core for PQC and FHE applications in edge devices
+# NTT-Lite
+A lighweight NTT and polynomial arithmetic core for PQC and FHE applications on edge devices
