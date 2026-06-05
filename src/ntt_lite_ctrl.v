@@ -24,6 +24,7 @@ module ntt_lite_ctrl
         output reg         rhs_const,    // (Write)        
         output reg         op_switch,    // (Write)
         output reg         bigend,       // (Write)
+        output reg         ctrl_rst,     // (Write/Self-Clear)
         output reg [31:0]  q,            // (Read/Write)
         output reg [31:0]  inv2,         // (Read/Write)        
         output reg [63:0]  mu,           // (Read/Write)
@@ -81,6 +82,10 @@ localparam STATUS_BUSY_BIT        = 30;
 localparam STATUS_DONE_BIT        = 31;
 
 
+// Bit-fields for advanced ctrl register
+localparam ACTRL_RST_BIT          = 0;
+
+
 reg done_q;
 reg chknorm_q;
 
@@ -123,6 +128,21 @@ always @(posedge clk) begin
         cmd <= wdata[CTRL_CMD_MSB:CTRL_CMD_LSB];
     end
 end
+
+
+// RST (Self-Clear)
+always @(posedge clk) begin
+    if (rst) begin
+        ctrl_rst <= 1'b0;
+    end
+    else if (ctrl_rst) begin
+        ctrl_rst <= 1'b0;
+    end
+    else if (we && (addr == (BASE_ADDR + ACTRL_ADDR))) begin
+        ctrl_rst <= wdata[ACTRL_RST_BIT];
+    end
+end
+
 
 // (Write)
 always @(posedge clk) begin

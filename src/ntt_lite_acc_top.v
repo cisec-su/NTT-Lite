@@ -86,6 +86,7 @@ wire ctrl_op_switch;
 wire ctrl_chknorm;
 wire ctrl_rej_samp_ip;
 wire ctrl_bigend;
+wire ctrl_rst;
 
 // CTRL & FSM
 wire [31:0] ctrl_din_addr;
@@ -98,7 +99,7 @@ ntt_lite #(
     .LOGQ(LOGQ)
 ) ntt_lite (
     .clk        (clk        ),
-    .rst        (rst        ),
+    .rst        (rst|ctrl_rst),
     // ntt <-> fsm
     .i_data     (fsm_i_data ),
     .i_ready    (fsm_i_ready),
@@ -166,6 +167,7 @@ ntt_lite_ctrl #(
     .chknorm    (ctrl_chknorm),
     .rej_samp_ip(ctrl_rej_samp_ip),
     .busy       (ctrl_busy  ),
+    .ctrl_rst   (ctrl_rst   ),
     // fsm <-> ctrl
     .din_addr   (ctrl_din_addr ),
     .dout_addr  (ctrl_dout_addr),

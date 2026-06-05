@@ -126,10 +126,9 @@ reg  chknorm_q;
 reg  hint_q;
 
 
-assign mode_mul    = (mode_q == `MODE_POLY && op_q != `OP_PWM && op_q != `OP_MAC
-                                           && op_q != `OP_SQ  && op_q != `OP_SQADD) ? `MODE_DUAL   :
-                     (en_z_q                                                      ) ? `MODE_SINGLE :
-                                                                                       mode_q      ;
+assign mode_mul    = (mode_q == `MODE_POLY && (op_q != `OP_PWM && op_q != `OP_MAC && op_q != `OP_SQADD)) ? `MODE_DUAL   :
+                     (en_z_q                                                                           ) ? `MODE_SINGLE :
+                                                                                                            mode_q      ;
 assign dual        =  mode_q == `MODE_DUAL || mode_q == `MODE_POLY;
 
 assign Q_half      = (dual) ? {Q_q[LOGQ0-1:0] >> 1, Q_q[LOGQ0-1:0] >> 1} : 
@@ -170,7 +169,6 @@ assign mm_in_A     = (op_q == `OP_INTT                          ) ? sub_out_C   
 assign mm_in_B     = (op_q == `OP_DECOMPOSE                     ) ? one_dual           :
                      (op_q == `OP_COMPRESS                      ) ? pow_2_d_dual       :
                      (op_q == `OP_DECOMPRESS                    ) ? Q_q                :
-                     (op_q == `OP_SQ && !en_z_q                 ) ? B_q                :
                      (op_q == `OP_SQADD && !en_z_q              ) ? B_q                :
                                                                     PSI_q              ;
 assign mm_in_E     = (floor_q                                   ) ? {LOGQ{1'b0}}       :
@@ -272,14 +270,12 @@ assign E_int       = (op_q == `OP_INTT      ) ? shift_out_2          :
                      (op_q == `OP_USEHINT   ) ? add_out_C            :
                      (op_q == `OP_PWM       ) ? ((en_z_q) ? add_out_C : mm_out_C) :
                      (op_q == `OP_MAC       ) ? ((en_z_q) ? add_out_C : mm_out_C) :
-                     (op_q == `OP_SQ        ) ? ((en_z_q) ? add_out_C : mm_out_C) :
                      (op_q == `OP_SQADD     ) ? ((en_z_q) ? add_out_C : mm_out_C) :
                     /*op_q == `OP_NTT        */ add_out_C            ;
 assign O_int       = (op_q == `OP_INTT      ) ? mm_out_C             :
                      (op_q == `OP_DECOMPOSE ) ? decompose_pp_out_B1  :
                      (op_q == `OP_PWM       ) ? shift_out_2          :
                      (op_q == `OP_MAC       ) ? shift_out_2          :
-                     (op_q == `OP_SQ        ) ? shift_out_2          :
                      (op_q == `OP_SQADD     ) ? shift_out_2          :
                      (op_q == `OP_CHKINFNORM) ? chknorm              :
                      (op_q == `OP_CHKL1NORM ) ? chknorm              :

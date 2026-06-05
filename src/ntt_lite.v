@@ -1269,7 +1269,7 @@ always @(*) begin
                     ctr1_inc = 1;
                 end                
             end
-            else if (op == `OP_REJ_SAMP && rdone && !encode_busy && !cbd_busy) begin
+            else if ((op == `OP_REJ_SAMP || op == `OP_FNDECOMPRESS) && rdone && !encode_busy && (!cbd_busy || op == `OP_FNDECOMPRESS)) begin
                 rej_samp_ip_set = 1;
                 next_state = ST_IDLE;
                 done_set = 1;
@@ -1476,7 +1476,7 @@ always @(*) begin
                     ctr1_inc = 1;
                 end                
             end
-            else if (op == `OP_REJ_SAMP && rdone && !encode_busy && !cbd_busy) begin
+            else if ((op == `OP_REJ_SAMP || op == `OP_FNDECOMPRESS) && rdone && !encode_busy && (!cbd_busy || op == `OP_FNDECOMPRESS)) begin
                 rej_samp_ip_set = 1;
                 ctr0_rst = 1;
                 next_state = ST_IDLE;
@@ -1858,7 +1858,6 @@ always @(*) begin
         `OP_INTT         : next_state_op = ST_NTT0;
         `OP_PWM          : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
         `OP_MAC          : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
-        `OP_SQ           : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
         `OP_SQADD        : next_state_op = (mode == `MODE_POLY) ? ST_POLY_PWM0 : ST_PWM0;
         `OP_ADD          : next_state_op = ST_ADDSUB;
         `OP_SUB          : next_state_op = ST_ADDSUB;
