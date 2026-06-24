@@ -6,13 +6,13 @@
 
 
 typedef struct packed {
-    int LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT;
+    int LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT, FF_BARRETT_KR_SUM0, FF_BARRETT_KR_SUB0, FF_BARRETT_KR_MUL, FF_BARRETT_KR_SUM1, FF_BARRETT_KR_SUM2, FF_BARRETT_KR_SUB1;
 } barrett_params_t;
 
 
 function automatic karatsuba_64x64_dual_params_t barrett_mac_0_params(input barrett_params_t params);
-    barrett_mac_0_params = '{FF_IN: params.FF_SHF, FF_SUM0 : 0, FF_SUB0 : 0, FF_MUL : params.FF_MUL,
-                             FF_SUM1 : 0, FF_SUM2 : 0, FF_SUB1 : 0, FF_OUT : 1};
+    barrett_mac_0_params = '{FF_IN: 0, FF_SUM0 : params.FF_BARRETT_KR_SUM0, FF_SUB0 : params.FF_BARRETT_KR_SUB0, FF_MUL : params.FF_BARRETT_KR_MUL,
+                             FF_SUM1 : params.FF_BARRETT_KR_SUM1, FF_SUM2 : params.FF_BARRETT_KR_SUM2, FF_SUB1 : params.FF_BARRETT_KR_SUB1, FF_OUT : 1};
 endfunction
 
 

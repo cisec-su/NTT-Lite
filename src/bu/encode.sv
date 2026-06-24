@@ -1,4 +1,4 @@
-`include "../ntt_lite.vh"
+`include "poly_acc.vh"
 module encode
    #(
         parameter  LOGQ    = 32,

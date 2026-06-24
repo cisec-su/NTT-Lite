@@ -4,11 +4,53 @@ import math
 
 random.seed(0)
 
+################# HELPERS #############################################3
+
+def reduce_mod_pm(r, a):
+    """
+    Reduces r modulo a, such that the result is in the range
+    -(a >> 1) < r <= (a >> 1)
+    """
+    r = r % a
+    if r > (a >> 1):
+        r -= a
+    return r
+
+def decompose(r, a, q):
+    """
+    Takes an element r and represents
+    it as:
+
+    r = r1*a + r0
+
+    With r0 in the range
+
+    -(a << 1) < r0 <= (a << 1)
+    """
+    rp = r % q
+    r0 = reduce_mod_pm(rp, a)
+    t = rp - r0
+    if t == q - 1:
+        r1 = 0
+        r0 = r0 - 1
+    else:
+        r1 = (t) // a
+    # assert r0 > -(a >> 1)
+    # assert r0 <= (a >> 1)
+    # assert r % q == (r0 + r1 * a) % q
+    return r1, r0 % a
 
 def _br(i, k):
     bin_i = bin(i & (2**k - 1))[2:].zfill(k)
     return int(bin_i[::-1], 2)
 
+def make_hint(a0, a1, q, bound):
+    if(((a0 > bound) and (a0 < (q-bound))) or (a0 == (q-bound) and a1 != 0)):
+        return 1
+    else:
+        return 0
+
+#############################################################3
 
 q = 3329
 logq = math.ceil(math.log2(q))
@@ -16,7 +58,6 @@ psi = 17
 logn = 7
 n = 1 << logn
 mu_64 = (1 << 64) // q
-mu_32 = (1 << 32) // q
 log = 23
 b = 32
 d = 10
@@ -35,9 +76,10 @@ with open("meta.txt", "w") as f:
     f.write(hex(logq)[2:] + "\n")
     f.write(hex(d)[2:] + "\n")
     f.write(hex(inv2)[2:] + "\n")
-    f.write(hex(mu_32)[2:] + "\n")
 
 A_0 =  [random.randint(0, q-1) for _ in range(n)]
+A_0[0] = q-1
+A_0[1] = 0
 A_1 =  [random.randint(0, q-1) for _ in range(n)]
 B_0 =  [random.randint(0, q-1) for _ in range(n)]
 B_1 =  [random.randint(0, q-1) for _ in range(n)]
@@ -92,7 +134,7 @@ with open("sq_out_single.txt", "w") as f:
 
 with open("mac_out_single.txt", "w") as f:
     for i in range(n):
-        f.write(hex((A_0[i] * B_0[i] + A_0[i] * B_0[i]) % q )[2:] + "\n")
+        f.write(hex((A_0[i] + A_0[i] * B_0[i]) % q )[2:] + "\n")
 
 
 with open("sqadd_out_single.txt", "w") as f:
@@ -506,66 +548,23 @@ with open("fn_decomp_out.txt", "w") as f:
 ############################# rej sample test ##########################
 
 
-
-
-############################# DECOMPOSE TEST ###########################
-
-def reduce_mod_pm(r, a):
-    """
-    Reduces r modulo a, such that the result is in the range
-    -(a >> 1) < r <= (a >> 1)
-    """
-    r = r % a
-    if r > (a >> 1):
-        r -= a
-    return r
-
-def decompose(r, a, q):
-    """
-    Takes an element r and represents
-    it as:
-
-    r = r1*a + r0
-
-    With r0 in the range
-
-    -(a << 1) < r0 <= (a << 1)
-    """
-    rp = r % q
-    r0 = reduce_mod_pm(rp, a)
-    t = rp - r0
-    if t == q - 1:
-        r1 = 0
-        r0 = r0 - 1
-    else:
-        r1 = (t) // a
-    # assert r0 > -(a >> 1)
-    # assert r0 <= (a >> 1)
-    # assert r % q == (r0 + r1 * a) % q
-    return r1, r0 % q
-
-
-q = 8380417
-inv2 = 16
+inv2 = 8
 bound = (q - 1) // (inv2)
 logq = math.ceil(math.log2(q))
-logn = 8
-n = 1 << logn
 mu_64 = (1 << 64) // bound
-mu_32 = (1 << 32) // bound
 
 with open("decompose_meta.txt", "w") as f:
-    f.write(hex(q)[2:] + "\n")
+    f.write(hex(bound)[2:] + "\n")
     f.write(hex(mu_64)[2:] + "\n")
     f.write(hex(logn)[2:] + "\n")
     f.write(hex(logq)[2:] + "\n")
     f.write(hex(d)[2:] + "\n")
     f.write(hex(inv2)[2:] + "\n")
-    f.write(hex(mu_32)[2:] + "\n")
     f.write(hex(bound)[2:] + "\n")
 
 
-A =  [random.randint(0, q) for _ in range(n)]
+A  = [random.randint(0, q) for _ in range(n)]
+A0 = q-1
 
 with open("decompose_in.txt", "w") as f:
     for i in range(n):
@@ -589,15 +588,25 @@ with open("decompose_out_high.txt", "w") as f:
     for i in range(n):
         f.write(hex(AD1[i])[2:] + "\n")
 
+hints = [random.randint(0, 1) for _ in range(n)]
+
+with open("usehint_in.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(hints[i])[2:] + "\n")
+
+for i in range(n):
+    if (hints[i]):
+        if AD0[i] <= bound//2 and AD0[i] > 0:
+            AD1[i] += 1
+        else:
+            AD1[i] += (inv2 - 1)
+        AD1[i] = AD1[i] % inv2
+
+with open("usehint_out.txt", "w") as f:
+    for i in range(n):
+        f.write(hex(AD1[i])[2:] + "\n")
 
 
-
-q = 8380417
-logq = math.ceil(math.log2(q))
-logn = 8
-n = 1 << logn
-mu_64 = (1 << 64) // inv2
-mu_32 = (1 << 32) // inv2
 
 T = 1023
 A =  [random.randint(0, T) % q for _ in range(n)]
@@ -614,7 +623,6 @@ with open("chkl1norm_meta.txt", "w") as f:
     f.write(hex(logq)[2:] + "\n")
     f.write(hex(d)[2:] + "\n")
     f.write(hex(inv2)[2:] + "\n")
-    f.write(hex(mu_32)[2:] + "\n")
     f.write(hex(bound)[2:] + "\n")
 
 
@@ -624,15 +632,9 @@ with open("chkl1norm_in.txt", "w") as f:
 
 
 
-q = 8380417
-bb = 16
+bb = 8
 bound =  (q - 1) // (bb)
 inv2 = q - bound
-logq = math.ceil(math.log2(q))
-logn = 8
-n = 1 << logn
-mu_64 = (1 << 64) // inv2
-mu_32 = (1 << 32) // inv2
 
 with open("chknorm_makehint_meta.txt", "w") as f:
     f.write(hex(q)[2:] + "\n")
@@ -641,7 +643,6 @@ with open("chknorm_makehint_meta.txt", "w") as f:
     f.write(hex(logq)[2:] + "\n")
     f.write(hex(d)[2:] + "\n")
     f.write(hex(inv2)[2:] + "\n")
-    f.write(hex(mu_32)[2:] + "\n")
     f.write(hex(bound)[2:] + "\n")
 
 
@@ -689,12 +690,6 @@ with open("makehint_in_high.txt", "w") as f:
     for i in range(n):
         f.write(hex(A1[i])[2:] + "\n")
 
-def make_hint(a0, a1, q, bound):
-    if(((a0 > bound) and (a0 < (q-bound))) or (a0 == (q-bound) and a1 != 0)):
-        return 1
-    else:
-        return 0
-
 
 hints = []
 
@@ -706,20 +701,6 @@ with open("makehint_out.txt", "w") as f:
         f.write(hex(hints[i])[2:] + "\n")
 
 
-for i in range(n):
-    if (hints[i]):
-        if AD0[i] <= q//2:
-            AD1[i] += 1
-        else:
-            AD1[i] += 15
-            AD1[i] = AD1[i] % 16
-
-with open("usehint_out.txt", "w") as f:
-    for i in range(n):
-        f.write(hex(AD1[i])[2:] + "\n")
-
-
-
 
 q = 0x77e001
 bound = q
@@ -728,7 +709,6 @@ logq = math.ceil(math.log2(q))
 logn = 8
 n = 1 << logn
 mu_64 = (1 << 64) // inv2
-mu_32 = (1 << 32) // inv2
 d = 24
 
 with open("rejsamp32_meta.txt", "w") as f:
@@ -738,7 +718,6 @@ with open("rejsamp32_meta.txt", "w") as f:
     f.write(hex(logq)[2:] + "\n")
     f.write(hex(d)[2:] + "\n")
     f.write(hex(inv2)[2:] + "\n")
-    f.write(hex(mu_32)[2:] + "\n")
     f.write(hex(bound)[2:] + "\n")
 
 rej_samp_in = [random.randint(0, 1 << 32) for _ in range(inv2)]
@@ -783,7 +762,6 @@ logq = 4
 logn = 8
 n = 1 << logn
 mu_64 = (1 << 64) // inv2
-mu_32 = (1 << 32) // inv2
 d = 4
 
 with open("rejsampeta_meta.txt", "w") as f:
@@ -793,7 +771,6 @@ with open("rejsampeta_meta.txt", "w") as f:
     f.write(hex(logq)[2:] + "\n")
     f.write(hex(d)[2:] + "\n")
     f.write(hex(inv2)[2:] + "\n")
-    f.write(hex(mu_32)[2:] + "\n")
     f.write(hex(bound)[2:] + "\n")
 
 rej_samp_in = [random.randint(0, 1 << 32) for _ in range(inv2)]
@@ -837,7 +814,6 @@ logq = 12
 logn = 7
 n = 1 << logn
 mu_64 = (1 << 64) // inv2
-mu_32 = (1 << 32) // inv2
 d = 12
 
 with open("rejsampdual_meta.txt", "w") as f:
@@ -847,7 +823,6 @@ with open("rejsampdual_meta.txt", "w") as f:
     f.write(hex(logq)[2:] + "\n")
     f.write(hex(d)[2:] + "\n")
     f.write(hex(inv2)[2:] + "\n")
-    f.write(hex(mu_32)[2:] + "\n")
     f.write(hex(bound)[2:] + "\n")
 
 rej_samp_in = [random.randint(0, 1 << 32) for _ in range(inv2)]

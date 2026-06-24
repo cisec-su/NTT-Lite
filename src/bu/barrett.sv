@@ -7,6 +7,12 @@ module barrett
         parameter  CORRECT  = 1 ,
         parameter  FF_IN    = 1 ,
         parameter  FF_SHF   = 1 ,
+        parameter  FF_BARRETT_KR_SUM0 = 0,
+        parameter  FF_BARRETT_KR_SUB0 = 0,
+        parameter  FF_BARRETT_KR_MUL  = 1,
+        parameter  FF_BARRETT_KR_SUM1 = 0,
+        parameter  FF_BARRETT_KR_SUM2 = 1,
+        parameter  FF_BARRETT_KR_SUB1 = 0,
         parameter  FF_MUL   = 1 ,
         parameter  FF_OUT   = 1
     )
@@ -16,7 +22,7 @@ module barrett
         input  [2*LOGQ-1:0] C   ,
         output [  LOGQ-1:0] T   ,
         input  [2*LOGQ-1:0] MU  ,
-        output [2*LOGQ-1:0] D   ,
+        output [  LOGQ-1:0] D   ,
         input  [  LOGQ-1:0] Q
     );
 
@@ -33,7 +39,8 @@ end
 
 ///////////////////////////// parameters ////////////////////////////////
 
-localparam barrett_params_t params = {LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT};
+localparam barrett_params_t params = {LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT,
+                                      FF_BARRETT_KR_SUM0, FF_BARRETT_KR_SUB0, FF_BARRETT_KR_MUL, FF_BARRETT_KR_SUM1, FF_BARRETT_KR_SUM2, FF_BARRETT_KR_SUB1};
 localparam karatsuba_64x64_dual_params_t  mac_0_params = barrett_mac_0_params(params);
 localparam mac_std_dual_32x34_params_t    mac_1_params = barrett_mac_1_params(params);
 
@@ -110,7 +117,8 @@ reg  [LOGQ-1:0] T5_q;
 
 wire [1:0] K;
 wire [LOGD-1:0] D_int;
-reg  [LOGD-1:0] D_int_q;
+wire [LOGQ-1:0] D_int_c;
+reg  [LOGQ-1:0] D_int_q;
 
 mode_mul_t mode_mul;
 
@@ -175,7 +183,7 @@ if (FF_OUT) begin
 end
 else begin
     assign T = T5;
-    assign D = D_int;
+    assign D = D_int_c;
 end
 
 /////////////////////////////////////////////////////////////////////////
@@ -334,6 +342,8 @@ addsub_dual #(
     .C   (D_int   )
 );
 
+assign D_int_c = (dual) ? {D_int[LOGQ +: LOGQ0], D_int[0 +: LOGQ0]} : D_int[LOGQ-1:0];
+
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -380,7 +390,7 @@ end
 if (FF_OUT) begin
     always @(posedge clk) begin
         T5_q <= T5;
-        D_int_q <= D_int;
+        D_int_q <= D_int_c;
     end
 end
 

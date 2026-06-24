@@ -2,7 +2,15 @@
 
 module modmul
     #(
-        parameter LOGQ    = 32
+        parameter int unsigned LOGQ            = 32,
+        parameter int unsigned FF_INTMUL_MUL   = 1 ,
+        parameter int unsigned FF_MODRED_MUL   = 1 ,
+        parameter int unsigned FF_BARRETT_KR_SUM0 = 0 ,
+        parameter int unsigned FF_BARRETT_KR_SUB0 = 0 ,
+        parameter int unsigned FF_BARRETT_KR_MUL  = 1 ,
+        parameter int unsigned FF_BARRETT_KR_SUM1 = 0 ,
+        parameter int unsigned FF_BARRETT_KR_SUM2 = 1 ,
+        parameter int unsigned FF_BARRETT_KR_SUB1 = 0
     )
     (
         input                  clk ,
@@ -38,14 +46,14 @@ wire dual;
 assign dual = (mode == MUL_SINGLE) ? 1'b0 : 1'b1;
 
 mac_std_dual_32x34 #(
-    .LOGB   (LOGQ  ),
-    .MODE_E (ADD_E ),
-    .FF_IN_A(1     ),
-    .FF_IN_B(1     ),
-    .FF_IN_E(1     ),
-    .FF_IN_Z(1     ),
-    .FF_OUT (1     ),
-    .FF_MUL (1     )
+    .LOGB   (LOGQ         ),
+    .MODE_E (ADD_E        ),
+    .FF_IN_A(1            ),
+    .FF_IN_B(1            ),
+    .FF_IN_E(1            ),
+    .FF_IN_Z(1            ),
+    .FF_MUL (FF_INTMUL_MUL),
+    .FF_OUT (1            )
 ) im_nstd (
     .clk     (clk ),
     .mode_mul(mode),
@@ -60,12 +68,18 @@ mac_std_dual_32x34 #(
 
 
 barrett #(
-    .LOGQ  (LOGQ),
-    .PIPE_Q(0   ),
-    .FF_IN (0   ),
-    .FF_SHF(0   ),
-    .FF_MUL(1   ),
-    .FF_OUT(1   )
+    .LOGQ  (LOGQ         ),
+    .PIPE_Q(0            ),
+    .FF_IN (0            ),
+    .FF_SHF(0            ),
+    .FF_BARRETT_KR_SUM0(FF_BARRETT_KR_SUM0),
+    .FF_BARRETT_KR_SUB0(FF_BARRETT_KR_SUB0),
+    .FF_BARRETT_KR_MUL (FF_BARRETT_KR_MUL ),
+    .FF_BARRETT_KR_SUM1(FF_BARRETT_KR_SUM1),
+    .FF_BARRETT_KR_SUM2(FF_BARRETT_KR_SUM2),
+    .FF_BARRETT_KR_SUB1(FF_BARRETT_KR_SUB1),
+    .FF_MUL(FF_MODRED_MUL),
+    .FF_OUT(1            )
 ) barrett_inst (
     .clk (clk ),
     .dual(dual),
