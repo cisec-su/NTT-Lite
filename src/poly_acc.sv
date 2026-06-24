@@ -286,6 +286,9 @@ wire [LOGQ-1:0] poly_in_mx_A;
 wire [LOGQ-1:0] poly_in_mx_B;
 wire [LOGQ-1:0] twiddle_in_mx;
 
+wire pwop_i_ready;
+wire pwop_o_valid;
+wire [LOGN-1:0] pwop_i_limit;
 
 reg is_ntt_q;
 reg is_intt_q;
@@ -373,8 +376,37 @@ assign is_ntt = is_ntt_q | is_intt_q; //TODO: state based ?
 assign logn_m1_shft_m1_ctr2 = logn_m1_shft_m1 >> ((is_sum) ? ctr2 : 0);
 assign ntt_limit = (is_sum) ? logn_m1_shft_m1_ctr2 : n_over4;
 
+///////////////////////////////////////////////////////////////////
+
+assign pwop_i_ready = (is_decode_q) ? encode_i_ready : 1'b1;
+assign pwop_o_valid = (is_decode_q || is_encode_q) ? encode_o_valid : bu_o_valid;
+assign pwop_i_limit = (is_decode_q) ? decode_num_words : n_m1;
+
 /////////////////////////////////////////////////////////////////////////
 
+
+
+///////////////////// Encode Inputs /////////////////////////////////////
+assign encode_i_valid = (is_decode_q || is_encode_q) ? bu_i_valid_d : 1'b0;
+// assign encode_i_valid = sr_e;
+assign encode_in      = (decode) ? twiddle_ram_dout  :
+                                   poly_in_mx_A      ;
+assign decode         = (is_decode_q      ) ? 1'b1 :
+                        (is_cbd_q         ) ? 1'b1 :
+                        (is_rej_samp_q    ) ? 1'b1 :
+                                              1'b0 ;
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+///////////////////// CBD Inputs ////////////////////////////////////////
+
+assign cbd_i_valid = encode_o_valid;
+assign cbd_in      = encode_out;
+assign cbd_mode    = d[1];
+
+/////////////////////////////////////////////////////////////////////////
 
 
 
@@ -385,7 +417,7 @@ assign pw_p_raddr = ctr1 ;
 always @(*) begin
     if (upoly_mul) begin
         pw_p_wen = 1;
-        pw_p_din = A_o;
+        pw_p_din = (is_decode_q) ? encode_out : A_o;
     end
     else if (wpoly | wpoly_zetafrwrd) begin
         pw_p_wen = 1;
@@ -451,33 +483,6 @@ assign twiddle_ram_raddr = (pwm_zeta_idx       ) ? (               {1'b1, ctr1[L
                            (twiddle_poly_idx   ) ?                        ctr1            :
                            //(pwm_idx_df                   ) ?                        ctr2            : 
                                                                                     ntt_t_raddr     ;
-/////////////////////////////////////////////////////////////////////////
-
-
-
-
-///////////////////// Encode Inputs /////////////////////////////////////
-
-// assign encode_i_valid = sr_e;
-assign encode_in      = (decode) ? twiddle_ram_dout  :
-                                   poly_in_mx_A      ;
-assign decode         = (is_decode_q      ) ? 1'b1 :
-                        (is_fn_decompress_q) ? 1'b1 :
-                        (is_cbd_q         ) ? 1'b1 :
-                        (is_rej_samp_q    ) ? 1'b1 :
-                                                   1'b0 ;
-assign fn_decomp      = (is_fn_decompress_q) ? 1'b1 : 1'b0;
-/////////////////////////////////////////////////////////////////////////
-
-
-
-
-///////////////////// CBD Inputs ////////////////////////////////////////
-
-assign cbd_i_valid = encode_o_valid;
-assign cbd_in      = encode_out;
-assign cbd_mode    = d[1];
-
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -897,23 +902,21 @@ shiftreg #(
 
 ////////////////////////// encode/decode ////////////////////////////////
 
-// encode #(
-//     .LOGQ(LOGQ)
-// ) encode_inst (
-//     .clk      (clk             ),
-//     .rst      (rst | encode_rst),
-//     .A        (encode_in       ),
-//     .decode   (decode          ),
-//     .bigend   (bigend          ),
-//     .fn_decomp(fn_decomp       ),
-//     .C        (encode_out      ),
-//     .d        (d               ),
-//     .mode     (mode            ),
-//     .busy     (encode_busy     ),
-//     .i_valid  (encode_i_valid  ),
-//     .i_ready  (encode_i_ready  ),
-//     .o_valid  (encode_o_valid  )
-// );
+encode #(
+    .LOGQ(LOGQ)
+) encode_inst (
+    .clk      (clk             ),
+    .rst      (rst | encode_rst),
+    .A        (encode_in       ),
+    .decode   (decode          ),
+    .C        (encode_out      ),
+    .d        (d               ),
+    .mode     (mode            ),
+    .busy     (encode_busy     ),
+    .i_valid  (encode_i_valid  ),
+    .i_ready  (encode_i_ready  ),
+    .o_valid  (encode_o_valid  )
+);
 
 
 // cbd #(
@@ -1453,19 +1456,21 @@ always @(*) begin
             twiddle_ram_ren = 1;            
             twiddle_poly_idx = 1;
             //
-            bu_i_valid = 1;
-            if (ctr1 == n_m1) begin
-                ctr1_rst = 1;
-                next_state = ST_PWM1;
-            end
-            else begin
-                ctr1_inc = 1;
+            if (pwop_i_ready) begin
+                bu_i_valid = 1;
+                if (ctr1 == pwop_i_limit) begin
+                    ctr1_rst = 1;
+                    next_state = ST_PWM1;
+                end
+                else begin
+                    ctr1_inc = 1;
+                end
             end
             pwm_rcv_bu = 1;
             upoly_zetamul = (is_poly_mode_q & bu_o_valid);
         end
         ST_PWM1: begin
-            if (bu_o_valid && ctr0 == n_m1) begin
+            if (pwop_o_valid && ctr0 == n_m1) begin
                 if (is_chk_infnorm_q) begin
                     ctr_all_rst = 1;
                     done_set   = 1;
@@ -1594,7 +1599,7 @@ always @(*) begin
         end
     end
     else if (pwm_rcv_bu) begin
-        if (bu_o_valid) begin
+        if (pwop_o_valid) begin
             if (ctr0 == n_m1) begin
                 ctr0_rst = 1;
             end
@@ -1647,7 +1652,7 @@ always @(*) begin
         `OP_MAKEHINT     : next_state_op = ST_PWM0;
         `OP_USEHINT      : next_state_op = ST_PWM0;
         // `OP_ENCODE       : next_state_op = ST_ENCODE0;
-        // `OP_DECODE       : next_state_op = ST_DECODE;
+        `OP_DECODE       : next_state_op = ST_PWM0;
         // `OP_CBD          : next_state_op = ST_DECODE;
         // `OP_REJ_SAMP     : next_state_op = ST_DECODE;
         // `OP_FNDECOMPRESS : next_state_op = (FALCON_EN) ? ST_DECODE : ST_IDLE;
