@@ -74,6 +74,7 @@ wire [LOGLOGQ-1:0] csrs_k;
 wire [LOGLOGQ-1:0] csrs_d;
 wire [1:0] csrs_mode;
 wire [4:0] csrs_op;
+wire [1:0] csrs_op1;
 wire [LOGQ-1:0] csrs_q;
 wire [LOGQ*2-1:0] csrs_mu;
 wire [LOGQ-1:0] csrs_inv2;
@@ -165,6 +166,7 @@ poly_acc #(
     .inv2       (csrs_inv2  ),
     .bound      (csrs_bound ),
     .op         (csrs_op    ),
+    .op1        (csrs_op1   ),
     .mode       (csrs_mode  ),
     .done       (csrs_done  ),
     .busy       (csrs_busy  ),
@@ -199,6 +201,7 @@ poly_acc_csrs #(
     .round      (csrs_round ),
     .mode       (csrs_mode  ),
     .op         (csrs_op    ),
+    .op1        (csrs_op1   ),
     .mu         (csrs_mu    ),
     .inv2       (csrs_inv2  ),
     .q          (csrs_q     ),

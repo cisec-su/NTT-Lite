@@ -349,13 +349,33 @@ for i in range(len(A_comp)):
 if tlen > 0:
     A_comp_encoded.append(t)
 
-A_1_comp_encoded = []
+A_0_comp_encoded = []
 t = 0
 tlen = 0
+for i in range(len(A_0_comp)):
+    t = t + (A_0_comp[i] << tlen)
+    tlen += d
+    if tlen >= b:
+        A_0_comp_encoded.append(t & ((1 << b) - 1))
+        t = t >> b
+        tlen = tlen - b
+if tlen > 0:
+    A_0_comp_encoded.append(t)
 
 with open("encode_out_poly.txt", "w") as f:
     for i in range(len(A_comp_encoded)):
         f.write(hex(A_comp_encoded[i])[2:] + "\n")
+
+with open("encode_out_single.txt", "w") as f:
+    for i in range(len(A_0_comp_encoded)):
+        f.write(hex(A_0_comp_encoded[i])[2:] + "\n")
+
+
+with open("add_out_dual_comp.txt", "w") as f:
+    for i in range(n):
+        t0 = (A_0_comp[i] + B_0[i]) % q
+        t1 = (A_1_comp[i] + B_1[i]) % q
+        f.write(hex((t1 << (b // 2)) + t0)[2:] + "\n")
 
 
 print("ZETAS C:")

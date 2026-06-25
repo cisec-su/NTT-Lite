@@ -1,5 +1,5 @@
 `include "../ntt_lite.vh"
-// WARNING: mode = dual not verified (single and poly modes are tested).
+
 module encode
    #(
         parameter  LOGQ    = 32,
@@ -7,17 +7,17 @@ module encode
         localparam LOGLOGQ = $clog2(LOGQ + 1)
     )
     (
-        input                 clk    ,
-        input                 rst    ,
-        input  [LOGQ    -1:0] A      ,
-        input  [LOGLOGQ -1:0] d      ,
-        input                 decode ,
-        input  [         1:0] mode   ,
-        input                 i_valid,
-        output                i_ready, // effective for decode
-        output                o_valid,
-        output                busy   ,
-        output [LOGQ    -1:0] C
+        input                     clk    ,
+        input                     rst    ,
+        input      [LOGQ    -1:0] A      ,
+        input      [LOGLOGQ -1:0] d      ,
+        input                     decode ,
+        input      [         1:0] mode   ,
+        input                     i_valid,
+        output                    i_ready, // effective for decode
+        output reg                o_valid,
+        output                    busy   ,
+        output reg [LOGQ    -1:0] C
     );
 
 ///////////////////////////// parameters ////////////////////////////////
@@ -53,6 +53,9 @@ wire [LOGLOGQ:0] d_out;
 wire [LOGLOGQ:0] d_in_h;
 wire [LOGLOGQ:0] d_out_h;
 
+wire [LOGQ-1:0] C_int;
+wire o_valid_int;
+
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -80,17 +83,17 @@ assign d_mask_l = (1 << d_out_h) - 1;
 assign d_mask_h = (~dual & decode) ? 0  :
                   (d_mask_l << d_out_h) ;
 
-assign C = ((~dual)) ?  C_q & {d_mask_h ^ d_mask_l}                        : 
-                       (C_q & d_mask_l) ^ ((C_q & d_mask_h) << logq0_m_d)  ;
+assign C_int = ((~dual)) ?  C_q & {d_mask_h ^ d_mask_l}                        : 
+                           (C_q & d_mask_l) ^ ((C_q & d_mask_h) << logq0_m_d)  ;
 
-assign o_valid = ctr >= d_out;                                              
+assign o_valid_int = ctr >= d_out;                                              
 
 assign i_ready = (~decode) ? 1 : (ctr_read_next <= (K)) ? 1'b1 : 1'b0;
 
-assign ctr_read = ctr - ((o_valid) ? d_out : 0);
+assign ctr_read = ctr - ((o_valid_int) ? d_out : 0);
 assign ctr_read_next = (i_valid) ? ctr_read + d_in : ctr_read;
 
-assign busy = i_valid | i_valid_q | o_valid;
+assign busy = i_valid | i_valid_q | o_valid_int;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -105,7 +108,7 @@ always @(posedge clk) begin
         C_q <= 0;
     end
     else begin
-        C_q <= ((i_valid & i_ready_q) ? (A_dual << ctr_read) : 0) ^ ((o_valid) ? asr_out : C_q);
+        C_q <= ((i_valid & i_ready_q) ? (A_dual << ctr_read) : 0) ^ ((o_valid_int) ? asr_out : C_q);
     end
 end
 
@@ -129,6 +132,16 @@ always @(posedge clk) begin
         i_valid_q <= i_valid;
         i_ready_q <= i_ready;
     end
+end
+
+always @(posedge clk) begin
+    if (rst) begin
+        o_valid <= 0;
+    end
+    else begin
+        o_valid <= o_valid_int;
+    end
+    C <= C_int;
 end
 
 

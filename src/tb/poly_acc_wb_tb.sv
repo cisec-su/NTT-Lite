@@ -1968,12 +1968,11 @@ initial begin
             wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
         end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
 
-        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
         wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
 
         // cmd = CMD_LOAD_TWIDDLE, op = OP_MAKEHINT, mode = MODE_SINGLE
         write_data = (`CMD_LOAD_POLY    << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
-                    (`OP_DECODE        << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                    (`OP1_DECODE        << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
                     (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
                     (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB   ) |
                     (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
@@ -2001,6 +2000,479 @@ initial begin
             $stop;
         end        
     end
+
+
+    $readmemh("../../../../../test/encode_out_single.txt", psi);
+    $readmemh("../../../../../test/comp_out_single.txt", poly_out);
+    $readmemh("../../../../../test/meta.txt"         , meta);
+    d = meta[4];
+
+    // reuse currently programmed q/mu/logn context; set DMA pointers
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        `mem[(TWIDDLE_BASE >> 2) + w] = psi[w];
+        `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+        `mem[(POLYOUT_BASE >> 2) + w] = '0;
+    end
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR   , TWIDDLE_BASE);
+
+
+    // cmd = CMD_LOAD_TWIDDLE, op = OP_MAKEHINT, mode = MODE_SINGLE
+    write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                    (`MODE_SINGLE      << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                    (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+    do begin
+        wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+    end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+    // cmd = CMD_LOAD_TWIDDLE, op = OP_MAKEHINT, mode = MODE_SINGLE
+    write_data = (`CMD_LOAD_POLY    << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                (`OP1_DECODE        << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                (`MODE_SINGLE       << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB   ) |
+                (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+    do begin
+        wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+    end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+    flag = 1'b1;
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        temp  = `mem[(POLYOUT_BASE >> 2) + w];
+        temp1 = poly_out[w];
+        if (temp !== temp1 || $isunknown(temp)) begin
+            $display("DECODE SINGLE mismatch at index %0d: %h != %h", w, temp, temp1);
+            flag = 1'b0;
+        end
+    end
+
+    record_tc_result(flag);
+    if (flag)
+        $display("(SUCCESS DECODE SINGLE)");
+    else begin
+        $display("(FAIL DECODE SINGLE)");
+        $stop;
+    end   
+
+
+    //-----------------------------------------------------------------------------------------------//
+
+    if (TEST_DUAL) begin
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            poly_out[w] = 32'hFFFFFFFF;
+        end
+
+        $readmemh("../../../../../test/comp_out_dual.txt", poly_in);
+        $readmemh("../../../../../test/encode_out_poly.txt", poly_out);
+        $readmemh("../../../../../test/meta.txt"         , meta);
+        d = meta[4];
+
+        // reuse currently programmed q/mu/logn context; set DMA pointers
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+            `mem[(POLYOUT_BASE >> 2) + w] = '0;
+        end
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+        // cmd = CMD_LOAD_TWIDDLE, op = OP_MAKEHINT, mode = MODE_SINGLE
+        write_data = (`CMD_LOAD_POLY    << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                    (`OP1_ENCODE        << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                    (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                    (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB   ) |
+                    (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+        flag = 1'b1;
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            temp  = `mem[(POLYOUT_BASE >> 2) + w];
+            temp1 = poly_out[w];
+            if ((temp !== temp1 || $isunknown(temp)) && temp1 != 32'hFFFFFFFF) begin
+                $display("ENCODE DUAL mismatch at index %0d: %h != %h", w, temp, temp1);
+                flag = 1'b0;
+            end
+        end
+
+        record_tc_result(flag);
+        if (flag)
+            $display("(SUCCESS ENCODE DUAL)");
+        else begin
+            $display("(FAIL ENCODE DUAL)");
+            $stop;
+        end        
+    end
+
+    //-----------------------------------------------------------------------------------------------//
+
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        poly_out[w] = 32'hFFFFFFFF;
+    end
+
+    $readmemh("../../../../../test/comp_out_single.txt", poly_in);
+    $readmemh("../../../../../test/encode_out_single.txt", poly_out);
+    $readmemh("../../../../../test/meta.txt"         , meta);
+    d = meta[4];
+
+    // reuse currently programmed q/mu/logn context; set DMA pointers
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+        `mem[(POLYOUT_BASE >> 2) + w] = '0;
+    end
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+    // cmd = CMD_LOAD_TWIDDLE, op = OP_MAKEHINT, mode = MODE_SINGLE
+    write_data = (`CMD_LOAD_POLY    << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                (`OP1_ENCODE        << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                (`MODE_SINGLE        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB   ) |
+                (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+    do begin
+        wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+    end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+    flag = 1'b1;
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        temp  = `mem[(POLYOUT_BASE >> 2) + w];
+        temp1 = poly_out[w];
+        if ((temp !== temp1 || $isunknown(temp)) && temp1 != 32'hFFFFFFFF) begin
+            $display("ENCODE SINGLE mismatch at index %0d: %h != %h", w, temp, temp1);
+            flag = 1'b0;
+        end
+    end
+
+    record_tc_result(flag);
+    if (flag)
+        $display("(SUCCESS ENCODE SINGLE)");
+    else begin
+        $display("(FAIL ENCODE SINGLE)");
+        $stop;
+    end     
+    //-----------------------------------------------------------------------------------------------//
+
+    if (TEST_DUAL) begin
+        $readmemh("../../../../../test/meta.txt"            , meta);
+        $readmemh("../../../../../test/encode_out_poly.txt"   , poly_in);
+        $readmemh("../../../../../test/poly_in_B_dual.txt"  , psi);
+        $readmemh("../../../../../test/add_out_dual_comp.txt"    , poly_out);
+
+        q    = (meta[0] << 16) + meta[0];
+        logn = meta[2][7:0];
+        d = meta[4];
+
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            `mem[(TWIDDLE_BASE >> 2) + w] = psi[w];
+            `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+            `mem[(POLYOUT_BASE >> 2) + w] = '0;
+        end
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR    , TWIDDLE_BASE);
+
+        write_data = (`CMD_LOAD_POLY << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                     (`OP_NOP              << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                     (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                     (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+        write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                     (`OP_ADD        << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                     (`OP1_DECODE        << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                     (`MODE_DUAL     << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                     (d                << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                     (logn           << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+        flag = 1'b1;
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            temp  = `mem[(POLYOUT_BASE >> 2) + w];
+            temp1 = poly_out[w];
+            if (temp !== temp1 || $isunknown(temp)) begin
+                $display("DUAL ADD DECODE mismatch at index %0d: %h != %h", w, temp, temp1);
+                flag = 1'b0;
+            end
+        end
+
+        record_tc_result(flag);
+        if (flag) $display("(SUCCESS DUAL ADD DECODE)");
+        else begin
+            $display("(FAIL DUAL ADD DECODE)");
+            $stop;
+        end        
+    end
+
+    //-----------------------------------------------------------------------------------------------//
+
+    $readmemh("../../../../../test/meta.txt"            , meta);
+    $readmemh("../../../../../test/encode_out_single.txt"   , poly_in);
+    $readmemh("../../../../../test/decomp_out_single.txt"    , poly_out);
+
+    logn = meta[2][7:0];
+    d = meta[4];
+    logn     = meta[2][7:0];
+    q        = 1 << (meta[4][7:0]);
+    mu       = 1 << (64 - (meta[4][7:0]));
+    inv2     = 32'hffffffff;//meta[5];
+    bound    = meta[0]; // q
+
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+        `mem[(POLYOUT_BASE >> 2) + w] = '0;
+    end
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_LOW , mu[31:0]);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_HIGH, mu[63:32]);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.INV2_ADDR   , inv2);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR   , bound);
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+    write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                 (`OP_COMPRESS      << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                 (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                 (`MODE_SINGLE      << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                 (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                 (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB)|
+                 (`ROUND_HALFUP  << uut.poly_acc_csrs_inst.CTRL_ROUND_LSB)|
+                 (1'b1              << uut.poly_acc_csrs_inst.CTRL_RHS_CONST_BIT);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+    do begin
+        wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+    end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+    flag = 1'b1;
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        temp  = `mem[(POLYOUT_BASE >> 2) + w];
+        temp1 = poly_out[w];
+        if (temp !== temp1 || $isunknown(temp)) begin
+            $display("SINGLE DECODE DECOMPRESS mismatch at index %0d: %h != %h", w, temp, temp1);
+            flag = 1'b0;
+        end
+    end
+
+    record_tc_result(flag);
+    if (flag) $display("(SUCCESS SINGLE DECODE DECOMPRESS)");
+    else begin
+        $display("(FAIL SINGLE DECODE DECOMPRESS)");
+        $stop;
+    end       
+
+    //-----------------------------------------------------------------------------------------------//
+
+    if (TEST_DUAL) begin
+        $readmemh("../../../../../test/meta.txt"            , meta);
+        $readmemh("../../../../../test/encode_out_poly.txt"   , poly_in);
+        $readmemh("../../../../../test/decomp_out_dual.txt"    , poly_out);
+
+        q     = ((1 << (meta[4][7:0])) << 16) | (1 << (meta[4][7:0]));
+        mu    = ((1 << (32 - (meta[4][7:0]))) << 32) | (1 << (32 - (meta[4][7:0])));
+        logn  = meta[2][7:0];
+        inv2  = 32'hffffffff;
+        bound = (meta[0] << 16) + meta[0];
+        d = meta[4];
+
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+            `mem[(POLYOUT_BASE >> 2) + w] = '0;
+        end
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_LOW , mu[31:0]);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_HIGH, mu[63:32]);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.INV2_ADDR   , inv2);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR   , bound);
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+        write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                    (`OP_COMPRESS      << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                    (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                    (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                    (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                    (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB)|
+                    (`ROUND_HALFUP  << uut.poly_acc_csrs_inst.CTRL_ROUND_LSB)|
+                    (1'b1              << uut.poly_acc_csrs_inst.CTRL_RHS_CONST_BIT);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+        flag = 1'b1;
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            temp  = `mem[(POLYOUT_BASE >> 2) + w];
+            temp1 = poly_out[w];
+            if (temp !== temp1 || $isunknown(temp)) begin
+                $display("DUAL DECODE DECOMPRESS mismatch at index %0d: %h != %h", w, temp, temp1);
+                flag = 1'b0;
+            end
+        end
+
+        record_tc_result(flag);
+        if (flag) $display("(SUCCESS DUAL DECODE DECOMPRESS)");
+        else begin
+            $display("(FAIL DUAL DECODE DECOMPRESS)");
+            $stop;
+        end               
+    end
+
+
+    //-----------------------------------------------------------------------------------------------//
+
+
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        poly_out[w] = 32'hFFFFFFFF;
+    end
+
+    $readmemh("../../../../../test/meta.txt"            , meta);
+    $readmemh("../../../../../test/poly_in_single.txt"    , poly_in);
+    $readmemh("../../../../../test/encode_out_single.txt"   , poly_out);
+
+    logn = meta[2][7:0];
+    d = meta[4];
+    logn     = meta[2][7:0];
+    q        = meta[0];
+    mu    = meta[1];
+    bound    = 1 << d;    
+
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+        `mem[(POLYOUT_BASE >> 2) + w] = '0;
+    end
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_LOW , mu[31:0]);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_HIGH, mu[63:32]);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.INV2_ADDR   , inv2);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR   , bound);
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+    write_data = (`CMD_LOAD_POLY    << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                 (`OP_COMPRESS      << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                 (`OP1_ENCODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                 (`MODE_SINGLE      << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                 (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                 (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB)|
+                 (`ROUND_HALFUP  << uut.poly_acc_csrs_inst.CTRL_ROUND_LSB)|
+                 (1'b1              << uut.poly_acc_csrs_inst.CTRL_RHS_CONST_BIT);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+    do begin
+        wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+    end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+    flag = 1'b1;
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        temp  = `mem[(POLYOUT_BASE >> 2) + w];
+        temp1 = poly_out[w];
+        if ((temp !== temp1 || $isunknown(temp)) && temp1 != 32'hFFFFFFFF) begin
+            $display("SINGLE COMPRESS ENCODE mismatch at index %0d: %h != %h", w, temp, temp1);
+            flag = 1'b0;
+        end
+    end
+
+    record_tc_result(flag);
+    if (flag) $display("(SUCCESS SINGLE COMPRESS ENCODE)");
+    else begin
+        $display("(FAIL SINGLE COMPRESS ENCODE)");
+        $stop;
+    end
+
+    //-----------------------------------------------------------------------------------------------//
+
+
+    if (TEST_DUAL) begin
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            poly_out[w] = 32'hFFFFFFFF;
+        end
+
+        $readmemh("../../../../../test/meta.txt"            , meta);
+        $readmemh("../../../../../test/poly_in_dual.txt"    , poly_in);
+        $readmemh("../../../../../test/encode_out_poly.txt"   , poly_out);
+
+        logn = meta[2][7:0];
+        d = meta[4];
+        logn     = meta[2][7:0];
+        mu    = meta[1];
+        q     = (meta[0] << 16) + meta[0];
+        bound = ((1 << d) << 16) + (1 << d);
+
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+            `mem[(POLYOUT_BASE >> 2) + w] = '0;
+        end
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_LOW , mu[31:0]);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_HIGH, mu[63:32]);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.INV2_ADDR   , inv2);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR   , bound);
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+        write_data = (`CMD_LOAD_POLY    << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                    (`OP_COMPRESS      << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                    (`OP1_ENCODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                    (`MODE_DUAL      << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                    (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                    (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB)|
+                    (`ROUND_HALFUP  << uut.poly_acc_csrs_inst.CTRL_ROUND_LSB)|
+                    (1'b1              << uut.poly_acc_csrs_inst.CTRL_RHS_CONST_BIT);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+        flag = 1'b1;
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            temp  = `mem[(POLYOUT_BASE >> 2) + w];
+            temp1 = poly_out[w];
+            if ((temp !== temp1 || $isunknown(temp)) && temp1 != 32'hFFFFFFFF) begin
+                $display("DUAL COMPRESS ENCODE mismatch at index %0d: %h != %h", w, temp, temp1);
+                flag = 1'b0;
+            end
+        end
+
+        record_tc_result(flag);
+        if (flag) $display("(FAIL DUAL COMPRESS ENCODE)");
+        else begin
+            $display("(SUCCESS DUAL COMPRESS ENCODE)");
+            $stop;
+        end
+    end    
+
 
     // Finish simulation
     $display("Simulation finished");

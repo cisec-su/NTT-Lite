@@ -11,15 +11,16 @@
 `define CMD_READ_POLY         3'd7
 
 
-`define OP_NTT                5'd0
-`define OP_INTT               5'd1
-`define OP_PWM                5'd2
-`define OP_ADD                5'd3
-`define OP_SUB                5'd4
-`define OP_COMPRESS           5'd5
-`define OP_DECOMPRESS         5'd6
-`define OP_ENCODE             5'd7
-`define OP_DECODE             5'd8
+`define OP_NOP                5'd0
+`define OP_NTT                5'd1
+`define OP_INTT               5'd2
+`define OP_PWM                5'd3
+`define OP_ADD                5'd4
+`define OP_SUB                5'd5
+`define OP_COMPRESS           5'd6
+// `define OP_DECOMPRESS         5'd6
+// `define OP_ENCODE             5'd7
+// `define OP_DECODE             5'd8
 `define OP_SUM                5'd9
 `define OP_MAC                5'd15
 `define OP_CBD                5'd13
@@ -34,6 +35,12 @@
 `define OP_MAKEHINT           5'd12
 `define OP_USEHINT            5'd16
 `define OP_CHKL1NORM          5'd17
+`define OP0_NOP               5'd31
+
+`define OP1_NOP               2'd0
+`define OP1_ENCODE            2'd1
+`define OP1_DECODE            2'd2
+
 
 `define MODE_SINGLE           2'd0
 `define MODE_DUAL             2'd2
