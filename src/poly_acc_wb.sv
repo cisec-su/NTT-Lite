@@ -7,13 +7,14 @@ module poly_acc_wb
         parameter  bit          FF_MODADD_OUT   = 1           ,
         parameter  bit          FF_INTMUL_MUL   = 1           ,
         parameter  bit          FF_MODRED_MUL   = 1           ,
-        parameter  bit          FF_BARRETT_KR_SUM0 = 0           ,
-        parameter  bit          FF_BARRETT_KR_SUB0 = 0           ,
+        parameter  bit          FF_BARRETT_KR_SUM0 = 1           ,
+        parameter  bit          FF_BARRETT_KR_SUB0 = 1           ,
         parameter  bit          FF_BARRETT_KR_MUL  = 1           ,
-        parameter  bit          FF_BARRETT_KR_SUM1 = 0           ,
+        parameter  bit          FF_BARRETT_KR_SUM1 = 1           ,
         parameter  bit          FF_BARRETT_KR_SUM2 = 1           ,
-        parameter  bit          FF_BARRETT_KR_SUB1 = 0           ,
-        parameter  bit          FF_HINT            = 0           ,
+        parameter  bit          FF_BARRETT_KR_SUB1 = 1           ,
+        parameter  bit          FF_HINT            = 1           ,
+        parameter  bit          FF_SC              = 1           ,
         parameter  bit          FORWARD_EN         = 1
     )
     (
@@ -64,8 +65,8 @@ wire o_read;
 wire o_valid;
 wire i_done;
 wire [LOGN-1:0] io_word;
-wire [LOGN  :0] io_len;
-
+wire [LOGN  :0] i_len;
+wire [LOGN  :0] o_len;
 
 // csrs & NTT
 wire [2:0] csrs_cmd;
@@ -98,7 +99,8 @@ wire [31:0] csrs_dout_addr;
 wire [31:0] dma_r_addr   ;
 wire [31:0] dma_w_addr   ;
 wire [ 7:0] dma_rw_offset;
-wire [ 8:0] dma_rw_len   ;
+wire [ 8:0] dma_r_len    ;
+wire [ 8:0] dma_w_len    ;
 wire        dma_r_ready  ;
 wire        dma_r_valid  ;
 wire        dma_w_valid  ;
@@ -110,7 +112,8 @@ wire [31:0] dma_w_data   ;
 assign dma_r_addr    = csrs_din_addr;
 assign dma_w_addr    = csrs_dout_addr;
 assign dma_rw_offset = io_word;
-assign dma_rw_len    = io_len;
+assign dma_r_len     = i_len;
+assign dma_w_len     = o_len;
 assign dma_r_ready   = i_ready;
 assign i_valid       = dma_r_valid;
 assign i_data        = dma_r_data;
@@ -137,6 +140,7 @@ poly_acc #(
     .FF_BARRETT_KR_SUM2(FF_BARRETT_KR_SUM2),
     .FF_BARRETT_KR_SUB1(FF_BARRETT_KR_SUB1),
     .FF_HINT           (FF_HINT           ),
+    .FF_SC             (FF_SC             ),
     .FORWARD_EN        (FORWARD_EN        )
 ) poly_acc_inst (
     .clk        (clk        ),
@@ -150,7 +154,8 @@ poly_acc #(
     .i_done     (i_done     ),
     .o_read     (o_read     ),
     .io_word    (io_word    ),
-    .io_len     (io_len     ),
+    .i_len      (i_len      ),
+    .o_len      (o_len      ),
     // ntt <-> csrs
     .cmd        (csrs_cmd   ),
     .logn       (csrs_logn  ),
@@ -225,7 +230,8 @@ wb_dma wb_dma_inst (
     .r_addr       (dma_r_addr   ),
     .w_addr       (dma_w_addr   ),
     .rw_offset    (dma_rw_offset),
-    .rw_len       (dma_rw_len   ),
+    .r_len        (dma_r_len    ),
+    .w_len        (dma_w_len    ),
     .r_ready      (dma_r_ready  ),
     .r_valid      (dma_r_valid  ),
     .w_valid      (dma_w_valid  ),

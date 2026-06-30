@@ -6,13 +6,13 @@
 
 
 typedef struct packed {
-    int LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT, FF_BARRETT_KR_SUM0, FF_BARRETT_KR_SUB0, FF_BARRETT_KR_MUL, FF_BARRETT_KR_SUM1, FF_BARRETT_KR_SUM2, FF_BARRETT_KR_SUB1;
+    int LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT, FF_KR_SUM0, FF_KR_SUB0, FF_KR_MUL, FF_KR_SUM1, FF_KR_SUM2, FF_KR_SUB1, FF_NEG;
 } barrett_params_t;
 
 
 function automatic karatsuba_64x64_dual_params_t barrett_mac_0_params(input barrett_params_t params);
-    barrett_mac_0_params = '{FF_IN: 0, FF_SUM0 : params.FF_BARRETT_KR_SUM0, FF_SUB0 : params.FF_BARRETT_KR_SUB0, FF_MUL : params.FF_BARRETT_KR_MUL,
-                             FF_SUM1 : params.FF_BARRETT_KR_SUM1, FF_SUM2 : params.FF_BARRETT_KR_SUM2, FF_SUB1 : params.FF_BARRETT_KR_SUB1, FF_OUT : 1};
+    barrett_mac_0_params = '{FF_IN: 0, FF_SUM0 : params.FF_KR_SUM0, FF_SUB0 : params.FF_KR_SUB0, FF_MUL : params.FF_KR_MUL,
+                             FF_SUM1 : params.FF_KR_SUM1, FF_SUM2 : params.FF_KR_SUM2, FF_SUB1 : params.FF_KR_SUB1, FF_OUT : 1};
 endfunction
 
 
@@ -48,7 +48,7 @@ endfunction
 
 
 function automatic int barrett_lat(input barrett_params_t params);
-    barrett_lat = params.FF_IN + barrett_mac_0_lat(params) + barrett_mac_1_lat(params) + params.FF_OUT;
+    barrett_lat = params.FF_IN + barrett_mac_0_lat(params) + barrett_mac_1_lat(params) + params.FF_NEG + params.FF_OUT;
 endfunction
 
 

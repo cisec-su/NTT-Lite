@@ -10,7 +10,8 @@ module modmul
         parameter int unsigned FF_BARRETT_KR_MUL  = 1 ,
         parameter int unsigned FF_BARRETT_KR_SUM1 = 0 ,
         parameter int unsigned FF_BARRETT_KR_SUM2 = 1 ,
-        parameter int unsigned FF_BARRETT_KR_SUB1 = 0
+        parameter int unsigned FF_BARRETT_KR_SUB1 = 0 ,
+        parameter int unsigned FF_BARRETT_NEG     = 0
     )
     (
         input                  clk ,
@@ -72,12 +73,13 @@ barrett #(
     .PIPE_Q(0            ),
     .FF_IN (0            ),
     .FF_SHF(0            ),
-    .FF_BARRETT_KR_SUM0(FF_BARRETT_KR_SUM0),
-    .FF_BARRETT_KR_SUB0(FF_BARRETT_KR_SUB0),
-    .FF_BARRETT_KR_MUL (FF_BARRETT_KR_MUL ),
-    .FF_BARRETT_KR_SUM1(FF_BARRETT_KR_SUM1),
-    .FF_BARRETT_KR_SUM2(FF_BARRETT_KR_SUM2),
-    .FF_BARRETT_KR_SUB1(FF_BARRETT_KR_SUB1),
+    .FF_KR_SUM0(FF_BARRETT_KR_SUM0),
+    .FF_KR_SUB0(FF_BARRETT_KR_SUB0),
+    .FF_KR_MUL (FF_BARRETT_KR_MUL ),
+    .FF_KR_SUM1(FF_BARRETT_KR_SUM1),
+    .FF_KR_SUM2(FF_BARRETT_KR_SUM2),
+    .FF_KR_SUB1(FF_BARRETT_KR_SUB1),
+    .FF_NEG    (FF_BARRETT_NEG    ),
     .FF_MUL(FF_MODRED_MUL),
     .FF_OUT(1            )
 ) barrett_inst (

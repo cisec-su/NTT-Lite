@@ -5,7 +5,8 @@ module wb_dma
         input      [31:0]  r_addr     ,
         input      [31:0]  w_addr     ,        
         input      [ 7:0]  rw_offset  ,
-        input      [ 8:0]  rw_len     ,
+        input      [ 8:0]  r_len      ,
+        input      [ 8:0]  w_len      ,        
         input              r_ready    ,
         output             r_valid    ,
         output             w_ready    ,
@@ -78,18 +79,18 @@ always @(posedge clk) begin
                 w_ready_r <= 1'b0;
                 r_valid_r <= 1'b0;
                 r_data    <= 32'd0;
-                if ((rw_len != 9'd0) && w_valid) begin
+                if ((w_len != 9'd0) && w_valid) begin
                     // Start WRITE burst.
-                    beats_left <= rw_len;
+                    beats_left <= w_len;
                     dma_cyc_i  <= 1'b1;
                     dma_stb_i  <= 1'b1;
                     dma_we_i   <= 1'b1;
                     dma_adr_i  <= start_w_addr;
                     dma_dat_i  <= w_data;
                     state      <= S_WRITE0;
-                end else if ((rw_len != 9'd0) && r_ready) begin
+                end else if ((r_len != 9'd0) && r_ready) begin
                     // Start READ burst.
-                    beats_left <= rw_len;
+                    beats_left <= r_len;
                     dma_cyc_i  <= 1'b1;
                     dma_stb_i  <= 1'b1;
                     dma_we_i   <= 1'b0;

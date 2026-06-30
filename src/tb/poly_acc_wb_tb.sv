@@ -15,7 +15,9 @@ module poly_acc_wb_tb
         parameter bit          FF_BARRETT_KR_SUM2 = 1           ,
         parameter bit          FF_BARRETT_KR_SUB1 = 0           ,
         parameter bit          FF_HINT            = 1           ,
-        parameter bit          FORWARD_EN         = 0           ,
+        parameter bit          FF_SC              = 1           ,
+        parameter bit          FF_BARRETT_NEG     = 1           ,
+        parameter bit          FORWARD_EN         = 1           ,
         ///////////////////////////////////////
         parameter int unsigned MEM_SIZE        = 2048        ,
         parameter int unsigned TWIDDLE_BASE    = 0           ,
@@ -149,6 +151,8 @@ poly_acc_wb #(
     .FF_BARRETT_KR_SUM2(FF_BARRETT_KR_SUM2),
     .FF_BARRETT_KR_SUB1(FF_BARRETT_KR_SUB1),
     .FF_HINT           (FF_HINT           ),
+    .FF_SC             (FF_SC             ),
+    .FF_BARRETT_NEG    (FF_BARRETT_NEG    ),
     .FORWARD_EN        (FORWARD_EN        )
 ) uut (
     .wb_cyc_i(wb_cyc_i),
@@ -1063,6 +1067,74 @@ initial begin
         $stop;
     end
 
+
+    $readmemh("../../../../../test/poly_in_single.txt"   , poly_in);
+    $readmemh("../../../../../test/poly_in_B_single.txt" , psi);
+    $readmemh("../../../../../test/add_out_single.txt"   , poly_out);
+
+    // reuse same meta-derived config
+    q = meta[0];
+    mu    = meta[1];
+    logn     = meta[2][7:0];
+    inv2     = meta[5];
+    bound    = 32'd0;
+
+    // preload vectors
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        `mem[(TWIDDLE_BASE >> 2) + w] = psi[w];
+        `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+        `mem[(POLYOUT_BASE >> 2) + w] = '0;
+    end
+
+    // program config
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR       , q);
+
+    // load second polynomial (B path) via twiddle load channel
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , TWIDDLE_BASE);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+    write_data = (`CMD_LOAD_POLY << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                 (5'd0              << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                 (`MODE_SINGLE      << uut.poly_acc_csrs_inst.CTRL_MODE_LSB)|
+                 (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+    do begin
+        wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+    end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+    // load first polynomial + run ADD
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+    write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                 (`OP_ADD        << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                 (`MODE_SINGLE   << uut.poly_acc_csrs_inst.CTRL_MODE_LSB)|
+                 (logn           << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+    do begin
+        wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+    end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+    // check output
+    flag = 1'b1;
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        temp  = `mem[(POLYOUT_BASE >> 2) + w];
+        temp1 = poly_out[w];
+        if (temp !== temp1 || $isunknown(temp)) begin
+            $display("ADD (TWIDDLE FORWARD) mismatch at index %0d: %h != %h", w, temp, temp1);
+            flag = 1'b0;
+        end
+    end
+
+    record_tc_result(flag);
+    if (flag) begin
+        $display("(SUCCESS (TWIDDLE FORWARD) SINGLE ADD)");
+    end
+    else begin
+        $display("(FAIL (TWIDDLE FORWARD) SINGLE ADD)");
+        $stop;
+    end
+
     //-----------------------------------------------------------------------------------------------//
     // New test case: SINGLE SUB
 
@@ -1971,7 +2043,7 @@ initial begin
         wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
 
         // cmd = CMD_LOAD_TWIDDLE, op = OP_MAKEHINT, mode = MODE_SINGLE
-        write_data = (`CMD_LOAD_POLY    << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+        write_data = (`CMD_START        << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
                     (`OP1_DECODE        << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
                     (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
                     (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB   ) |
@@ -2030,7 +2102,7 @@ initial begin
     wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
 
     // cmd = CMD_LOAD_TWIDDLE, op = OP_MAKEHINT, mode = MODE_SINGLE
-    write_data = (`CMD_LOAD_POLY    << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+    write_data = (`CMD_START    << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
                 (`OP1_DECODE        << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
                 (`MODE_SINGLE       << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
                 (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB   ) |
@@ -2466,9 +2538,9 @@ initial begin
         end
 
         record_tc_result(flag);
-        if (flag) $display("(FAIL DUAL COMPRESS ENCODE)");
+        if (flag) $display("(SUCCESS DUAL COMPRESS ENCODE)");
         else begin
-            $display("(SUCCESS DUAL COMPRESS ENCODE)");
+            $display("(FAIL DUAL COMPRESS ENCODE)");
             $stop;
         end
     end    

@@ -7,12 +7,13 @@ module barrett
         parameter  CORRECT  = 1 ,
         parameter  FF_IN    = 1 ,
         parameter  FF_SHF   = 1 ,
-        parameter  FF_BARRETT_KR_SUM0 = 0,
-        parameter  FF_BARRETT_KR_SUB0 = 0,
-        parameter  FF_BARRETT_KR_MUL  = 1,
-        parameter  FF_BARRETT_KR_SUM1 = 0,
-        parameter  FF_BARRETT_KR_SUM2 = 1,
-        parameter  FF_BARRETT_KR_SUB1 = 0,
+        parameter  FF_KR_SUM0 = 0,
+        parameter  FF_KR_SUB0 = 0,
+        parameter  FF_KR_MUL  = 1,
+        parameter  FF_KR_SUM1 = 0,
+        parameter  FF_KR_SUM2 = 1,
+        parameter  FF_KR_SUB1 = 0,
+        parameter  FF_NEG   = 1 ,
         parameter  FF_MUL   = 1 ,
         parameter  FF_OUT   = 1
     )
@@ -40,7 +41,8 @@ end
 ///////////////////////////// parameters ////////////////////////////////
 
 localparam barrett_params_t params = {LOGQ, FF_IN, FF_SHF, FF_MUL, FF_OUT,
-                                      FF_BARRETT_KR_SUM0, FF_BARRETT_KR_SUB0, FF_BARRETT_KR_MUL, FF_BARRETT_KR_SUM1, FF_BARRETT_KR_SUM2, FF_BARRETT_KR_SUB1};
+                                      FF_KR_SUM0, FF_KR_SUB0, FF_KR_MUL, FF_KR_SUM1, FF_KR_SUM2, FF_KR_SUB1, 
+                                      FF_NEG};
 localparam karatsuba_64x64_dual_params_t  mac_0_params = barrett_mac_0_params(params);
 localparam mac_std_dual_32x34_params_t    mac_1_params = barrett_mac_1_params(params);
 
@@ -74,10 +76,10 @@ localparam LOGT1L   = LOGT1L_0 << 1;
 
 localparam LAT    = barrett_lat(params);
 localparam LAT_0  = barrett_mac_0_lat(params);
-localparam LAT_1  = barrett_mac_1_lat(params);
+localparam LAT_1  = barrett_mac_1_lat(params) + FF_NEG;
 
 localparam CL_D   = LAT_0;
-localparam Q_D    = (PIPE_Q) ? LAT_1 + LAT_0 + FF_IN : 0;
+localparam Q_D    = (PIPE_Q) ? LAT_1 + LAT_0 + FF_IN + FF_NEG : 0;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -299,8 +301,10 @@ lsb_dual #(
 addsub_dual #(
     .MODE (1      ),
     .LOGA0(LOGT1L_0),
-    .LOGB0(LOGT1L_0)
+    .LOGB0(LOGT1L_0),
+    .FF_OUT(FF_NEG)
 ) addsub_neg_inst (
+    .clk (clk   ),
     .A   (0     ),
     .B   (T1L   ),
     .dual(dual  ),

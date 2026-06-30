@@ -15,7 +15,9 @@ module butterfly
         parameter  int unsigned FF_BARRETT_KR_SUM1 = 0 ,
         parameter  int unsigned FF_BARRETT_KR_SUM2 = 1 ,
         parameter  int unsigned FF_BARRETT_KR_SUB1 = 0 ,
+        parameter  int unsigned FF_BARRETT_NEG     = 0 ,
         parameter  int unsigned FF_HINT            = 0 ,
+        parameter  int unsigned FF_SC              = 0 ,
         parameter  bit          KYBER_EN           = 1 ,
         parameter  bit          DILITHIUM_EN       = 1 ,
         parameter  bit          FALCON_EN          = 1 ,
@@ -46,7 +48,8 @@ module butterfly
 
 localparam int unsigned LAT_MUL    = L_MUL + FF_INTMUL_MUL;
 localparam int unsigned LAT_RED    = L_RED + FF_MODRED_MUL + FF_BARRETT_KR_SUM0 + FF_BARRETT_KR_SUB0 + 
-                                     FF_BARRETT_KR_MUL + FF_BARRETT_KR_SUM1 + FF_BARRETT_KR_SUM2 + FF_BARRETT_KR_SUB1;
+                                     FF_BARRETT_KR_MUL + FF_BARRETT_KR_SUM1 + FF_BARRETT_KR_SUM2 + FF_BARRETT_KR_SUB1 + 
+                                     FF_BARRETT_NEG;
 localparam int unsigned LAT_MODADD = FF_MODADD_IN + FF_MODADD_OUT;
 
 
@@ -93,7 +96,7 @@ wire [LOGQ -1:0] specialcase_checker_in_A1;
 wire [LOGQ -1:0] specialcase_checker_in_S;
 wire [LOGQ -1:0] specialcase_checker_out_B0;
 wire [LOGQ -1:0] specialcase_checker_out_B1;
-wire [LOGQ -1:0] specialcase_checker_out_sc;
+wire specialcase_checker_out_sc;
 
 wire makehint_specialcase;
 wire makehint_specialcase_d;
@@ -292,7 +295,8 @@ modmul #(
     .FF_BARRETT_KR_MUL (FF_BARRETT_KR_MUL ),
     .FF_BARRETT_KR_SUM1(FF_BARRETT_KR_SUM1),
     .FF_BARRETT_KR_SUM2(FF_BARRETT_KR_SUM2),
-    .FF_BARRETT_KR_SUB1(FF_BARRETT_KR_SUB1)
+    .FF_BARRETT_KR_SUB1(FF_BARRETT_KR_SUB1),
+    .FF_BARRETT_NEG    (FF_BARRETT_NEG    )
 ) mm (
     .clk (clk     ),
     .mode(mode_mul),
@@ -349,8 +353,10 @@ modmul_inv2 #(
 );
 
 specialcase_checker #(
-    .LOGQ(LOGQ)
+    .LOGQ(LOGQ),
+    .FF_OUT(FF_SC)
 ) specialcase_checker_0 (
+    .clk (clk),
     .A0  (specialcase_checker_in_A0 ),
     .A1  (specialcase_checker_in_A1 ),
     .S   (specialcase_checker_in_S  ),
@@ -364,7 +370,7 @@ specialcase_checker #(
 
 use_hint #(
     .LOGQ(LOGQ),
-    .HINT_DELAY(LAT_MODADD + LAT_MUL + LAT_RED + 1),
+    .HINT_DELAY(LAT_MODADD + LAT_MUL + LAT_RED + FF_SC),
     .FF_OUT(FF_HINT)
 ) use_hint_inst (
     .clk (clk),
@@ -372,7 +378,7 @@ use_hint #(
     .A1  (specialcase_checker_out_B1),
     .Q   (Q_q     ),
     .M   (inv2_q  ),
-    .hint(A[0]    ),
+    .hint(A_q[0]  ),
     .B   (use_hint_B)
 );
 
@@ -429,7 +435,7 @@ shiftreg #(
 );
 
 shiftreg #(
-    .SHIFT(LAT_MODADD * 2),
+    .SHIFT(LAT_MODADD * 2 - FF_SC),
     .DATA (1)
 ) sre_makehint (
     .clk     (clk ),
@@ -512,7 +518,7 @@ shiftreg #(
 );
 
 shiftreg #(
-    .SHIFT(FF_HINT),
+    .SHIFT(FF_HINT + FF_SC),
     .DATA (1)
 ) sr_o_valid_usehint (
     .clk     (clk        ),
@@ -544,14 +550,24 @@ shiftreg #(
     .data_out(o_valid_ntt)
 );
 
+shiftreg #(
+    .SHIFT(FF_SC),
+    .DATA (1)
+) sr_o_valid_sc (
+    .clk     (clk        ),
+    .rst     (1'b0       ),
+    .data_in (o_valid_ntt),
+    .data_out(o_valid_sc)
+);
+
 always @(*) begin
     case (op_q)
         `OP_NTT          : o_valid = o_valid_ntt;
         `OP_INTT         : o_valid = o_valid_ntt;
         `OP_PWM          : o_valid = (en_z_q) ? o_valid_ntt : o_valid_mul;
         `OP_MAC          : o_valid = (en_z_q) ? o_valid_ntt : o_valid_mul;
-        `OP_COMPRESS     : o_valid = o_valid_ntt;
-        `OP_DECOMPOSE    : o_valid = o_valid_ntt;
+        `OP_COMPRESS     : o_valid = o_valid_sc;
+        `OP_DECOMPOSE    : o_valid = o_valid_sc;
         `OP_SQADD        : o_valid = o_valid_ntt;
         `OP_ADD          : o_valid = o_valid_add;
         `OP_SUB          : o_valid = o_valid_add;
