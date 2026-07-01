@@ -2,7 +2,8 @@
 
 module cbd
    #(
-        parameter  LOGQ    = 32,
+        parameter  LOGQ          = 32,
+        parameter  SINGLE_CBD_EN = 0 ,
         localparam LOGLOGQ = $clog2(LOGQ + 1)
     )
     (
@@ -49,7 +50,7 @@ reg  dual_q;
 reg [LOGLOGQ -1:0] k_q;
 wire [LOGQ-1:0] modsub0_in_A;
 wire [LOGQ-1:0] modsub0_in_B;
-wire [LOGQ-1:0] modsub0_in_C;
+wire [LOGQ-1:0] modsub0_out_C;
 wire [LOGQ-1:0] modsub1_out_C;
 wire [LOGQ -1:0] mask_k;
 wire [LOGQ -1:0] mask_k_dual;
@@ -97,7 +98,7 @@ always @(*) begin
             2'b11  : T1L = 2;
             default: T1L = 0;
         endcase
-        if (dual_q) begin
+        if (dual_q || (SINGLE_CBD_EN == 0)) begin
             case (A_q[LOGQ0+1:LOGQ0])
                 2'b01  : T0H = 1;
                 2'b10  : T0H = 1;
@@ -137,7 +138,7 @@ always @(*) begin
             3'b111 : T1L = 3;
             default: T1L = 0;
         endcase
-        if (dual_q) begin
+        if (dual_q || (SINGLE_CBD_EN == 0)) begin
             case (A_q[LOGQ0+2:LOGQ0])
                 3'b001 : T0H = 1;
                 3'b010 : T0H = 1;
@@ -250,7 +251,7 @@ assign modsub0_in_A = (rej_samp_q) ? (A_q_masked) : T0;
 assign modsub0_in_B = (rej_samp_q) ? bound_q : T1;
 
 assign o_valid_mx = (rej_samp_q) ? o_valid_rejsamp : i_valid_d;
-assign C_mx = (rej_samp_q) ? C_rejsamp : modsub0_in_C;
+assign C_mx = (rej_samp_q) ? C_rejsamp : modsub0_out_C;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -266,10 +267,11 @@ modsub  #(
     .B    (modsub0_in_B),
     .dual (dual_q      ),
     .Q    (Q_q         ),
+    .rd_en(1'b1        ),
     .corr (sub_corr    ),
     .corr0(sub_corr0   ),
     .corr1(sub_corr1   ),
-    .C    (modsub0_in_C)
+    .C    (modsub0_out_C)
 );
 
 
@@ -278,6 +280,7 @@ modsub  #(
 ) ms1 (
     .A   (bound_half   ),
     .B   (A_q_masked   ),
+    .rd_en(1'b1        ),
     .dual(dual_q       ),
     .Q   (Q_q          ),
     .C   (modsub1_out_C)

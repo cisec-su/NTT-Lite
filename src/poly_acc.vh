@@ -18,13 +18,8 @@
 `define OP_ADD                5'd4
 `define OP_SUB                5'd5
 `define OP_COMPRESS           5'd6
-// `define OP_DECOMPRESS         5'd6
-// `define OP_ENCODE             5'd7
-// `define OP_DECODE             5'd8
 `define OP_SUM                5'd9
 `define OP_MAC                5'd15
-`define OP_CBD                5'd13
-`define OP_REJ_SAMP           5'd14
 `define OP_SQADD              5'd18
 `define OP_TOCENTER           5'd19
 `define OP_FROMCENTER         5'd20
@@ -35,11 +30,14 @@
 `define OP_MAKEHINT           5'd12
 `define OP_USEHINT            5'd16
 `define OP_CHKL1NORM          5'd17
-`define OP0_NOP               5'd31
 
 `define OP1_NOP               2'd0
 `define OP1_ENCODE            2'd1
 `define OP1_DECODE            2'd2
+
+`define OP2_NOP               2'd0
+`define OP2_CBD               2'd1
+`define OP2_REJSAMP           2'd2
 
 
 `define MODE_SINGLE           2'd0

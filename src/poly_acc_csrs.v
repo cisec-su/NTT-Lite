@@ -18,7 +18,7 @@ module poly_acc_csrs
         output reg [ 1:0]  mode,         // (Read/Write)
         output reg [ 4:0]  op  ,         // (Write)
         output reg [ 1:0]  op1,          // (Write)
-        output reg         otf,          // (Read/Write)
+        output reg [ 1:0]  op2,          // (Write)
         output reg [ 5:0]  k,            // (Read/Write)
         output reg [ 5:0]  d,            // (Write)
         output reg [ 1:0]  round,        // (Write)        
@@ -66,6 +66,9 @@ localparam CTRL_LOGN_LEN      = CTRL_LOGN_MSB - CTRL_LOGN_LSB + 1;
 localparam CTRL_OP1_LSB       = 14;
 localparam CTRL_OP1_MSB       = 15;
 localparam CTRL_OP1_LEN       = CTRL_OP1_MSB - CTRL_OP1_LSB + 1;
+localparam CTRL_OP2_LSB       = 16;
+localparam CTRL_OP2_MSB       = 17;
+localparam CTRL_OP2_LEN       = CTRL_OP2_MSB - CTRL_OP2_LSB + 1;
 // localparam CTRL_K_LSB         = 14;
 // localparam CTRL_K_MSB         = 18;
 // localparam CTRL_K_LEN         = CTRL_K_MSB - CTRL_K_LSB + 1;
@@ -155,7 +158,7 @@ always @(posedge clk) begin
         mode  <= {CTRL_MODE_LEN{1'b0}};
         op    <= {CTRL_OP_LEN{1'b0}};
         op1   <= {CTRL_OP1_LEN{1'b0}};
-        otf   <= 1'b0;
+        op2   <= {CTRL_OP2_LEN{1'b0}};
         // k     <= {CTRL_K_LEN{1'b0}};
         d     <= {CTRL_D_LEN{1'b0}};
         q     <= 32'd0;
@@ -178,6 +181,7 @@ always @(posedge clk) begin
                 // k         <= {1'b0, wdata[CTRL_K_MSB:CTRL_K_LSB]};
                 op        <= wdata[CTRL_OP_MSB  :CTRL_OP_LSB  ];
                 op1       <= wdata[CTRL_OP1_MSB :CTRL_OP1_LSB ];
+                op2       <= wdata[CTRL_OP2_MSB :CTRL_OP2_LSB ];
                 d         <= {1'b0, wdata[CTRL_D_MSB:CTRL_D_LSB]};
                 round     <= wdata[CTRL_ROUND_MSB:CTRL_ROUND_LSB];
                 rhs_const <= wdata[CTRL_RHS_CONST_BIT];

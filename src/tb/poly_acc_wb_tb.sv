@@ -2546,6 +2546,115 @@ initial begin
     end    
 
 
+    //-----------------------------------------------------------------------------------------------//
+
+    if (TEST_DUAL) begin
+        $readmemh("../../../../../test/meta.txt"            , meta);
+        $readmemh("../../../../../test/cbd_in.txt"   , poly_in);
+        $readmemh("../../../../../test/cbd_out_dual.txt"    , poly_out);
+
+        q = (meta[0] << 16) + meta[0];
+        mu  = meta[1];
+        logn   = meta[2][7:0];
+        d = 4; // todo: parametric
+
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+            `mem[(POLYOUT_BASE >> 2) + w] = '0;
+        end
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_LOW , mu[31:0]);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_HIGH, mu[63:32]);
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+        write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                    (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                    (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                    (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+
+        write_data = (`CMD_START       << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                    (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                    (`OP2_CBD          << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                    (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                    (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                    (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+        flag = 1'b1;
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            temp  = `mem[(POLYOUT_BASE >> 2) + w];
+            temp1 = poly_out[w];
+            if (temp !== temp1 || $isunknown(temp)) begin
+                $display("DUAL CBD mismatch at index %0d: %h != %h", w, temp, temp1);
+                flag = 1'b0;
+            end
+        end
+
+        record_tc_result(flag);
+        if (flag) $display("(SUCCESS DUAL CBD)");
+        else begin
+            $display("(FAIL DUAL CBD)");
+            $stop;
+        end
+
+        if (FORWARD_EN) begin
+            for (int w = 0; w < (1 << logn); w = w + 1) begin
+                `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+                `mem[(POLYOUT_BASE >> 2) + w] = '0;
+            end
+
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_LOW , mu[31:0]);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_HIGH, mu[63:32]);
+
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+
+            write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                        (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                        (`OP2_CBD          << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                        (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                        (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                        (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+            do begin
+                wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+            end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+            flag = 1'b1;
+            for (int w = 0; w < (1 << logn); w = w + 1) begin
+                temp  = `mem[(POLYOUT_BASE >> 2) + w];
+                temp1 = poly_out[w];
+                if (temp !== temp1 || $isunknown(temp)) begin
+                    $display("DUAL CBD mismatch at index %0d: %h != %h", w, temp, temp1);
+                    flag = 1'b0;
+                end
+            end
+
+            record_tc_result(flag);
+            if (flag) $display("(SUCCESS DUAL CBD FORWARD)");
+            else begin
+                $display("(FAIL DUAL CBD FORWARD)");
+                $stop;
+            end
+        end
+    end
+
     // Finish simulation
     $display("Simulation finished");
     $display("==============================================");
