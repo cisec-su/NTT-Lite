@@ -833,7 +833,7 @@ inv2 = 250
 logq = 12
 logn = 7
 n = 1 << logn
-mu_64 = (1 << 64) // inv2
+mu_64 = (1 << 64) // q
 d = 12
 
 with open("rejsampdual_meta.txt", "w") as f:
@@ -877,3 +877,17 @@ with open("rej_samp_in_dual.txt", "w") as f:
 with open("rej_samp_out_dual.txt", "w") as f:
     for i in range(len(rej_samp_out)//2):
         f.write(hex((rej_samp_out[(2*i) + 1] << (b // 2)) + rej_samp_out[2*i])[2:] + "\n")
+
+with open("rej_samp_add_out_dual.txt", "w") as f:
+    for i in range(n):
+        t1 = (A_1[i] + rej_samp_out[(2*i) + 1]) % q
+        t0 = (A_0[i] + rej_samp_out[2*i]) % q
+        f.write(hex((t1 << (b // 2)) + t0)[2:] + "\n")
+
+with open("rej_samp_mul_out_poly.txt", "w") as f:
+    for i in range(n):
+        b1 = rej_samp_out[(2*i) + 1]
+        b0 = rej_samp_out[2*i]
+        t0 = (A_0[i] * b0 + A_1[i] * b1 * Z_1[i]) % q
+        t1 = (A_1[i] * b0 + A_0[i] * b1) % q
+        f.write(hex((t1 << (b // 2)) + t0)[2:] + "\n")

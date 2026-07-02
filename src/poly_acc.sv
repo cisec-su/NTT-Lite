@@ -141,7 +141,6 @@ reg ctr_tw_inc, ctr_tw_rst, ctr_tw_set;
 wire [LOGN-1:0] ctr2_p1;
 wire [LOGN-1:0] ctr0_p1;
 reg wpoly, /*upoly_ntt, upoly_ntt_q,*/ upoly_mul, upoly_zetamul, wpoly_zetafrwrd, wpsi, wzeta, upsi, wq, p_ren, px_ren, pwm_zeta_idx, twiddle_poly_idx, upoly_cbd, ntt_ren;
-reg poly_op1op0_idx;
 reg zeropoly;
 reg clr_poly_q, clr_poly_set, clr_poly_clr;
 reg zerotwiddle;
@@ -186,6 +185,7 @@ wire [LOGQ-1:0] B_o;
 reg  bu_i_valid;
 wire bu_o_valid;
 wire bu_busy;
+reg bu_abort;
 
 // chk norm
 wire chknorm_bu;
@@ -375,7 +375,8 @@ assign o_len  = pwop_o_limit + 1'b1 - ctr_io;
 
 ///////////////////// BU inputs /////////////////////////////////////////
 
-assign bu_i_valid = (op_order == ORDER_OP1_OP2_OP0) ? cbd_o_valid_d    :  
+assign bu_i_valid = (en_z) ? fsm_i_valid_d :
+                    (op_order == ORDER_OP1_OP2_OP0) ? cbd_o_valid_d    :  
                     (op_order == ORDER_OP1_OP0    ) ? encode_o_valid_d :
                     (op_order == ORDER_OP1_OP2    ) ? 1'b0             :
                     (op_order == ORDER_OP1        ) ? 1'b0             :                    
@@ -442,7 +443,8 @@ assign pwop_o_limit = (is_op1_encode_q) ? decode_num_words : n_m1;
 
 
 ///////////////////// Encode Inputs /////////////////////////////////////
-assign encode_i_valid = (op_order == ORDER_OP1        ) ? fsm_i_valid_d : 
+assign encode_i_valid = (en_z) ? 1'b0 :
+                        (op_order == ORDER_OP1        ) ? fsm_i_valid_d : 
                         (op_order == ORDER_OP1_OP0    ) ? fsm_i_valid_d :
                         (op_order == ORDER_OP1_OP2_OP0) ? fsm_i_valid_d :
                         (op_order == ORDER_OP1_OP2    ) ? fsm_i_valid_d :                        
@@ -588,10 +590,10 @@ always @(posedge clk) begin
         ctr_tr <= 0;
     else if (ctr_tr_rst || ctr_all_rst)
         ctr_tr <= 0;
-    else if (ctr_tr_inc)
-        ctr_tr <= ctr_tr + 1;
     else if (ctr_tr_set)
         ctr_tr[LOGN-1] <= 1'b1;
+    else if (ctr_tr_inc)
+        ctr_tr <= ctr_tr + 1;
 end
 
 always @(posedge clk) begin
@@ -947,6 +949,7 @@ butterfly #(
     .mode(mode ),
     .round(round),
     .en_z(en_z),
+    .abort(bu_abort),
     .A   (A_i  ),
     .B   (B_i  ),
     .PSI (psi_i),
@@ -1101,7 +1104,6 @@ always @(*) begin
     px_ren = 0;
     pwm_zeta_idx = 0;
     twiddle_poly_idx = 0;
-    poly_op1op0_idx = 0;
     ntt_rcv_bu = 0;
     sum_rcv_bu = 0;
     addsub_rcv_bu = 0;
@@ -1151,6 +1153,8 @@ always @(*) begin
     i_done = 0;
     
     fsm_i_valid = 0;
+
+    bu_abort = 0;
 
     case (state)
         ST_IDLE: begin
@@ -1251,12 +1255,6 @@ always @(*) begin
             rdone_clr = 1;
         end
         ST_TWIDDLE_IN: begin
-            // if (op_switch) begin
-            //     io_limit = decode_num_words;
-            // end
-            // else if (rhs_const) begin
-            //     io_limit = rejsamp_num_words;
-            // end
             i_ready = 1;
             if (i_valid) begin
                 wpsi = 1;
@@ -1313,8 +1311,13 @@ always @(*) begin
                 twiddle_ram_ren = 1;
                 twiddle_poly_idx = 1;
                 if (op_order == ORDER_OP1_OP0) begin
-                    poly_op1op0_idx = 1;
                     if (encode_o_valid) begin
+                        p_ren = 1;
+                        ctr1_inc = 1;
+                    end
+                end
+                else if (op_order == ORDER_OP1_OP2_OP0) begin
+                    if (cbd_o_valid) begin
                         p_ren = 1;
                         ctr1_inc = 1;
                     end
@@ -1341,7 +1344,16 @@ always @(*) begin
                 end
             end
             if (pwop_o_valid && ctr0 == pwop_o_limit) begin
-                next_state = ST_POLY_OUT;
+                if (is_pwm_q & is_poly_mode_q) begin
+                    next_state = ST_POLY_PWM2;
+                    bu_abort = 1;
+                    ctr_tr_set = 1;
+                    fsm_i_valid = 0;
+                end
+                else begin
+                    next_state = ST_POLY_OUT;
+                    ctr_tr_rst = 1;
+                end
                 ctr1_rst = 1;
                 ctr_io_rst = 1;
                 i_done = 1;
@@ -1349,66 +1361,7 @@ always @(*) begin
             pwm_rcv_bu = 1;
             upoly_zetamul = (is_poly_mode_q & bu_o_valid);
             twiddle_frwrd = 1;
-        end
-        // ST_TWIDDLE_FORWARD_DECODE: begin
-
-        //     if ((is_op1_decode_q) || (is_cbd_q)) begin
-        //         io_limit = decode_num_words;
-        //     end
-        //     else if ((is_rej_samp_q) || (is_fn_decompress_q)) begin
-        //         io_limit = rejsamp_num_words;
-        //     end
-        //     i_ready = 1;
-        //     if (i_valid) begin
-        //         wpsi = 1;
-        //         if (ctr0 == io_limit) begin
-        //             // do nothing, just wait
-        //         end
-        //         else
-        //             ctr0_inc = 1;
-        //     end
-
-
-        //     if (decode_i_ready && /*(ctr1 != n_m1) &&*/ (ctr0_d >= ctr2) && (ctr0 != 0)) begin
-        //         if (ctr2 == io_limit) begin
-        //             rdone_set = 1;
-        //         end
-        //         else begin
-        //             ctr2_inc = 1;                    
-        //         end
-        //         // sr_i = !rdone;
-        //     end
-        //     if ((is_op1_decode_q       && encode_o_valid) ||
-        //         (is_fn_decompress_q && encode_o_valid) || 
-        //         (is_cbd_q          && cbd_o_valid   ) ||
-        //         (is_rej_samp_q     && cbd_o_valid   ))
-        //     begin
-        //         if (is_cbd_q || is_rej_samp_q) begin
-        //             upoly_cbd = 1;
-        //         end
-        //         else begin
-        //             upoly_encode = 1;
-        //         end
-        //         if (ctr1 == n_m1) begin
-        //             ctr1_rst = 1;
-        //             ctr0_rst = 1;
-        //             ctr2_rst = 1;
-        //             rej_samp_ip_clr = 1;
-        //             next_state = ST_POLY_OUT;
-        //             i_done = 1;
-        //         end
-        //         else begin
-        //             ctr1_inc = 1;
-        //         end                
-        //     end
-        //     else if ((is_rej_samp_q || is_fn_decompress_q) && rdone && !encode_busy && (!cbd_busy || is_fn_decompress_q)) begin
-        //         rej_samp_ip_set = 1;
-        //         next_state = ST_IDLE;
-        //         done_set = 1;
-        //     end
-
-        //     pwm_idx_df = 1;
-        // end        
+        end    
         ST_POLY_IN: begin
             i_ready = 1;
             if (i_valid) begin
@@ -1515,8 +1468,13 @@ always @(*) begin
             twiddle_ram_ren = 1;
             twiddle_poly_idx = 1;
             if (op_order == ORDER_OP1_OP0) begin
-                poly_op1op0_idx = 1;
                 if (encode_o_valid) begin
+                    p_ren = 1;
+                    ctr1_inc = 1;
+                end
+            end
+            else if (op_order == ORDER_OP1_OP2_OP0) begin
+                if (cbd_o_valid) begin
                     p_ren = 1;
                     ctr1_inc = 1;
                 end
@@ -1548,12 +1506,17 @@ always @(*) begin
         end
         ST_PWOP1: begin
             if (op_order == ORDER_OP1_OP0) begin
-                poly_op1op0_idx = 1;
                 if (encode_o_valid) begin
                     p_ren = 1;
                     ctr1_inc = 1;
                 end
-            end            
+            end
+            else if (op_order == ORDER_OP1_OP2_OP0) begin
+                if (cbd_o_valid) begin
+                    p_ren = 1;
+                    ctr1_inc = 1;
+                end
+            end                        
             if (pwop_o_valid && ctr0 == pwop_o_limit) begin
                 if (is_chk_infnorm_q) begin
                     ctr_all_rst = 1;
@@ -1565,6 +1528,7 @@ always @(*) begin
                     ctr0_rst = 1;
                     ctr1_rst = 1;
                     ctr_tr_set = 1;
+                    bu_abort = 1;
                 end
                 else begin
                     next_state = ST_POLY_OUT;

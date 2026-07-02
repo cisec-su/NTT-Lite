@@ -27,6 +27,7 @@ module butterfly
         input                clk      ,
 
         input                i_valid  ,
+        input                abort    ,
         input  [        4:0] op       ,
         input  [        1:0] mode     ,
         input  [        1:0] round    ,
@@ -496,7 +497,7 @@ shiftreg #(
     .EN_OR (1)
 ) sr_o_valid_add (
     .clk     (clk        ),
-    .rst     (1'b0       ),
+    .rst     (abort       ),
     .data_in (i_valid    ),
     .data_out(o_valid_add),
     .data_or (s0)
@@ -508,7 +509,7 @@ shiftreg #(
     .EN_OR (1)
 ) sr_o_valid_addsub (
     .clk     (clk        ),
-    .rst     (1'b0       ),
+    .rst     (abort       ),
     .data_in (o_valid_add),
     .data_out(o_valid_addsub),
     .data_or (s1)
@@ -520,7 +521,7 @@ shiftreg #(
     .EN_OR (1)
 ) sr_o_valid_makehint (
     .clk     (clk        ),
-    .rst     (1'b0       ),
+    .rst     (abort       ),
     .data_in (o_valid_addsub),
     .data_out(o_valid_makehint),
     .data_or (s2)
@@ -532,7 +533,7 @@ shiftreg #(
     .EN_OR (1)
 ) sr_o_valid_usehint (
     .clk     (clk        ),
-    .rst     (1'b0       ),
+    .rst     (abort       ),
     .data_in (o_valid_ntt),
     .data_out(o_valid_usehint),
     .data_or (s3)
@@ -545,7 +546,7 @@ shiftreg #(
     .EN_OR (1)
 ) sr_o_valid_mul (
     .clk     (clk        ),
-    .rst     (1'b0       ),
+    .rst     (abort       ),
     .data_in (o_valid_add),
     .data_out(o_valid_mul),
     .data_or (s4)
@@ -559,7 +560,7 @@ shiftreg #(
     .EN_OR (1)
 ) sr_o_valid_ntt (
     .clk     (clk        ),
-    .rst     (1'b0       ),
+    .rst     (abort       ),
     .data_in (i_valid_ntt),
     .data_out(o_valid_ntt),
     .data_or (s5)
@@ -571,7 +572,7 @@ shiftreg #(
     .EN_OR (1)
 ) sr_o_valid_sc (
     .clk     (clk        ),
-    .rst     (1'b0       ),
+    .rst     (abort       ),
     .data_in (o_valid_ntt),
     .data_out(o_valid_sc),
     .data_or (s6)

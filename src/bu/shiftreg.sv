@@ -28,7 +28,7 @@ if (SHIFT > 0) begin
     assign data_out = shift_array[SHIFT - 1];
     always @(*) begin
         if (EN_OR) begin
-            data_or = 0;
+            data_or = data_in;
             for (int i = 0; i < SHIFT; i++) begin
                 data_or = data_or | shift_array[i];
             end

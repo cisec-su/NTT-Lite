@@ -135,6 +135,7 @@ for (genvar i = 0; i < MEM32_DEPTH; i = i + 1) begin
     assign mem32_view[i] = `mem[i >> MEM_SHIFT][(i & (MEM_SHIFT))*32 +: 32];
 end
 
+int unsigned ii;
 
 // Instantiate the keccak_acc_top module
 poly_acc_wb #(
@@ -778,7 +779,6 @@ initial begin
 
 
 
-            $readmemh("../../../../../test/poly_in_dual.txt"  , poly_in);
             $readmemh("../../../../../test/zeta_in.txt"       , psi);
             $readmemh("../../../../../test/mul_out_poly.txt"  , poly_out);
 
@@ -843,6 +843,88 @@ initial begin
         else begin
             $display("Skipping POLY PWM test since logn matches LOGN");
         end
+
+        $readmemh("../../../../../test/poly_in_B_dual.txt" , psi);
+        logn   = meta[2][7:0];
+        if (logn != LOGN) begin
+            for (int w = 0; w < (1 << logn); w = w + 1) begin
+                `mem[(TWIDDLE_BASE >> 2) + w] = psi[w];
+            end
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , TWIDDLE_BASE);
+            write_data = (`CMD_LOAD_POLY   << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                        (`MODE_POLY        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB)|
+                        (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+            do begin
+                wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+            end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+
+
+            $readmemh("../../../../../test/zeta_in.txt"       , psi);
+
+            q = (meta[0] << 16) + meta[0];
+            logn   = meta[2][7:0];
+
+            for (int w = 0; w < (1 << logn); w = w + 1) begin
+                `mem[(TWIDDLE_BASE >> 2) + w] = psi[w];
+                `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+                `mem[(POLYOUT_BASE >> 2) + w] = '0;
+            end
+
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR   , q);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , TWIDDLE_BASE);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_LOW , mu[31:0]);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_HIGH, mu[63:32]);
+
+            // op = 0, mode = MODE_POLY, cmd = CMD_LOAD_ZETA
+            write_data = (`CMD_LOAD_ZETA << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                        (5'd0           << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                        (`MODE_POLY     << uut.poly_acc_csrs_inst.CTRL_MODE_LSB)|
+                        (logn           << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+            do begin
+                wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+            end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+            // op = OP_PWM, mode = MODE_POLY, cmd = CMD_LOAD_POLY
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+            write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                        (`OP_PWM        << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                        (`MODE_POLY     << uut.poly_acc_csrs_inst.CTRL_MODE_LSB)|
+                        (logn           << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+            do begin
+                wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+            end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+            flag = 1'b1;
+            for (int w = 0; w < (1 << logn); w = w + 1) begin
+                temp  = `mem[(POLYOUT_BASE >> 2) + w];
+                temp1 = poly_out[w];
+                if (temp !== temp1 || $isunknown(temp)) begin
+                    $display("POLY PWM TWIDDLE FORWARD mismatch at index %0d: %h != %h", w, temp, temp1);
+                    flag = 1'b0;
+                end
+            end
+
+            record_tc_result(flag);
+            if (flag) begin
+                $display("(SUCCESS POLY PWM TWIDDLE FORWARD)");
+            end
+            else begin
+                $display("(FAIL POLY PWM TWIDDLE FORWARD)");
+                $stop;
+            end
+        end
+        else begin
+            $display("Skipping POLY PWM TWIDDLE FORWARD test since logn matches LOGN");
+        end
+
     end
 
 
@@ -2833,60 +2915,34 @@ initial begin
 
     //-----------------------------------------------------------------------------------------------//
 
-    $readmemh("../../../../../test/rejsampdual_meta.txt" , meta);
-    $readmemh("../../../../../test/rej_samp_in_dual.txt", poly_in);
-    $readmemh("../../../../../test/rej_samp_out_dual.txt", poly_out);
+    if (TEST_DUAL) begin
+        $readmemh("../../../../../test/rejsampdual_meta.txt" , meta);
+        $readmemh("../../../../../test/rej_samp_in_dual.txt", poly_in);
+        $readmemh("../../../../../test/rej_samp_out_dual.txt", poly_out);
 
-    q = (meta[0] << 16) | meta[0];
-    logn   = meta[2][7:0];
-    bound = meta[6];
-    k = meta[3];
-    d = meta[4];
-    inv2 = meta[5];
+        q = (meta[0] << 16) | meta[0];
+        logn   = meta[2][7:0];
+        bound = meta[6];
+        k = meta[3];
+        d = meta[4];
+        inv2 = meta[5];
 
-    flag2 = 1'b1;
+        flag2 = 1'b1;
 
-    for (int i = 1; i < inv2; i = i + 1) begin
-
-
-        rejsamp_n = i;    
-
-        for (int w = 0; w < (1 << logn); w = w + 1) begin
-            `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
-            `mem[(POLYOUT_BASE >> 2) + w] = '0;
-        end
-
-        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
-        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR  , bound);
-
-        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
-        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
-
-        write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
-                    (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB);
-        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+        for (int i = 1; i < inv2; i = i + 1) begin
 
 
-        write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
-                    (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
-                    (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
-                    (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
-                    (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
-                    (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
-        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+            rejsamp_n = i;    
 
-        do begin
-            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
-        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+            for (int w = 0; w < (1 << logn); w = w + 1) begin
+                `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+                `mem[(POLYOUT_BASE >> 2) + w] = '0;
+            end
 
-        chknorm = (read_data >> uut.poly_acc_csrs_inst.STATUS_REJ_SAMP_IP_BIT) & 32'd1;
-        flag    = (chknorm == 1'b1);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR  , bound);
 
-        if (flag) begin
-
-            rejsamp_n = meta[5] - i;    
-
-            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE + (i << 2));
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
             wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
 
             write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
@@ -2905,6 +2961,307 @@ initial begin
             do begin
                 wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
             end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+            chknorm = (read_data >> uut.poly_acc_csrs_inst.STATUS_REJ_SAMP_IP_BIT) & 32'd1;
+            flag    = (chknorm == 1'b1);
+
+            if (flag) begin
+
+                rejsamp_n = meta[5] - i;    
+
+                wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE + (i << 2));
+                wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+                write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
+                            (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB);
+                wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+
+
+                write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                            (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                            (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                            (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                            (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                            (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+                wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+                do begin
+                    wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+                end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+            end
+
+            chknorm = (read_data >> uut.poly_acc_csrs_inst.STATUS_REJ_SAMP_IP_BIT) & 32'd1;
+            flag    = (chknorm == 1'b0);
+
+            if (!flag) begin
+                flag2 = 1'b0;
+                $display("(FAIL REJSAMP IP FLAG) iter-%d", i);
+                $stop;
+            end
+
+            for (int w = 0; w < (1 << logn); w = w + 1) begin
+                temp  = `mem[(POLYOUT_BASE >> 2) + w];
+                temp1 = poly_out[w];
+                if (temp !== temp1 || $isunknown(temp)) begin
+                    $display("DUAL REJSAMP IP mismatch at index %0d: %h != %h", w, temp, temp1);
+                    flag = 1'b0;
+                end
+            end
+
+            if (!flag) begin
+                flag2 = 1'b0;
+                $display("(FAIL REJSAMP IP) iter-%d", i);
+                $stop;
+            end
+        end
+
+        record_tc_result(flag2);
+        if (flag2) $display("(SUCCESS DUAL REJSAMP IP)");
+        else begin
+            $display("(FAIL DUAL REJSAMP IP)");
+            $stop;
+        end
+    end
+
+    //-----------------------------------------------------------------------------------------------//
+
+    if (TEST_DUAL) begin
+        $readmemh("../../../../../test/rejsampdual_meta.txt" , meta);
+        $readmemh("../../../../../test/poly_in_dual.txt", psi);
+        $readmemh("../../../../../test/rej_samp_in_dual.txt", poly_in);
+        $readmemh("../../../../../test/rej_samp_add_out_dual.txt", poly_out);
+
+        q = (meta[0] << 16) | meta[0];
+        logn   = meta[2][7:0];
+        bound = meta[6];
+        k = meta[3];
+        d = meta[4];
+        inv2 = meta[5];
+
+        flag2 = 1'b1;
+
+        for (int i = 1; i < inv2; i = i + 1) begin
+
+            for (int w = 0; w < (1 << logn); w = w + 1) begin
+                `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+                `mem[(TWIDDLE_BASE  >> 2) + w] = psi[w];
+                `mem[(POLYOUT_BASE >> 2) + w] = '0;
+            end
+
+
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , TWIDDLE_BASE);
+
+
+            write_data = (`CMD_LOAD_POLY << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                        (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+            do begin
+                wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+            end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+            rejsamp_n = i;    
+
+
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR  , bound);
+
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+            write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
+                        (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+
+            write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                        (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                        (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                        (`OP_ADD           << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                        (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                        (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                        (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+            do begin
+                wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+            end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+            chknorm = (read_data >> uut.poly_acc_csrs_inst.STATUS_REJ_SAMP_IP_BIT) & 32'd1;
+            flag    = (chknorm == 1'b1);
+
+            if (flag) begin
+
+                rejsamp_n = meta[5] - i;    
+
+                wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE + (i << 2));
+                wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+                write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
+                            (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB);
+                wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+
+
+                write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                            (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                            (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                            (`OP_ADD           << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                            (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                            (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                            (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+                wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+                do begin
+                    wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+                end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+            end
+
+            chknorm = (read_data >> uut.poly_acc_csrs_inst.STATUS_REJ_SAMP_IP_BIT) & 32'd1;
+            flag    = (chknorm == 1'b0);
+
+            if (!flag) begin
+                flag2 = 1'b0;
+                $display("(FAIL REJSAMP ADD IP FLAG) iter-%d", i);
+                $stop;
+            end
+
+            for (int w = 0; w < (1 << logn); w = w + 1) begin
+                temp  = `mem[(POLYOUT_BASE >> 2) + w];
+                temp1 = poly_out[w];
+                if (temp !== temp1 || $isunknown(temp)) begin
+                    $display("DUAL REJSAMP ADD mismatch at index %0d: %h != %h", w, temp, temp1);
+                    flag = 1'b0;
+                end
+            end
+
+            if (!flag) begin
+                flag2 = 1'b0;
+                $display("(FAIL REJSAMP ADD IP) iter-%d", i);
+                $stop;
+            end
+        end
+
+        record_tc_result(flag2);
+        if (flag2) $display("(SUCCESS DUAL REJSAMP ADD IP)");
+        else begin
+            $display("(FAIL DUAL REJSAMP ADD IP)");
+            $stop;
+        end
+    end
+
+    //-----------------------------------------------------------------------------------------------//
+
+    if (TEST_DUAL) begin
+
+        $readmemh("../../../../../test/zeta_in.txt"       , psi);
+
+        q = (meta[0] << 16) + meta[0];
+        logn   = meta[2][7:0];
+
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            `mem[(TWIDDLE_BASE >> 2) + w] = psi[w];
+        end
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , TWIDDLE_BASE);
+        // op = 0, mode = MODE_POLY, cmd = CMD_LOAD_ZETA
+        write_data = (`CMD_LOAD_ZETA << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                    (logn           << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+        $readmemh("../../../../../test/rejsampdual_meta.txt" , meta);
+        $readmemh("../../../../../test/poly_in_dual.txt", psi);
+        $readmemh("../../../../../test/rej_samp_in_dual.txt", poly_in);
+        $readmemh("../../../../../test/rej_samp_mul_out_poly.txt", poly_out);
+
+        q = (meta[0] << 16) | meta[0];
+        logn   = meta[2][7:0];
+        bound = meta[6];
+        k = meta[3];
+        d = meta[4];
+        inv2 = meta[5];
+        mu = meta[1];
+
+        flag2 = 1'b1;
+
+        ii = 1 << logn;
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR   , q);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , TWIDDLE_BASE);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_LOW , mu[31:0]);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.MU_ADDR_HIGH, mu[63:32]);
+
+
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+            `mem[(TWIDDLE_BASE  >> 2) + w] = psi[w];
+            `mem[(POLYOUT_BASE >> 2) + w] = '0;
+        end
+
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , TWIDDLE_BASE);
+
+        write_data = (`CMD_LOAD_POLY << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                    (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+        rejsamp_n = ii;    
+
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR  , bound);
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+        write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
+                    (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+
+        write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                    (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                    (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                    (`OP_PWM           << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                    (`MODE_POLY        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                    (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                    (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+        chknorm = (read_data >> uut.poly_acc_csrs_inst.STATUS_REJ_SAMP_IP_BIT) & 32'd1;
+        flag    = (chknorm == 1'b1);
+
+        if (flag) begin
+
+            rejsamp_n = meta[5] - ii;
+
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE + (ii << 2));
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+            write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
+                        (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+
+
+            write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                        (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                        (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                        (`OP_PWM           << uut.poly_acc_csrs_inst.CTRL_OP_LSB ) |
+                        (`MODE_POLY        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                        (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                        (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+            do begin
+                wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+            end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
         end
 
         chknorm = (read_data >> uut.poly_acc_csrs_inst.STATUS_REJ_SAMP_IP_BIT) & 32'd1;
@@ -2912,7 +3269,7 @@ initial begin
 
         if (!flag) begin
             flag2 = 1'b0;
-            $display("(FAIL REJSAMP IP 2 FLAG) iter-%d", i);
+            $display("(FAIL REJSAMP POLY PWM IP FLAG)");
             $stop;
         end
 
@@ -2920,24 +3277,25 @@ initial begin
             temp  = `mem[(POLYOUT_BASE >> 2) + w];
             temp1 = poly_out[w];
             if (temp !== temp1 || $isunknown(temp)) begin
-                $display("DUAL REJSAMP mismatch at index %0d: %h != %h", w, temp, temp1);
+                $display("DUAL REJSAMP POLY PWM mismatch at index %0d: %h != %h", w, temp, temp1);
                 flag = 1'b0;
             end
         end
 
         if (!flag) begin
             flag2 = 1'b0;
-            $display("(FAIL REJSAMP IP) iter-%d", i);
+            $display("(FAIL REJSAMP POLY PWM IP)");
+            $stop;
+        end
+
+        record_tc_result(flag2);
+        if (flag2) $display("(SUCCESS DUAL REJSAMP POLY PWM IP)");
+        else begin
+            $display("(FAIL DUAL REJSAMP POLY PWM IP)");
             $stop;
         end
     end
 
-    record_tc_result(flag2);
-    if (flag2) $display("(SUCCESS DUAL REJSAMP IP)");
-    else begin
-        $display("(FAIL DUAL REJSAMP IP)");
-        $stop;
-    end
 
     // Finish simulation
     $display("Simulation finished");
