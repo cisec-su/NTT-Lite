@@ -13,6 +13,7 @@ module wb_dma
         input              w_valid    ,
 (* dont_touch *) output reg [31:0]  r_data,
         input      [31:0]  w_data     ,
+        input              rw_abort   ,
         // dma connections
         output reg         dma_cyc_i  ,
         output reg         dma_stb_i  ,
@@ -32,8 +33,9 @@ typedef enum logic [3:0] {
     S_IDLE       = 3'd0,
     S_READ0      = 3'd1,
     S_READ1      = 3'd2,
-    S_READ2      = 3'd3,    
-    S_WRITE0     = 3'd4
+    S_READ2      = 3'd3,
+    S_READ3      = 3'd4,
+    S_WRITE0     = 3'd5
 } fsm_state_t;
 
 
@@ -100,7 +102,12 @@ always @(posedge clk) begin
             end
             S_READ0: begin
                 beats_left <= beats_left - 9'd1;
-                if (beats_left == 9'd1) begin
+                if (rw_abort) begin
+                    dma_cyc_i <= 1'b0;
+                    dma_stb_i <= 1'b0;
+                    state     <= S_IDLE;
+                end
+                else if (beats_left == 9'd1) begin
                     dma_cyc_i <= 1'b0;
                     dma_stb_i <= 1'b0;
                     state     <= S_READ2;
@@ -114,7 +121,12 @@ always @(posedge clk) begin
                 r_data    <= dma_dat_o;
                 r_valid_r <= 1'b1;
                 beats_left <= beats_left - 9'd1;
-                if (beats_left == 9'd1) begin
+                if (rw_abort) begin
+                    dma_cyc_i <= 1'b0;
+                    dma_stb_i <= 1'b0;
+                    state     <= S_IDLE;
+                end
+                else if (beats_left == 9'd1) begin
                     dma_cyc_i <= 1'b0;
                     dma_stb_i <= 1'b0;
                     state     <= S_READ2;
@@ -126,6 +138,11 @@ always @(posedge clk) begin
             S_READ2: begin
                 r_data    <= dma_dat_o;
                 r_valid_r <= 1'b1;
+                state    <= S_READ3;
+            end
+            S_READ3: begin
+                r_data    <= 32'd0;
+                r_valid_r <= 1'b0;
                 state    <= S_IDLE;
             end
             S_WRITE0: begin

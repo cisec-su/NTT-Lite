@@ -44,9 +44,10 @@ module poly_acc_wb
         output          dma_rst_i
     );
 
-localparam int unsigned LOGQ    = 32;
-localparam int unsigned LOGLOGQ = $clog2(LOGQ + 1);
-localparam int unsigned LOGLOGN = $clog2(LOGN+1); 
+localparam int unsigned LOGQ     = 32;
+localparam int unsigned LOGLOGQ  = $clog2(LOGQ + 1);
+localparam int unsigned LOGLOGN  = $clog2(LOGN+1); 
+localparam int unsigned LOGLOGQF = $clog2(LOGQ);
 
 wire clk, rst;
 
@@ -72,6 +73,8 @@ wire [LOGN  :0] o_len;
 wire [2:0] csrs_cmd;
 wire [LOGLOGN-1:0] csrs_logn;
 wire [LOGLOGQ-1:0] csrs_k;
+wire [LOGN-1:0] csrs_rejsamp_n;
+wire csrs_rejsamp_center;
 wire [LOGLOGQ-1:0] csrs_d;
 wire [1:0] csrs_mode;
 wire [4:0] csrs_op;
@@ -108,6 +111,7 @@ wire        dma_w_valid  ;
 wire        dma_w_ready  ;
 wire [31:0] dma_r_data   ;
 wire [31:0] dma_w_data   ;
+wire        dma_rw_abort  ;
 
 
 assign dma_r_addr    = csrs_din_addr;
@@ -121,7 +125,7 @@ assign i_data        = dma_r_data;
 assign dma_w_valid   = o_valid;
 assign dma_w_data    = o_data;
 assign o_read        = dma_w_ready;
-
+assign dma_rw_abort  = i_done;
 
 
 
@@ -161,6 +165,8 @@ poly_acc #(
     .cmd        (csrs_cmd   ),
     .logn       (csrs_logn  ),
     .k          (csrs_k     ),
+    .rejsamp_n  (csrs_rejsamp_n),
+    .rejsamp_center (csrs_rejsamp_center),
     .d          (csrs_d     ),
     .o_dis      (csrs_o_dis ),
     .round      (csrs_round ),
@@ -200,6 +206,8 @@ poly_acc_csrs #(
     .cmd        (csrs_cmd   ),
     .logn       (csrs_logn  ),
     .k          (csrs_k     ),
+    .rejsamp_n  (csrs_rejsamp_n),
+    .rejsamp_center (csrs_rejsamp_center),
     .d          (csrs_d     ),
     .o_dis      (csrs_o_dis ),
     .rhs_const  (csrs_rhs_const),
@@ -232,6 +240,7 @@ wb_dma wb_dma_inst (
     .r_addr       (dma_r_addr   ),
     .w_addr       (dma_w_addr   ),
     .rw_offset    (dma_rw_offset),
+    .rw_abort     (dma_rw_abort ),
     .r_len        (dma_r_len    ),
     .w_len        (dma_w_len    ),
     .r_ready      (dma_r_ready  ),

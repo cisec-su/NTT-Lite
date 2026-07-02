@@ -19,7 +19,9 @@ module poly_acc_csrs
         output reg [ 4:0]  op  ,         // (Write)
         output reg [ 1:0]  op1,          // (Write)
         output reg [ 1:0]  op2,          // (Write)
-        output reg [ 5:0]  k,            // (Read/Write)
+        output reg [ 4:0]  k,            // (Write)
+        output reg [ 7:0]  rejsamp_n,    // (Read/Write)
+        output reg         rejsamp_center, // (Write)
         output reg [ 5:0]  d,            // (Write)
         output reg [ 1:0]  round,        // (Write)        
         output reg         o_dis,        // (Write)        
@@ -52,6 +54,7 @@ localparam MU_ADDR_LOW    = 8'h18; // Offset for mu register lsb 32-bits
 localparam MU_ADDR_HIGH   = 8'h1C; // Offset for mu register msb 2-bit
 localparam INV2_ADDR      = 8'h20; // Offset for mu register lsb 32-bits
 localparam ACTRL_ADDR     = 8'h24; // Offset for advanced ctrl register
+localparam REJS_CTRL_ADDR = 8'h28; // Offset for advanced ctrl register
 
 // Bit-fields for ctrl register
 localparam CTRL_CMD_LSB       = 0;
@@ -69,9 +72,6 @@ localparam CTRL_OP1_LEN       = CTRL_OP1_MSB - CTRL_OP1_LSB + 1;
 localparam CTRL_OP2_LSB       = 16;
 localparam CTRL_OP2_MSB       = 17;
 localparam CTRL_OP2_LEN       = CTRL_OP2_MSB - CTRL_OP2_LSB + 1;
-// localparam CTRL_K_LSB         = 14;
-// localparam CTRL_K_MSB         = 18;
-// localparam CTRL_K_LEN         = CTRL_K_MSB - CTRL_K_LSB + 1;
 localparam CTRL_MODE_LSB      = 19;
 localparam CTRL_MODE_MSB      = 20;
 localparam CTRL_MODE_LEN      = CTRL_MODE_MSB - CTRL_MODE_LSB + 1;
@@ -93,6 +93,16 @@ localparam STATUS_DONE_BIT        = 31;
 
 // Bit-fields for advanced ctrl register
 localparam ACTRL_RST_BIT          = 0;
+
+// Bit-fields for rejsamp ctrl register
+localparam REJS_CTRL_N_LSB         = 0;
+localparam REJS_CTRL_N_MSB         = 7;
+localparam REJS_CTRL_N_LEN         = REJS_CTRL_N_MSB - REJS_CTRL_N_LSB + 1;
+localparam REJS_CTRL_K_LSB         = 8;
+localparam REJS_CTRL_K_MSB         = 12;
+localparam REJS_CTRL_K_LEN         = REJS_CTRL_K_MSB - REJS_CTRL_K_LSB + 1;
+localparam REJS_CTRL_CENTER_BIT    = 13;
+
 
 
 reg done_q;
@@ -159,8 +169,10 @@ always @(posedge clk) begin
         op    <= {CTRL_OP_LEN{1'b0}};
         op1   <= {CTRL_OP1_LEN{1'b0}};
         op2   <= {CTRL_OP2_LEN{1'b0}};
-        // k     <= {CTRL_K_LEN{1'b0}};
         d     <= {CTRL_D_LEN{1'b0}};
+        k     <= {REJS_CTRL_K_LEN{1'b0}};
+        rejsamp_n <= {REJS_CTRL_N_LEN{1'b0}};
+        rejsamp_center <= 1'b0;
         q     <= 32'd0;
         mu    <= 64'd0;
         din_addr  <= 32'd0;
@@ -187,6 +199,11 @@ always @(posedge clk) begin
                 rhs_const <= wdata[CTRL_RHS_CONST_BIT];
                 o_dis     <= (dout_addr == 32'd0) ? 1'b1 : 1'b0;
             end
+            REJS_CTRL_ADDR: begin
+                k          <= wdata[REJS_CTRL_K_MSB:REJS_CTRL_K_LSB];
+                rejsamp_n  <= wdata[REJS_CTRL_N_MSB:REJS_CTRL_N_LSB];
+                rejsamp_center <= wdata[REJS_CTRL_CENTER_BIT];
+            end
             DIN_ADDR    : din_addr  <= wdata;
             DOUT_ADDR   : dout_addr <= wdata;
             BOUND_ADDR  : bound     <= wdata;
@@ -208,6 +225,10 @@ always @(*) begin
             rdata[CTRL_LOGN_MSB:CTRL_LOGN_LSB] = logn;
             rdata[CTRL_MODE_MSB:CTRL_MODE_LSB] = mode;
             // rdata[CTRL_K_MSB   :CTRL_K_LSB   ] = k;
+        end
+        REJS_CTRL_ADDR: begin
+            rdata                              = 32'd0;
+            rdata[REJS_CTRL_N_MSB:REJS_CTRL_N_LSB] = rejsamp_n;
         end
         STATUS_ADDR: begin
             rdata                              = 32'd0;

@@ -4,7 +4,7 @@ module cbd
    #(
         parameter  LOGQ          = 32,
         parameter  SINGLE_CBD_EN = 0 ,
-        localparam LOGLOGQ = $clog2(LOGQ + 1)
+        localparam LOGLOGQ = $clog2(LOGQ)
     )
     (
         input                 clk     ,

@@ -77,6 +77,7 @@ reg [LOGQ-1:0] poly_out [0:N-1];
 reg  [LOGLOGN-1:0] logn;
 reg  [LOGLOGQ-1:0] k;
 reg  [LOGLOGQ-1:0] d;
+reg  [LOGN-1:0] rejsamp_n;
 
 // tb signals
 reg [31:0] read_data;
@@ -85,7 +86,7 @@ reg [31:0] mem [0:MEM_SIZE-1]; // 4KB memory
 
 reg [31:0] temp;
 reg [31:0] temp1;
-reg flag, flag1;
+reg flag, flag1, flag2;
 reg chknorm;
 
 // --- added cumulative counters ---
@@ -2653,6 +2654,289 @@ initial begin
                 $stop;
             end
         end
+    end
+
+    //-----------------------------------------------------------------------------------------------//
+
+    $readmemh("../../../../../test/rejsamp32_meta.txt" , meta);
+    $readmemh("../../../../../test/rej_samp_in.txt", poly_in);
+    $readmemh("../../../../../test/rej_samp_out.txt", poly_out);
+
+    q = meta[0];
+    logn   = meta[2][7:0];
+    bound = meta[6];
+    k = meta[3];
+    d = meta[4];
+    rejsamp_n = meta[5];    
+
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+        `mem[(POLYOUT_BASE >> 2) + w] = '0;
+    end
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR  , bound);
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+    write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
+                 (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+
+
+    write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                (`MODE_SINGLE      << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+    do begin
+        wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+    end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+    flag = 1'b1;
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        temp  = `mem[(POLYOUT_BASE >> 2) + w];
+        temp1 = poly_out[w];
+        if (temp !== temp1 || $isunknown(temp)) begin
+            $display("SINGLE REJSAMP mismatch at index %0d: %h != %h", w, temp, temp1);
+            flag = 1'b0;
+        end
+    end
+
+    record_tc_result(flag);
+    if (flag) $display("(SUCCESS SINGLE REJSAMP)");
+    else begin
+        $display("(FAIL SINGLE REJSAMP)");
+        $stop;
+    end
+
+    //-----------------------------------------------------------------------------------------------//
+
+    $readmemh("../../../../../test/rejsampdual_meta.txt" , meta);
+    $readmemh("../../../../../test/rej_samp_in_dual.txt", poly_in);
+    $readmemh("../../../../../test/rej_samp_out_dual.txt", poly_out);
+
+    q = (meta[0] << 16) | meta[0];
+    logn   = meta[2][7:0];
+    bound = meta[6];
+    k = meta[3];
+    d = meta[4];
+    rejsamp_n = meta[5];    
+
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+        `mem[(POLYOUT_BASE >> 2) + w] = '0;
+    end
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR  , bound);
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+    write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
+                 (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+
+
+    write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+    do begin
+        wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+    end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+    flag = 1'b1;
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        temp  = `mem[(POLYOUT_BASE >> 2) + w];
+        temp1 = poly_out[w];
+        if (temp !== temp1 || $isunknown(temp)) begin
+            $display("DUAL REJSAMP mismatch at index %0d: %h != %h", w, temp, temp1);
+            flag = 1'b0;
+        end
+    end
+
+    record_tc_result(flag);
+    if (flag) $display("(SUCCESS DUAL REJSAMP)");
+    else begin
+        $display("(FAIL DUAL REJSAMP)");
+        $stop;
+    end
+
+    //-----------------------------------------------------------------------------------------------//
+
+    $readmemh("../../../../../test/rejsampeta_meta.txt" , meta);
+    $readmemh("../../../../../test/rej_samp_eta_in.txt", poly_in);
+    $readmemh("../../../../../test/rej_samp_eta_out.txt", poly_out);
+
+    q = meta[0];
+    logn   = meta[2][7:0];
+    bound = meta[6];
+    k = meta[3];
+    d = meta[4];
+    rejsamp_n = meta[5];    
+
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+        `mem[(POLYOUT_BASE >> 2) + w] = '0;
+    end
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR  , bound);
+
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+    write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
+                 (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB) |
+                 (1'b1              << uut.poly_acc_csrs_inst.REJS_CTRL_CENTER_BIT);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+
+
+    write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                (`MODE_SINGLE      << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+    wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+    do begin
+        wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+    end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+    flag = 1'b1;
+    for (int w = 0; w < (1 << logn); w = w + 1) begin
+        temp  = `mem[(POLYOUT_BASE >> 2) + w];
+        temp1 = poly_out[w];
+        if (temp !== temp1 || $isunknown(temp)) begin
+            $display("SINGLE REJSAMP ETA mismatch at index %0d: %h != %h", w, temp, temp1);
+            flag = 1'b0;
+        end
+    end
+
+    record_tc_result(flag);
+    if (flag) $display("(SUCCESS SINGLE REJSAMP ETA)");
+    else begin
+        $display("(FAIL SINGLE REJSAMP ETA)");
+        $stop;
+    end
+
+    //-----------------------------------------------------------------------------------------------//
+
+    $readmemh("../../../../../test/rejsampdual_meta.txt" , meta);
+    $readmemh("../../../../../test/rej_samp_in_dual.txt", poly_in);
+    $readmemh("../../../../../test/rej_samp_out_dual.txt", poly_out);
+
+    q = (meta[0] << 16) | meta[0];
+    logn   = meta[2][7:0];
+    bound = meta[6];
+    k = meta[3];
+    d = meta[4];
+    inv2 = meta[5];
+
+    flag2 = 1'b1;
+
+    for (int i = 1; i < inv2; i = i + 1) begin
+
+
+        rejsamp_n = i;    
+
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            `mem[(POLYIN_BASE  >> 2) + w] = poly_in[w];
+            `mem[(POLYOUT_BASE >> 2) + w] = '0;
+        end
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.Q_ADDR      , q);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.BOUND_ADDR  , bound);
+
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+        write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
+                    (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+
+
+        write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                    (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                    (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                    (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                    (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                    (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+        wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+        do begin
+            wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+        end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+
+        chknorm = (read_data >> uut.poly_acc_csrs_inst.STATUS_REJ_SAMP_IP_BIT) & 32'd1;
+        flag    = (chknorm == 1'b1);
+
+        if (flag) begin
+
+            rejsamp_n = meta[5] - i;    
+
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DIN_ADDR , POLYIN_BASE + (i << 2));
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.DOUT_ADDR, POLYOUT_BASE);
+
+            write_data = (k                 << uut.poly_acc_csrs_inst.REJS_CTRL_K_LSB) |
+                        (rejsamp_n         << uut.poly_acc_csrs_inst.REJS_CTRL_N_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.REJS_CTRL_ADDR, write_data);
+
+
+            write_data = (`CMD_LOAD_TWIDDLE << uut.poly_acc_csrs_inst.CTRL_CMD_LSB) |
+                        (`OP1_DECODE       << uut.poly_acc_csrs_inst.CTRL_OP1_LSB ) |
+                        (`OP2_REJSAMP      << uut.poly_acc_csrs_inst.CTRL_OP2_LSB ) |
+                        (`MODE_DUAL        << uut.poly_acc_csrs_inst.CTRL_MODE_LSB) |
+                        (d                 << uut.poly_acc_csrs_inst.CTRL_D_LSB) |
+                        (logn              << uut.poly_acc_csrs_inst.CTRL_LOGN_LSB);
+            wb_write(BASE_ADDR + uut.poly_acc_csrs_inst.CTRL_ADDR, write_data);
+
+            do begin
+                wb_read(BASE_ADDR + uut.poly_acc_csrs_inst.STATUS_ADDR, read_data);
+            end while ((read_data & (32'd1 << uut.poly_acc_csrs_inst.STATUS_DONE_BIT)) == 0);
+        end
+
+        chknorm = (read_data >> uut.poly_acc_csrs_inst.STATUS_REJ_SAMP_IP_BIT) & 32'd1;
+        flag    = (chknorm == 1'b0);
+
+        if (!flag) begin
+            flag2 = 1'b0;
+            $display("(FAIL REJSAMP IP 2 FLAG) iter-%d", i);
+            $stop;
+        end
+
+        for (int w = 0; w < (1 << logn); w = w + 1) begin
+            temp  = `mem[(POLYOUT_BASE >> 2) + w];
+            temp1 = poly_out[w];
+            if (temp !== temp1 || $isunknown(temp)) begin
+                $display("DUAL REJSAMP mismatch at index %0d: %h != %h", w, temp, temp1);
+                flag = 1'b0;
+            end
+        end
+
+        if (!flag) begin
+            flag2 = 1'b0;
+            $display("(FAIL REJSAMP IP) iter-%d", i);
+            $stop;
+        end
+    end
+
+    record_tc_result(flag2);
+    if (flag2) $display("(SUCCESS DUAL REJSAMP IP)");
+    else begin
+        $display("(FAIL DUAL REJSAMP IP)");
+        $stop;
     end
 
     // Finish simulation

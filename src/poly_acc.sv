@@ -23,8 +23,9 @@ module poly_acc
         parameter  bit          FF_SC              = 1 ,
         parameter  bit          FF_BARRETT_NEG     = 1 ,
         parameter  bit          O_VALID_EARLY   = 0 ,
-        localparam LOGLOGQ    = $clog2(LOGQ + 1)  ,
-        localparam LOGLOGN    = $clog2(LOGN + 1)
+        localparam int unsigned LOGLOGQ    = $clog2(LOGQ + 1),
+        localparam int unsigned LOGLOGQF   = $clog2(LOGQ)    ,
+        localparam int unsigned LOGLOGN    = $clog2(LOGN + 1)
     )
     (
         input                       clk      ,
@@ -34,7 +35,9 @@ module poly_acc
         input      [           1:0] op1      ,
         input      [           1:0] op2      ,
         input      [   LOGLOGN-1:0] logn     ,
-        input      [   LOGLOGQ-1:0] k        ,
+        input      [  LOGLOGQF-1:0] k        ,
+        input      [      LOGN-1:0] rejsamp_n,
+        input                       rejsamp_center,
         input      [   LOGLOGQ-1:0] d        ,        
         input      [      LOGQ-1:0] q        ,
         input      [      LOGQ-1:0] inv2     ,
@@ -150,6 +153,8 @@ reg [LOGN-1:0] io_limit;
 
 reg twiddle_out_q, twiddle_out_set;
 
+wire busy_any;
+
 // logn register
 wire [LOGN  :0] n;
 wire [LOGN-1:0] n_m1;
@@ -180,6 +185,7 @@ wire [LOGQ-1:0] A_o;
 wire [LOGQ-1:0] B_o;
 reg  bu_i_valid;
 wire bu_o_valid;
+wire bu_busy;
 
 // chk norm
 wire chknorm_bu;
@@ -287,8 +293,8 @@ wire [LOGQ-1:0] cbd_out;
 wire [LOGQ-1:0] cbd_out_d;
 wire cbd_i_valid;
 wire cbd_o_valid;
+wire cbd_o_valid_d;
 wire cbd_mode;
-reg rej_samp_center;
 reg cbd_rst;
 wire cbd_busy;
 reg rej_samp_ip_set, rej_samp_ip_clr;
@@ -319,8 +325,6 @@ reg is_make_hint_q;
 reg is_use_hint_q;
 reg is_tocenter_q;
 reg is_fromcenter_q;
-reg is_cbd_q;
-reg is_rej_samp_q;
 reg is_fn_decompress_q;
 reg is_decompose_q;
 reg is_decompress_q;
@@ -371,7 +375,11 @@ assign o_len  = pwop_o_limit + 1'b1 - ctr_io;
 
 ///////////////////// BU inputs /////////////////////////////////////////
 
-assign bu_i_valid = (is_op1_decode_q) ? encode_o_valid_d : fsm_i_valid_d;
+assign bu_i_valid = (op_order == ORDER_OP1_OP2_OP0) ? cbd_o_valid_d    :  
+                    (op_order == ORDER_OP1_OP0    ) ? encode_o_valid_d :
+                    (op_order == ORDER_OP1_OP2    ) ? 1'b0             :
+                    (op_order == ORDER_OP1        ) ? 1'b0             :                    
+                    fsm_i_valid_d;
 
 assign poly_in_mx_A = //(poly_in_frwrd_A_q) ? i_data_q          :
                       (is_ntt           ) ? ntt_A_i           :
@@ -417,6 +425,7 @@ assign op_order = (is_op1_nop_q                                     ) ? ORDER_OP
                   (is_op1_decode_q &  is_op2_nop_q                  ) ? ORDER_OP1_OP0     :
                   (is_op1_decode_q & ~is_op2_nop_q                  ) ? ORDER_OP1_OP2_OP0 :
                                                                         ORDER_OP0_OP1     ;
+assign busy_any = encode_busy | cbd_busy | bu_busy;
 
 ///////////////////////////////////////////////////////////////////
 
@@ -425,7 +434,7 @@ assign pwop_o_valid = (op_order == ORDER_OP1    ) ? encode_o_valid :
                       (op_order == ORDER_OP0_OP1) ? encode_o_valid :
                       (op_order == ORDER_OP1_OP2) ? cbd_o_valid    :
                                                     bu_o_valid     ;
-assign pwop_i_limit = (is_op1_decode_q) ? decode_num_words : n_m1;
+assign pwop_i_limit = (is_op2_rejsamp_q) ? (rejsamp_n - 1'b1) : (is_op1_decode_q) ? decode_num_words : n_m1;
 assign pwop_o_limit = (is_op1_encode_q) ? decode_num_words : n_m1;
 
 /////////////////////////////////////////////////////////////////////////
@@ -946,6 +955,7 @@ butterfly #(
     .bound(bound),
     .inv2(inv2 ),
     .o_valid(bu_o_valid),
+    .busy   (bu_busy   ),
     .E   (A_o  ),
     .O   (B_o  ),
     .chknorm(chknorm_bu)
@@ -987,6 +997,16 @@ shiftreg #(
     .rst     (rst),
     .data_in (encode_out),
     .data_out(encode_out_d)
+);
+
+shiftreg #(
+    .SHIFT(1),
+    .DATA (1)
+) shreg_cbd_o_valid (
+    .clk     (clk),
+    .rst     (rst),
+    .data_in (cbd_o_valid),
+    .data_out(cbd_o_valid_d)
 );
 
 shiftreg #(
@@ -1033,7 +1053,7 @@ cbd #(
     .cbd_mode(cbd_mode   ),
     .rej_samp(is_op2_rejsamp_q),
     .bound   (bound      ),
-    .center  (rej_samp_center),
+    .center  (rejsamp_center),
     .Q       (q          ),
     .C       (cbd_out    ),
     .k       (k          ),
@@ -1114,7 +1134,6 @@ always @(*) begin
 
     ntt_ren = 0;
 
-    rej_samp_center = rhs_const;
     rej_samp_ip_set = 0;
     rej_samp_ip_clr = 0;
 
@@ -1225,7 +1244,9 @@ always @(*) begin
                 // ctr1 is output ptr (for writeback to internal memory)
                 // encode and cbd are also not reseted to preserve state
                 ctr2_rst = 1;
-                ctr0_rst = 1;
+                ctr_tw_rst = 1;
+                ctr_io_rst = 1;
+                ctr_tr_rst = 1;
             end
             rdone_clr = 1;
         end
@@ -1312,13 +1333,19 @@ always @(*) begin
                         next_state = ST_PWOP1;
                         ctr_tw_rst = 1;
                         ctr_io_rst = 1;
-                        ctr_tr_set = 1;
+                        ctr_tr_rst = 1;
                     end
                     else begin
                         ctr_tr_inc = 1;
                     end
                 end
             end
+            if (pwop_o_valid && ctr0 == pwop_o_limit) begin
+                next_state = ST_POLY_OUT;
+                ctr1_rst = 1;
+                ctr_io_rst = 1;
+                i_done = 1;
+            end            
             pwm_rcv_bu = 1;
             upoly_zetamul = (is_poly_mode_q & bu_o_valid);
             twiddle_frwrd = 1;
@@ -1512,6 +1539,10 @@ always @(*) begin
                     ctr_tr_inc = 1;
                 end
             end
+            if (pwop_o_valid && ctr0 == pwop_o_limit) begin
+                next_state = ST_POLY_OUT;
+                ctr1_rst = 1;
+            end            
             pwm_rcv_bu = 1;
             upoly_zetamul = (is_poly_mode_q & bu_o_valid);
         end
@@ -1539,6 +1570,11 @@ always @(*) begin
                     next_state = ST_POLY_OUT;
                     ctr1_rst = 1;
                 end
+            end
+            else if (is_op2_rejsamp_q && !busy_any) begin
+                rej_samp_ip_set = 1;
+                next_state = ST_IDLE;
+                done_set = 1;
             end
             pwm_rcv_bu = 1;
             upoly_zetamul = (is_poly_mode_q & bu_o_valid);
@@ -1574,6 +1610,7 @@ always @(*) begin
         end
         ST_POLY_OUT: begin
             p_ren = 1;
+            rej_samp_ip_clr = 1;
             if (!o_dis) begin
                 ctr1_inc = 1;
                 o_valid = (O_VALID_EARLY) ? 1 : 0;

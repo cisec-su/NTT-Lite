@@ -93,7 +93,7 @@ assign i_ready = (~decode) ? 1 : (ctr_read_next <= (K)) ? 1'b1 : 1'b0;
 assign ctr_read = ctr - ((o_valid_int) ? d_out : 0);
 assign ctr_read_next = (i_valid) ? ctr_read + d_in : ctr_read;
 
-assign busy = i_valid | i_valid_q | o_valid_int;
+assign busy = i_valid | i_valid_q | o_valid_int | o_valid;
 
 /////////////////////////////////////////////////////////////////////////
 

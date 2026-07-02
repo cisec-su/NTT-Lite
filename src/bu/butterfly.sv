@@ -41,6 +41,7 @@ module butterfly
         input  [LOGLOGQ-1:0] k        ,
         input  [LOGLOGQ-1:0] d        ,
         output reg           o_valid  ,
+        output wire          busy     ,
         output [LOGQ   -1:0] E        ,
         output [LOGQ   -1:0] O        ,
         output               chknorm
@@ -487,77 +488,93 @@ end
 
 ///////////////////////////////////////// o_valid generation /////////////////////////////
 
+wire s0, s1, s2, s3, s4, s5, s6;
+
 shiftreg #(
     .SHIFT(LAT_MODADD + 2),
-    .DATA (1)
+    .DATA (1),
+    .EN_OR (1)
 ) sr_o_valid_add (
     .clk     (clk        ),
     .rst     (1'b0       ),
     .data_in (i_valid    ),
-    .data_out(o_valid_add)
+    .data_out(o_valid_add),
+    .data_or (s0)
 );
 
 shiftreg #(
     .SHIFT(LAT_MODADD),
-    .DATA (1)
+    .DATA (1),
+    .EN_OR (1)
 ) sr_o_valid_addsub (
     .clk     (clk        ),
     .rst     (1'b0       ),
     .data_in (o_valid_add),
-    .data_out(o_valid_addsub)
+    .data_out(o_valid_addsub),
+    .data_or (s1)
 );
 
 shiftreg #(
     .SHIFT(FF_HINT),
-    .DATA (1)
+    .DATA (1),
+    .EN_OR (1)
 ) sr_o_valid_makehint (
     .clk     (clk        ),
     .rst     (1'b0       ),
     .data_in (o_valid_addsub),
-    .data_out(o_valid_makehint  )
+    .data_out(o_valid_makehint),
+    .data_or (s2)
 );
 
 shiftreg #(
     .SHIFT(FF_HINT + FF_SC),
-    .DATA (1)
+    .DATA (1),
+    .EN_OR (1)
 ) sr_o_valid_usehint (
     .clk     (clk        ),
     .rst     (1'b0       ),
     .data_in (o_valid_ntt),
-    .data_out(o_valid_usehint)
+    .data_out(o_valid_usehint),
+    .data_or (s3)
 );
 
 
 shiftreg #(
     .SHIFT(LAT_RED + LAT_MUL - LAT_MODADD),
-    .DATA (1)
+    .DATA (1),
+    .EN_OR (1)
 ) sr_o_valid_mul (
     .clk     (clk        ),
     .rst     (1'b0       ),
     .data_in (o_valid_add),
-    .data_out(o_valid_mul)
+    .data_out(o_valid_mul),
+    .data_or (s4)
 );
 
 assign i_valid_ntt = ((is_pwm_q || is_mac_q) && !en_z_q) ? 1'b0 : o_valid_mul;
 
 shiftreg #(
     .SHIFT(LAT_MODADD),
-    .DATA (1)
+    .DATA (1),
+    .EN_OR (1)
 ) sr_o_valid_ntt (
     .clk     (clk        ),
     .rst     (1'b0       ),
     .data_in (i_valid_ntt),
-    .data_out(o_valid_ntt)
+    .data_out(o_valid_ntt),
+    .data_or (s5)
 );
 
 shiftreg #(
     .SHIFT(FF_SC),
-    .DATA (1)
+    .DATA (1),
+    .EN_OR (1)
 ) sr_o_valid_sc (
     .clk     (clk        ),
     .rst     (1'b0       ),
     .data_in (o_valid_ntt),
-    .data_out(o_valid_sc)
+    .data_out(o_valid_sc),
+    .data_or (s6)
 );
 
 always @(*) begin
@@ -581,6 +598,8 @@ always @(*) begin
         default          : o_valid = 1'b0;
     endcase
 end
+
+assign busy = s0 | s1 | s2 | s3 | s4 | s5 | s6;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
