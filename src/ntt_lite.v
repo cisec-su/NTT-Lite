@@ -4,7 +4,7 @@ module ntt_lite
    #(   
         parameter  LOGN       = 8,
         parameter  LOGQ       = 32,
-        parameter  L_RED      = 7, // BU  latency
+        parameter  L_RED      = 8, // BU  latency
         parameter  L_MUL      = 3, // MUL latency
         parameter  FORWARD_EN = 1,
         parameter  EN_NTT_OTF = 0,

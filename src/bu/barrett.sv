@@ -64,13 +64,14 @@ localparam LOGT1_0 = LOGT1 >> 1;
 localparam LOGT1L_0 = (LOGQ0 + 1);
 localparam LOGT1L   = LOGT1L_0 << 1;
 
+localparam FF_NEG = 1;
 
 localparam LAT    = barrett_lat(params);
 localparam LAT_0  = barrett_mac_0_lat(params);
-localparam LAT_1  = barrett_mac_1_lat(params);
+localparam LAT_1  = barrett_mac_1_lat(params) + FF_NEG;
 
 localparam CL_D   = LAT_0;
-localparam Q_D    = (PIPE_Q) ? LAT_1 + LAT_0 + FF_IN : 0;
+localparam Q_D    = (PIPE_Q) ? LAT_1 + LAT_0 + FF_IN + FF_NEG : 0;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -291,8 +292,10 @@ lsb_dual #(
 addsub_dual #(
     .MODE (1      ),
     .LOGA0(LOGT1L_0),
-    .LOGB0(LOGT1L_0)
+    .LOGB0(LOGT1L_0),
+    .FF_OUT(FF_NEG)
 ) addsub_neg_inst (
+    .clk (clk   ),
     .A   (0     ),
     .B   (T1L   ),
     .dual(dual  ),

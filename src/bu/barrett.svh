@@ -48,7 +48,7 @@ endfunction
 
 
 function automatic int barrett_lat(input barrett_params_t params);
-    barrett_lat = params.FF_IN + barrett_mac_0_lat(params) + barrett_mac_1_lat(params) + params.FF_OUT;
+    barrett_lat = params.FF_IN + barrett_mac_0_lat(params) + barrett_mac_1_lat(params) + params.FF_OUT + 1;
 endfunction
 
 

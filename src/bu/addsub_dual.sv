@@ -2,9 +2,11 @@ module addsub_dual
    #(
         parameter MODE  = 0 , // 0: A + B, 1: A - B
         parameter LOGA0 = 32,
-        parameter LOGB0 = 32
+        parameter LOGB0 = 32,
+        parameter FF_OUT = 0
     )
     (
+        input                clk ,
         input  [2*LOGA0-1:0] A   ,
         input  [2*LOGB0-1:0] B   ,
         input                dual,
@@ -20,6 +22,11 @@ end
 if (MODE != 0 && MODE != 1) begin
     MODE_MUST_BE_EITHER_0_OR_1();
 end
+
+wire [2*LOGA0-1:0] C_int;
+wire [        1:0] K_int;
+reg  [2*LOGA0-1:0] C_q;
+reg  [        1:0] K_q;
     
 /////////////////////////////////////////////////////////////////////////
 
@@ -67,10 +74,21 @@ else begin
     assign C1 = A1 - B1 - ((~dual) & C0[LOGA0]); 
 end
 
-assign C = {C1[LOGA0-1:0], C0[LOGA0-1:0]};
-assign K = {C1[LOGA0], C0[LOGA0]};
+assign C_int = {C1[LOGA0-1:0], C0[LOGA0-1:0]};
+assign K_int = {C1[LOGA0], C0[LOGA0]};
+
+assign C = (FF_OUT) ? C_q : C_int;
+assign K = (FF_OUT) ? K_q : K_int;
 
 /////////////////////////////////////////////////////////////////////////
+
+
+always @(posedge clk) begin
+    if (FF_OUT) begin
+        C_q <= C_int;
+        K_q <= K_int;
+    end
+end
 
 
 endmodule
