@@ -54,6 +54,8 @@ wire [LOGQ -1:0] sub_in_Q;
 wire [LOGQ -1:0] sub_out_C;
 wire [LOGQ -1:0] shift_in_0;
 wire [LOGQ -1:0] shift_out_0;
+wire [LOGQ -1:0] shift_in_3;
+wire [LOGQ -1:0] shift_out_3;
 wire [LOGQ -1:0] shift_in_1;
 wire [LOGQ -1:0] shift_out_1;
 wire [LOGQ -1:0] shift_in_2;
@@ -87,8 +89,10 @@ wire [LOGQ -1:0] decompose_pp_out_B0;
 wire [LOGQ -1:0] decompose_pp_out_B1;
 
 wire makehint_specialcase;
-reg  makehint_specialcase_q;
+wire makehint_specialcase_q;
 wire hint;
+reg hint_o_q;
+
 
 wire [LOGQ -1:0] use_hint_mux;
 
@@ -104,6 +108,7 @@ reg [LOGQ-1:0] M_q;
 reg [LOGQ-1:0] A_q;
 reg [LOGQ-1:0] B_q;
 reg [LOGQ-1:0] PSI_q;
+reg [LOGQ-1:0] PSI_d;
 
 reg [LOGQ-1:0] Q_q;
 reg [LOGQ*2-1:0] MU_q;
@@ -139,7 +144,7 @@ reg is_mac_q;
 
 wire chknorm;
 reg  chknorm_q;
-reg  hint_q;
+wire  hint_q;
 
 
 assign mode_mul    = (mode_q == `MODE_POLY && !is_pwm_q && !is_mac_q) ? `MODE_DUAL   :
@@ -185,7 +190,8 @@ assign mm_in_A     = (is_intt_q                               ) ? sub_out_C     
 assign mm_in_B     = (is_decompose_q                          ) ? one_dual           :
                      (is_compress_q                           ) ? pow_2_d_dual       :
                      (is_decompress_q                         ) ? Q_q                :
-                                                                 PSI_q              ;
+                     (is_intt_q                               ) ? PSI_d              :
+                                                                  PSI_q              ;
 assign mm_in_E     = (floor_q                                 ) ? {LOGQ{1'b0}}       :
                      (is_decompose_q                          ) ? bound_half         :
                      (is_compress_q                           ) ? Q_half             :
@@ -200,7 +206,7 @@ assign mm_in_Q     = (is_decompose_q                          ) ? bound_q       
 assign add_in_A    = (is_intt_q || is_add_q                   ) ? A_q            :
                      (is_sum_q                                ) ? A_q            :
                      (is_chknorm_q                            ) ? A_q            :
-                     (is_usehint_q                            ) ? shift_out_0    :
+                     (is_usehint_q                            ) ? shift_out_3    :
                      (is_makehint_q                           ) ? A_q            :
                                                                   shift_out_2    ;
 assign add_in_B    = (is_intt_q                               ) ? B_q            :
@@ -220,26 +226,24 @@ assign sub_in_A    = (is_intt_q || is_sub_q                   ) ? A_q           
                                                                   shift_out_2    ;
 assign sub_in_B    = (is_intt_q                               ) ? B_q            :
                      (is_decompose_q                          ) ? bound_half     :
-                     (is_chknorm_q                            ) ? shift_out_0    :
-                     (is_makehint_q                           ) ? shift_out_0    :
+                     (is_chknorm_q                            ) ? add_out_C      :
+                     (is_makehint_q                           ) ? add_out_C      :
                      (is_sub_q                                ) ? PSI_q          :
                      (is_usehint_q                            ) ? B_q            :
                                                                   mm_out_C       ;
 assign sub_in_Q    = Q_q;
 
 assign shift_in_0  = (is_intt_q                               ) ? add_out_C      :
-                     (is_chknorm_q                            ) ? add_out_C      :
-                     (is_makehint_q                           ) ? add_out_C      :
-                     (is_decompose_q                          ) ? sub_out_C      :
                      (is_usehint_q                            ) ? PSI_q          :
                                                                   A_q            ;
-assign shift_in_1  = (is_intt_q                               ) ? mm_inv2_out    :
+assign shift_in_3  = (is_intt_q                               ) ? mm_inv2_out    :
                                                                   shift_out_0    ;
+assign shift_in_1  = shift_out_3;
 
 assign shift_in_2  = (mode_p2d_q                 ) ? mm_out_F       :
                                                      shift_out_1    ;
 
-assign decompose_pp_in_A0 = shift_out_0;
+assign decompose_pp_in_A0 = sub_out_C;
 assign decompose_pp_in_A1 = mm_out_D_q;
 assign decompose_pp_in_T  = bound_q;
 
@@ -262,7 +266,7 @@ assign E_int       = (is_intt_q       ) ? shift_out_2         :
                      (is_compress_q   ) ? D_dual_masked       :
                      (is_decompress_q ) ? asr_out_dual_masked :
                      (is_decompose_q  ) ? decompose_pp_out_B0 :
-                     (is_makehint_q   ) ? hint                :
+                     (is_makehint_q   ) ? hint_o_q            :
                      (is_usehint_q    ) ? add_out_C           :
                      (is_chknorm_q    ) ? chknorm             :
                      (is_pwm_q        ) ? ((en_z_q) ? add_out_C : mm_out_C) :
@@ -288,9 +292,19 @@ shiftreg #(
     .data_out(shift_out_0)
 );
 
+shiftreg #(
+    .SHIFT(1   ),
+    .DATA (LOGQ)
+) sre_3 (
+    .clk     (clk        ),
+    .rst     (1'b0       ),
+    .data_in (shift_in_3 ),
+    .data_out(shift_out_3)
+);
+
 
 shiftreg #(
-    .SHIFT(L_MUL - 1),
+    .SHIFT(L_MUL - 2),
     .DATA (LOGQ )
 ) sre_1 (
     .clk     (clk        ),
@@ -308,6 +322,27 @@ shiftreg #(
     .rst     (1'b0       ),
     .data_in (shift_in_2 ),
     .data_out(shift_out_2)
+);
+
+
+shiftreg #(
+    .SHIFT(2   ),
+    .DATA (1)
+) sre_makehint (
+    .clk     (clk        ),
+    .rst     (1'b0       ),
+    .data_in (makehint_specialcase  ),
+    .data_out(makehint_specialcase_q)
+);
+
+shiftreg #(
+    .SHIFT(2   ),
+    .DATA (1)
+) sre_usehint (
+    .clk     (clk   ),
+    .rst     (1'b0  ),
+    .data_in (A_q[0]),
+    .data_out(hint_q)
 );
 
 
@@ -331,26 +366,33 @@ modmul #(
 
 
 modadd  #(
-    .LOGQ(LOGQ)
+    .LOGQ(LOGQ),
+    .FF_OUT(1)
 ) ma (
+    .clk (clk     ),
     .A   (add_in_A ),
     .B   (add_in_B ),
     .dual(dual     ),
+    .rd_en(1'b1      ),
     .Q   (add_in_Q ),
     .C   (add_out_C) 
 );
 
 
 modsub #(
-    .LOGQ(LOGQ)
+    .LOGQ(LOGQ),
+    .FF_OUT(1)
 ) ms (
+    .clk (clk     ),
     .A   (sub_in_A ),
     .B   (sub_in_B ),
     .dual(dual     ),
+    .rd_en(1'b1      ),
     .Q   (sub_in_Q ),
     .corr(sub_out_corr),
     .C   (sub_out_C)
 );
+
 
 
 asr #(
@@ -438,14 +480,14 @@ always @(posedge clk) begin
 end
 
 
-always @(posedge clk) begin
-    makehint_specialcase_q <= makehint_specialcase;
-end
-
 
 always @(posedge clk) begin
     chknorm_q <= chknorm;
-    hint_q    <= A_q[0];
+    hint_o_q <= hint;
+end
+
+always @(posedge clk) begin
+    PSI_d <= PSI_q;
 end
 
 

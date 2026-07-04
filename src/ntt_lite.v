@@ -86,6 +86,7 @@ localparam ST_POLY_PWM2                 = 6'd29;
 localparam ST_POLY_PWM3                 = 6'd30;
 localparam ST_POLY_FORWARD_POLY_PWM     = 6'd31;
 localparam ST_TWIDDLE_FORWARD_POLY_PWM  = 6'd32;
+localparam ST_POLY_PWM_DUMMY            = 6'd33;
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -174,7 +175,9 @@ wire sr_mx;
 wire sr_o;
 wire sr_t;
 wire sr_o1;
+wire sr_o2;
 wire sr_z;
+wire sr_z1;
 wire sr_x;
 wire sr_ntt;
 wire sr_sum;
@@ -281,6 +284,12 @@ wire [LOGQ-1:0] poly_in_mx_A;
 wire [LOGQ-1:0] poly_in_mx_B;
 wire [LOGQ-1:0] twiddle_in_mx;
 
+// registered op-decode controls
+reg is_ntt_q, is_intt_q, is_add_q, is_sub_q, is_sum_q;
+reg is_decompose_q, is_decompress_q, is_makehint_q, is_usehint_q;
+reg is_encode_q, is_decode_q, is_cbd_q, is_rejsamp_q;
+reg is_mac_q, is_pwm_q, is_compress_q, is_chknorm_q, is_rejsamp_q;
+
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -359,16 +368,18 @@ assign sr_sum    = (ctr2_d == logn_m1) ? sr_t : sr_z;
 assign sum_raddr = ctr0 << ctr2;
 assign sum_waddr = ctr1 << ctr2_d;
 // NTT address generation
-assign sr_mx = (op == `OP_NTT && ctr2 != 0) ? 1'b1 : ((op == `OP_INTT || is_sum) && ctr2_q != logn_m1) ? 1'b1 : 1'b0;
-assign sr_ntt = (op == `OP_NTT && ctr2_d == 0) ? sr_o : ((op == `OP_INTT) && ctr2_d == logn_m1) ? sr_o : sr_o1;
+assign sr_mx  = (is_ntt_q && (ctr2 != 0)) ? 1'b1 :
+                (((is_intt_q || is_sum) && (ctr2_q != logn_m1)) ? 1'b1 : 1'b0);
+assign sr_ntt = (is_ntt_q  && (ctr2_d == 0))       ? sr_o1  :
+                ((is_intt_q && (ctr2_d == logn_m1)) ? sr_o1  : sr_o2);
 assign ntt_flag   = ctr1[0];
 assign ntt_flag_i = ctr0[0];
-assign ntt_isfirst_r = (op == `OP_NTT) ? (ctr2   != 0) : (ctr2   != logn_m1);
-assign ntt_isfirst_w = (op == `OP_NTT) ? (ctr2_d != 0) : (ctr2_d != logn_m1);
-assign ntt_rmask = (ntt_isfirst_r) ? (1 << (((op == `OP_NTT) ? logn_ctr2     : ctr2   + 1))) - 1 : 1;
-assign ntt_wmask = (ntt_isfirst_w) ? (1 << (((op == `OP_NTT) ? logn - ctr2_d : ctr2_d + 1))) - 1 : 1;
-assign ntt_rshift = (!ntt_isfirst_r) ? 0 : (op == `OP_NTT) ? logn_m1_ctr2     : ctr2  ;
-assign ntt_wshift = (!ntt_isfirst_w) ? 0 : (op == `OP_NTT) ? logn_m1 - ctr2_d : ctr2_d;
+assign ntt_isfirst_r = (is_ntt_q) ? (ctr2   != 0) : (ctr2   != logn_m1);
+assign ntt_isfirst_w = (is_ntt_q) ? (ctr2_d != 0) : (ctr2_d != logn_m1);
+assign ntt_rmask = (ntt_isfirst_r) ? (1 << ((is_ntt_q ? logn_ctr2     : (ctr2   + 1)))) - 1 : 1;
+assign ntt_wmask = (ntt_isfirst_w) ? (1 << ((is_ntt_q ? (logn-ctr2_d) : (ctr2_d + 1)))) - 1 : 1;
+assign ntt_rshift = (!ntt_isfirst_r) ? 0 : (is_ntt_q ? logn_m1_ctr2     : ctr2  );
+assign ntt_wshift = (!ntt_isfirst_w) ? 0 : (is_ntt_q ? (logn_m1-ctr2_d) : ctr2_d);
 assign ntt_raddr  = (ctr0[0] << ntt_rshift) + ((ctr0 & ntt_rmask) >> 1) + (ctr0 & ~ntt_rmask);
 assign ntt_waddr  = (ctr1[0] << ntt_wshift) + ((ctr1 & ntt_wmask) >> 1) + (ctr1 & ~ntt_wmask);
 assign ntt_p0_din = (ntt_flag & ntt_isfirst_w) ? B_o_q : A_o;
@@ -412,13 +423,13 @@ assign twiddle_ram_wen   =  wzeta | wpsi | upsi | zerotwiddle;
 assign twiddle_ram_waddr = (wzeta) ? {1'b1, ctr0[LOGN-2:0]} : (wpsi | zerotwiddle) ? ctr0 : /*(upsi) ?*/ ctr1/* : 0*/;
 assign twiddle_ram_din   = (wzeta | wpsi) ? i_data : (zerotwiddle) ? 0 : B_o;
 assign twiddle_mask      = (1 << logn_m2) - 2;
-assign twiddle_ntt_ctr0  = (op == `OP_NTT) ? (ctr0[0] << (ctr2 - 1))       + (ctr0 >> (logn_ctr2)) : 
-                                             (ctr0[0] << (logn_m2 - ctr2)) + (ctr0 >> (ctr2 + 1 )) ;
-assign twiddle_ram_raddr = (pwm_zeta_idx                 ) ? (               {1'b1, ctr0[LOGN-2:0]}): 
-                           (pwm_idx | pwm_poly_idx       ) ?                        ctr0            :
-                           (pwm_idx_df                   ) ?                        ctr2            : 
-                           (op == `OP_INTT               ) ? (  maskIS       + (twiddle_ntt_ctr0))  : 
-                                                             (  maskS        + (twiddle_ntt_ctr0))  ;
+assign twiddle_ntt_ctr0  = is_ntt_q ? ((ctr0[0] << (ctr2 - 1))      + (ctr0 >> (logn_ctr2))) :
+                                      ((ctr0[0] << (logn_m2 - ctr2)) + (ctr0 >> (ctr2 + 1 )));
+assign twiddle_ram_raddr = (pwm_zeta_idx                 ) ? ({1'b1, ctr0[LOGN-2:0]})      :
+                           (pwm_idx | pwm_poly_idx       ) ? ctr0                            :
+                           (pwm_idx_df                   ) ? ctr2                            : 
+                           (is_intt_q                    ) ? (maskIS + twiddle_ntt_ctr0)    : 
+                                                             (maskS  + twiddle_ntt_ctr0)  ;
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -438,10 +449,7 @@ assign chknorm_bu = A_o[0];
 assign encode_i_valid = sr_e;
 assign encode_in      = (decode) ? twiddle_ram_dout  :
                                    poly_in_mx_A      ;
-assign decode         = (op == `OP_DECODE  ) ? 1'b1 :
-                        (op == `OP_CBD     ) ? 1'b1 :
-                        (op == `OP_REJ_SAMP) ? 1'b1 :
-                                               1'b0 ;
+assign decode         = is_decode_q | is_cbd_q | is_rejsamp_q;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -674,6 +682,27 @@ always @(posedge clk) begin
 end
 
 
+always @(posedge clk) begin
+    is_ntt_q        <= (op == `OP_NTT);
+    is_intt_q       <= (op == `OP_INTT);
+    is_add_q        <= (op == `OP_ADD);
+    is_sum_q        <= (op == `OP_SUM);
+    is_sub_q        <= (op == `OP_SUB);
+    is_compress_q   <= (op == `OP_COMPRESS);
+    is_decompress_q <= (op == `OP_DECOMPRESS);
+    is_decompose_q  <= (op == `OP_DECOMPOSE);
+    is_makehint_q   <= (op == `OP_MAKEHINT);
+    is_usehint_q    <= (op == `OP_USEHINT);
+    is_chknorm_q    <= (op == `OP_CHKNORM);
+    is_pwm_q        <= (op == `OP_PWM);
+    is_mac_q        <= (op == `OP_MAC);
+    is_encode_q     <= (op == `OP_ENCODE);
+    is_decode_q     <= (op == `OP_DECODE);
+    is_cbd_q        <= (op == `OP_CBD);
+    is_rejsamp_q    <= (op == `OP_REJ_SAMP);
+end
+
+
 ////////////////////////// coefficient ram //////////////////////////////
 
 ntt_lite_coeff_ram_double #(
@@ -785,7 +814,7 @@ shiftreg #(
 
 
 shiftreg #(
-    .SHIFT(2),
+    .SHIFT(3),
     .DATA (1)
 ) shreg_addsub (
     .clk     (clk ),
@@ -806,9 +835,19 @@ shiftreg #(
     .data_out(sr_z)
 );
 
+shiftreg #(
+    .SHIFT(1),
+    .DATA (1)
+) shreg_z1 (
+    .clk     (clk ),
+    .rst     (rst  | ctr_all_rst),
+    .data_in (sr_z),
+    .data_out(sr_z1)
+);
+
 
 shiftreg #(
-    .SHIFT(L_MUL - 1),
+    .SHIFT(L_MUL - 2),
     .DATA (        1)
 ) shreg_mulx (
     .clk     (clk ),
@@ -838,6 +877,17 @@ shiftreg #(
     .data_in (sr_o),
     .data_out(sr_o1)
 );
+
+shiftreg #(
+    .SHIFT(1),
+    .DATA (1)
+) shreg_ntt2 (
+    .clk     (clk ),
+    .rst     (rst  | ctr_all_rst),
+    .data_in (sr_o1),
+    .data_out(sr_o2)
+);
+
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -1202,10 +1252,10 @@ always @(*) begin
         end
         ST_TWIDDLE_FORWARD_DECODE: begin
 
-            if ((op == `OP_DECODE) || (op == `OP_CBD)) begin
+            if (is_decode_q || is_cbd_q) begin
                 io_limit = decode_num_words;
             end
-            else if (op == `OP_REJ_SAMP) begin
+            else if (is_rejsamp_q) begin
                 io_limit = rejsamp_num_words;
             end
 
@@ -1220,7 +1270,7 @@ always @(*) begin
                     ctr0_inc = 1;
             end
 
-            rej_samp = (op == `OP_REJ_SAMP) ? 1'b1 : 1'b0;
+            rej_samp = is_rejsamp_q ? 1'b1 : 1'b0;
 
             if (encode_i_ready && /*(ctr1 != n_m1) &&*/ (ctr0_d >= ctr2) && (ctr0 != 0)) begin
                 if (ctr2 == io_limit) begin
@@ -1231,11 +1281,11 @@ always @(*) begin
                 end
                 sr_i = !rdone;
             end
-            if ((op == `OP_DECODE   && encode_o_valid) || 
-                (op == `OP_CBD      && cbd_o_valid   ) ||
-                (op == `OP_REJ_SAMP && cbd_o_valid   ))
+            if ((is_decode_q && encode_o_valid) || 
+                (is_cbd_q    && cbd_o_valid   ) ||
+                (is_rejsamp_q && cbd_o_valid  ))
             begin
-                if (op == `OP_CBD || op == `OP_REJ_SAMP) begin
+                if (is_cbd_q || is_rejsamp_q) begin
                     upoly_cbd = 1;
                 end
                 else begin
@@ -1253,7 +1303,7 @@ always @(*) begin
                     ctr1_inc = 1;
                 end                
             end
-            else if (op == `OP_REJ_SAMP && rdone && !encode_busy && !cbd_busy) begin
+            else if (is_rejsamp_q && rdone && !encode_busy && !cbd_busy) begin
                 rej_samp_ip_set = 1;
                 next_state = ST_IDLE;
                 done_set = 1;
@@ -1261,6 +1311,7 @@ always @(*) begin
 
             pwm_idx_df = 1;
         end        
+
         ST_POLY_IN: begin
 
             io_word = ctr1;
@@ -1271,7 +1322,7 @@ always @(*) begin
                     next_state = next_state_op;
                     ctr1_rst = 1;
                 end
-                else if (op == `OP_NTT && ctr1 == num_words_over2_m1) begin
+                else if (is_ntt_q && ctr1 == num_words_over2_m1) begin
                     next_state = ST_POLY_FORWARD_NTT;
                     ctr1_rst = 1;
                 end
@@ -1369,7 +1420,7 @@ always @(*) begin
                 end
             end
 
-            ctr2_d_set = ~sr_o;
+            ctr2_d_set = ~sr_o1;
             poly_in_frwrd_B = 1;
             ntt_rcv_bu = 1;
 
@@ -1421,15 +1472,15 @@ always @(*) begin
         end
         ST_DECODE: begin
 
-            if ((op == `OP_DECODE) || (op == `OP_CBD)) begin
+            if (is_decode_q || is_cbd_q) begin
                 io_limit = decode_num_words;
             end
-            else if (op == `OP_REJ_SAMP) begin
+            else if (is_rejsamp_q) begin
                 io_limit = rejsamp_num_words;
             end
 
             pwm_idx = 1;
-            rej_samp = (op == `OP_REJ_SAMP) ? 1'b1 : 1'b0;
+            rej_samp = is_rejsamp_q ? 1'b1 : 1'b0;
             if (encode_i_ready && ctr1 != n_m1) begin
                 if (ctr0 == io_limit) begin
                     rdone_set = 1;
@@ -1439,11 +1490,11 @@ always @(*) begin
                 end
                 sr_i = !rdone;
             end
-            if (((op != `OP_CBD && op != `OP_REJ_SAMP) && encode_o_valid) || 
-                (op == `OP_CBD      && cbd_o_valid   ) ||
-                (op == `OP_REJ_SAMP && cbd_o_valid   ))
+            if (((!is_cbd_q && !is_rejsamp_q) && encode_o_valid) || 
+                ( is_cbd_q                     && cbd_o_valid   ) ||
+                ( is_rejsamp_q                 && cbd_o_valid   ))
             begin
-                if (op == `OP_CBD || op == `OP_REJ_SAMP) begin
+                if (is_cbd_q || is_rejsamp_q) begin
                     upoly_cbd = 1;
                 end
                 else begin
@@ -1459,15 +1510,14 @@ always @(*) begin
                     ctr1_inc = 1;
                 end                
             end
-            else if (op == `OP_REJ_SAMP && rdone && !encode_busy && !cbd_busy) begin
+            else if (is_rejsamp_q && rdone && !encode_busy && !cbd_busy) begin
                 rej_samp_ip_set = 1;
                 ctr0_rst = 1;
                 next_state = ST_IDLE;
                 done_set = 1;
             end
-
-
         end
+
         ST_ADDSUB: begin
 
             pwm_idx = 1;
@@ -1477,8 +1527,8 @@ always @(*) begin
                 ctr0_inc = 1;
             end
 
-            if ((sr_t && (op != `OP_MAKEHINT && op != `OP_USEHINT)) || 
-                (sr_z && (op == `OP_MAKEHINT || op == `OP_USEHINT))) begin
+            if ((sr_t && !(is_makehint_q || is_usehint_q)) || 
+                (sr_z1 &&  (is_makehint_q || is_usehint_q))) begin
                 if (ctr1 == n_m1) begin
                     ctr0_rst = 1;
                     next_state = ST_POLY_OUT;
@@ -1543,7 +1593,7 @@ always @(*) begin
             mode_p2d = 1;
             if (sr_o) begin
                 if (ctr1 == n_m1) begin
-                    next_state = ST_POLY_PWM2;
+                    next_state = ST_POLY_PWM_DUMMY;
                     ctr1_rst = 1;
                 end
             end
@@ -1552,6 +1602,14 @@ always @(*) begin
             pwm_zeta_rcv_bu = 1;
 
         end
+        ST_POLY_PWM_DUMMY: begin
+            en_z = 1'b1;
+            pwm_zeta_idx = 1;
+            busy = 1;
+            sr_i = 1;
+            next_state = ST_POLY_PWM2;
+            ctr0_inc = 1;
+        end        
         ST_POLY_PWM2: begin
 
             en_z = 1'b1;
@@ -1573,7 +1631,7 @@ always @(*) begin
             busy = 1;
             pwm_zeta_idx = 1;
 
-            if (sr_o) begin
+            if (sr_o1) begin
                 if (ctr1 == n_m1) begin
                     next_state = ST_POLY_OUT;
                 end
@@ -1599,9 +1657,9 @@ always @(*) begin
         ST_PWM1: begin
 
             busy = 1;
-            if ((sr_x && op == `OP_DECOMPRESS) || 
-                (sr_o && op != `OP_DECOMPOSE ) || 
-                (sr_o1 && op == `OP_DECOMPOSE)) begin
+            if ((sr_x  && is_decompress_q) || 
+                (sr_o  && !is_decompose_q ) || 
+                (sr_o1 && is_decompose_q )) begin
                 if (ctr1 == n_m1) begin
                     next_state = ST_POLY_OUT;
                 end
@@ -1623,7 +1681,7 @@ always @(*) begin
                 ctr0_inc = 1;
 
             ntt_rcv_bu = 1;
-            ctr2_d_set = ~sr_o;
+            ctr2_d_set = ~sr_o1;
         end
         ST_NTT1: begin
 
@@ -1637,7 +1695,7 @@ always @(*) begin
                 next_state = ST_POLY_OUT;
             end
 
-            ctr2_d_set = ~sr_o;
+            ctr2_d_set = ~sr_o1;
             ntt_rcv_bu = 1;
 
         end
@@ -1688,7 +1746,7 @@ always @(*) begin
                     if (clr_twiddle_q) begin
                         zerotwiddle = 1;
                     end
-                    if (ctr0 == num_words_m1 || ((op == `OP_ENCODE) && (ctr0_p1 == ctr1)) || (op == `OP_SUM)) begin
+                    if (ctr0 == num_words_m1 || (is_encode_q && (ctr0_p1 == ctr1)) || is_sum_q) begin
                         next_state = ST_IDLE;
                         ctr_all_rst = 1;
                         done_set = 1;
@@ -1745,15 +1803,21 @@ always @(*) begin
         end
     end
     else if (pwm_rcv_bu) begin
-        if (sr_x && op == `OP_DECOMPRESS) begin
+        if (sr_x && is_decompress_q) begin
             ctr1_inc = 1;
             upoly_mul = 1;
         end
-        else if (op == `OP_DECOMPOSE) begin
+        else if (is_decompose_q) begin
             if (sr_o1) begin
                 ctr1_inc = 1;
                 upoly_mul = 1;
                 upsi = 1;
+            end
+        end
+        else if (en_z) begin
+            if (sr_o1) begin
+                ctr1_inc = (ctr1_rst) ? 0 : 1;
+                upoly_mul = 1;
             end
         end
         else begin
@@ -1774,8 +1838,8 @@ always @(*) begin
         end
     end
     else if (addsub_rcv_bu) begin
-        if (op == `OP_MAKEHINT || op == `OP_USEHINT) begin
-            if (sr_z) begin
+        if (is_makehint_q || is_usehint_q) begin
+            if (sr_z1) begin
                 upoly_mul = 1;
                 if (ctr1 == n_m1) begin
                     ctr1_rst = 1;
@@ -1841,7 +1905,6 @@ end
 
 
 /////////////////////////////////////////////////////////////////////////
-
 
 
 endmodule

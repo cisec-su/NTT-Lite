@@ -264,6 +264,7 @@ modsub  #(
 ) ms0 (
     .A    (modsub0_in_A),
     .B    (modsub0_in_B),
+    .rd_en(1'b1        ),
     .dual (dual_q      ),
     .Q    (Q_q         ),
     .corr (sub_corr    ),
@@ -278,6 +279,7 @@ modsub  #(
 ) ms1 (
     .A   (bound_half   ),
     .B   (A_q_masked   ),
+    .rd_en(1'b1        ),
     .dual(dual_q       ),
     .Q   (Q_q          ),
     .C   (modsub1_out_C)

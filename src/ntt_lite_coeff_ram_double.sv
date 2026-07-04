@@ -28,13 +28,13 @@ module ntt_lite_coeff_ram_double
         input      [LOGN-1:0] p_waddr ,
         input      [LOGQ-1:0] p_din   ,
         input      [LOGN-1:0] p_raddr ,
-        output     [LOGQ-1:0] p_dout  ,
+        output reg [LOGQ-1:0] p_dout  ,
         
         input                 px_wen  ,
         input      [LOGN-1:0] px_waddr,
         input      [LOGQ-1:0] px_din  ,
         input      [LOGN-1:0] px_raddr,
-        output     [LOGQ-1:0] px_dout        
+        output reg [LOGQ-1:0] px_dout        
     );
 
 localparam N2  = 1 << (LOGN - 1);
@@ -78,6 +78,19 @@ wire [LOGN-1:0] logn_mask;
 reg p_rsel_q;
 reg px_rsel_q;
 
+wire [LOGQ-1:0] p0_dout_int;
+wire [LOGQ-1:0] p1_dout_int;
+
+reg [LOGQ-1:0] p0_din_q;
+reg [LOGQ-1:0] p1_din_q;
+
+reg [LOGN-2:0] p0_waddr_q;
+reg [LOGN-2:0] p1_waddr_q;
+
+reg p0_wen_q;
+reg p1_wen_q;
+
+
 assign logn_m1 = logn - 1;
 assign p_waddr_shift  = p_waddr[logn_m1];
 assign p_raddr_shift  = p_raddr[logn_m1];
@@ -115,24 +128,26 @@ assign p1_raddr_int = (p1_ren  ) ?              p1_raddr :
                       (p_ren_p1) ? (p_raddr & logn_mask) : 
                       (1 << (LOGN - 2)) | (px_raddr & logn_mask);
 
-assign p_dout  = (p_rsel_q ) ? p1_dout : p0_dout;
-assign px_dout = (px_rsel_q) ? p0_dout : p1_dout;
+assign p0_dout_int = (ren) ? bram0[p0_raddr_int] : {LOGQ{1'b0}};
+assign p1_dout_int = (ren) ? bram1[p1_raddr_int] : {LOGQ{1'b0}};
 
 always @(posedge clk) begin
-    if(p0_wen_int)
-        bram0[p0_waddr_int] <= p0_din_int;
+    if(p0_wen_q)
+        bram0[p0_waddr_q] <= p0_din_q;
 end
 
 
 always @(posedge clk) begin
-    if(p1_wen_int)
-        bram1[p1_waddr_int] <= p1_din_int;
+    if(p1_wen_q)
+        bram1[p1_waddr_q] <= p1_din_q;
 end
 
 
 always @(posedge clk) begin
-    p0_dout <= (ren) ? bram0[p0_raddr_int] : {LOGQ{1'b0}};
-    p1_dout <= (ren) ? bram1[p1_raddr_int] : {LOGQ{1'b0}};
+    p0_dout <= p0_dout_int;
+    p1_dout <= p1_dout_int;
+    p_dout  <= (p_raddr_shift ) ? p1_dout_int : p0_dout_int;
+    px_dout <= (px_raddr_shift) ? p0_dout_int : p1_dout_int;
 end
 
 always @(posedge clk) begin
@@ -140,5 +155,13 @@ always @(posedge clk) begin
     px_rsel_q <= px_raddr_shift;
 end
 
+always @(*) begin
+    p0_din_q   <= p0_din_int;
+    p1_din_q   <= p1_din_int;
+    p0_waddr_q <= p0_waddr_int;
+    p1_waddr_q <= p1_waddr_int;
+    p0_wen_q   <= p0_wen_int;
+    p1_wen_q   <= p1_wen_int;
+end
 
 endmodule
