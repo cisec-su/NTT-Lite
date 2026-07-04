@@ -4,7 +4,7 @@ module ntt_lite
    #(   
         parameter  LOGN       = 8,
         parameter  LOGQ       = 32,
-        parameter  L_RED      = 5, // BU  latency
+        parameter  L_RED      = 7, // BU  latency
         parameter  L_MUL      = 3, // MUL latency
         parameter  FORWARD_EN = 1,
         parameter  EN_NTT_OTF = 0,
@@ -53,8 +53,7 @@ module ntt_lite
 ///////////////////// local parameters //////////////////////////////////
 
 localparam N       = 1 << LOGN;
-localparam L       = L_MUL + L_RED;
-localparam L_REAL  = L + 3;
+
 
 // states, todo: add glitch protection as HW codes
 localparam ST_IDLE                      = 6'd0 ;
@@ -470,30 +469,26 @@ always @(posedge clk) begin
         ctr0 <= 0;
     else if (ctr0_inc)
         ctr0 <= ctr0_p1;
-    else if (set_ctr0_poly_tail)
-        ctr0 <= n_over2 - (L_REAL);
 end
 
 
 always @(posedge clk) begin
     if (rst)
         ctr1 <= 0;
+    else if (ctr1_rst || ctr_all_rst)
+        ctr1 <= 0;        
     else if (ctr1_inc)
         ctr1 <= ctr1 + 1;
-    else if (ctr1_rst || ctr_all_rst)
-        ctr1 <= 0;
-    else if (set_ctr1_poly_tail)
-        ctr1 <= n_over2 - (L_REAL);
 end
 
 
 always @(posedge clk) begin
     if (rst)
+        ctr2 <= 0;
+    else if (ctr2_rst || ctr_all_rst)
         ctr2 <= 0;
     else if (ctr2_inc)
         ctr2 <= ctr2 + 1;
-    else if (ctr2_rst || ctr_all_rst)
-        ctr2 <= 0;
 end
 
 
@@ -783,7 +778,7 @@ shiftreg #(
     .DATA (1)
 ) shreg_encode (
     .clk     (clk ),
-    .rst     (rst ),
+    .rst     (rst | ctr_all_rst),
     .data_in (sr_i),
     .data_out(sr_e)
 );
@@ -794,7 +789,7 @@ shiftreg #(
     .DATA (1)
 ) shreg_addsub (
     .clk     (clk ),
-    .rst     (rst ),
+    .rst     (rst | ctr_all_rst),
     .data_in (sr_e),
     .data_out(sr_t)
 );
@@ -806,7 +801,7 @@ shiftreg #(
     .DATA (1)
 ) shreg_addr (
     .clk     (clk ),
-    .rst     (rst ),
+    .rst     (rst  | ctr_all_rst),
     .data_in (sr_t),
     .data_out(sr_z)
 );
@@ -817,7 +812,7 @@ shiftreg #(
     .DATA (        1)
 ) shreg_mulx (
     .clk     (clk ),
-    .rst     (rst ),
+    .rst     (rst  | ctr_all_rst),
     .data_in (sr_z),
     .data_out(sr_x)
 );
@@ -828,7 +823,7 @@ shiftreg #(
     .DATA (    1)
 ) shreg_mul (
     .clk     (clk ),
-    .rst     (rst ),
+    .rst     (rst  | ctr_all_rst),
     .data_in (sr_x),
     .data_out(sr_o)
 );
@@ -839,7 +834,7 @@ shiftreg #(
     .DATA (1)
 ) shreg_ntt (
     .clk     (clk ),
-    .rst     (rst ),
+    .rst     (rst  | ctr_all_rst),
     .data_in (sr_o),
     .data_out(sr_o1)
 );
@@ -1682,9 +1677,8 @@ always @(*) begin
 
         end        
         ST_POLY_OUT: begin
-
+            pwm_idx = 1;
             if (!o_dis) begin
-                pwm_idx = 1;
                 o_valid_int = 1;
                 busy = 1;
                 if (o_read) begin

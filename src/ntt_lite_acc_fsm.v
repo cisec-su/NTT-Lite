@@ -85,7 +85,7 @@ begin
         end
         ST_GET:
         begin
-            if(cnt_rst)
+            if(cnt_rst || fsm_i_done || fsm_o_done)
                 cstate <= ST_IDLE; 
         end
         
@@ -121,7 +121,7 @@ begin
     end
     ST_GET:
     begin
-        if (fsm_i_done) begin
+        if (fsm_i_done || fsm_o_done) begin
             cnt_rst = 1;
         end
         else if(fsm_i_ready)

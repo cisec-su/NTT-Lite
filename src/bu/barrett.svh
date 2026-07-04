@@ -11,8 +11,8 @@ typedef struct packed {
 
 
 function automatic karatsuba_64x64_dual_params_t barrett_mac_0_params(input barrett_params_t params);
-    barrett_mac_0_params = '{FF_IN: params.FF_SHF, FF_SUM0 : 0, FF_SUB0 : 0, FF_MUL : params.FF_MUL,
-                             FF_SUM1 : 0, FF_SUM2 : 0, FF_SUB1 : 0, FF_OUT : 1};
+    barrett_mac_0_params = '{FF_IN: params.FF_SHF, FF_SUM0 : 0, FF_SUB0 : 1, FF_MUL : params.FF_MUL,
+                             FF_SUM1 : 0, FF_SUM2 : 1, FF_SUB1 : 0, FF_OUT : 1};
 endfunction
 
 
