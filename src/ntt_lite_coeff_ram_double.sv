@@ -155,7 +155,7 @@ always @(posedge clk) begin
     px_rsel_q <= px_raddr_shift;
 end
 
-always @(*) begin
+always @(posedge clk) begin
     p0_din_q   <= p0_din_int;
     p1_din_q   <= p1_din_int;
     p0_waddr_q <= p0_waddr_int;

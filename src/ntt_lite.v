@@ -87,6 +87,7 @@ localparam ST_POLY_PWM3                 = 6'd30;
 localparam ST_POLY_FORWARD_POLY_PWM     = 6'd31;
 localparam ST_TWIDDLE_FORWARD_POLY_PWM  = 6'd32;
 localparam ST_POLY_PWM_DUMMY            = 6'd33;
+localparam ST_SUM2                      = 6'd34;
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -351,8 +352,7 @@ assign psi_i    = (op_switch) ? poly_in_mx_A : twiddle_in_mx;
 
 ///////////////////// op signals ///////////////////////////////////////
 
-
-assign is_sum = (state == ST_SUM0 || state == ST_SUM1);
+assign is_sum = (state == ST_SUM0 || state == ST_SUM1 || state == ST_SUM2);
 assign is_ntt = (state == ST_NTT0 || state == ST_NTT1 || state == ST_POLY_FORWARD_NTT) ? 1'b1 : 1'b0;
 
 /////////////////////////////////////////////////////////////////////////
@@ -1718,22 +1718,22 @@ always @(*) begin
 
         end
         ST_SUM1: begin
-
             busy = 1;
             if ((ctr1 == logn_m1_shft_m1_ctr2) && sr_sum) begin
-                if (ctr2_d != logn_m1) begin
-                    next_state = ST_SUM0;
-                    ctr2_inc = 1; // go to next stage                        
-                end
-                else begin
-                    next_state = ST_POLY_OUT;                    
-                end
+                next_state = ST_SUM2;
             end
             ctr2_d_set = ~sr_sum;
-
             sum_rcv_bu = 1;
-
         end        
+        ST_SUM2: begin
+            if (ctr2_d != logn_m1) begin
+                next_state = ST_SUM0;
+                ctr2_inc = 1; // go to next stage                        
+            end
+            else begin
+                next_state = ST_POLY_OUT;                    
+            end
+        end
         ST_POLY_OUT: begin
             pwm_idx = 1;
             if (!o_dis) begin
