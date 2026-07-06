@@ -105,6 +105,7 @@ reg  [5:0]   state;
 reg  [LOGN-1:0] ctr0; // general purpose counter 0,
 reg  [LOGN-1:0] ctr1; // general purpose counter 1
 reg  [LOGN-1:0] ctr2; // general purpose counter 2
+reg  [LOGN-1:0] ctr3; // general purpose counter 3
 wire [LOGN-1:0] maskS; // stage mask
 wire [LOGN-1:0] maskIS; // stage inv. mask
 
@@ -114,6 +115,7 @@ reg [5:0] next_state_op;
 reg ctr0_inc, ctr0_rst;
 reg ctr1_inc, ctr1_rst;
 reg ctr2_inc, ctr2_rst;
+reg ctr3_inc, ctr3_rst;
 reg  [LOGN-1:0] ctr0_d;
 wire [LOGN-1:0] ctr0_p1;
 reg [LOGN-1:0] ctr2_d;
@@ -427,7 +429,7 @@ assign twiddle_ntt_ctr0  = is_ntt_q ? ((ctr0[0] << (ctr2 - 1))      + (ctr0 >> (
                                       ((ctr0[0] << (logn_m2 - ctr2)) + (ctr0 >> (ctr2 + 1 )));
 assign twiddle_ram_raddr = (pwm_zeta_idx                 ) ? ({1'b1, ctr0[LOGN-2:0]})      :
                            (pwm_idx | pwm_poly_idx       ) ? ctr0                            :
-                           (pwm_idx_df                   ) ? ctr2                            : 
+                           (pwm_idx_df                   ) ? ctr3                            : 
                            (is_intt_q                    ) ? (maskIS + twiddle_ntt_ctr0)    : 
                                                              (maskS  + twiddle_ntt_ctr0)  ;
 /////////////////////////////////////////////////////////////////////////
@@ -497,6 +499,16 @@ always @(posedge clk) begin
         ctr2 <= 0;
     else if (ctr2_inc)
         ctr2 <= ctr2 + 1;
+end
+
+
+always @(posedge clk) begin
+    if (rst)
+        ctr3 <= 0;
+    else if (ctr3_rst || ctr_all_rst)
+        ctr3 <= 0;
+    else if (ctr3_inc)
+        ctr3 <= ctr3 + 1;
 end
 
 
@@ -951,6 +963,8 @@ always @(*) begin
     ctr2_inc = 0;
     ctr2_rst = 0;
     ctr2_d_set = 0;
+    ctr3_inc = 0;
+    ctr3_rst = 0;
     wpoly = 0;
     upoly_ntt = 0;
     upoly_mul = 0;
@@ -1138,6 +1152,7 @@ always @(*) begin
                 // ctr1 is output ptr (for writeback to internal memory)
                 // encode and cbd are also not reseted to preserve state
                 ctr2_rst = 1;
+                ctr3_rst = 1;
                 ctr0_rst = 1;
             end
             rdone_clr = 1;
@@ -1272,12 +1287,12 @@ always @(*) begin
 
             rej_samp = is_rejsamp_q ? 1'b1 : 1'b0;
 
-            if (encode_i_ready && /*(ctr1 != n_m1) &&*/ (ctr0_d >= ctr2) && (ctr0 != 0)) begin
-                if (ctr2 == io_limit) begin
+            if (encode_i_ready && /*(ctr1 != n_m1) &&*/ (ctr0_d >= ctr3) && (ctr0 != 0)) begin
+                if (ctr3 == io_limit) begin
                     rdone_set = 1;
                 end
                 else begin
-                    ctr2_inc = 1;                    
+                    ctr3_inc = 1;                    
                 end
                 sr_i = !rdone;
             end
@@ -1294,7 +1309,7 @@ always @(*) begin
                 if (ctr1 == n_m1) begin
                     ctr1_rst = 1;
                     ctr0_rst = 1;
-                    ctr2_rst = 1;
+                    ctr3_rst = 1;
                     rej_samp_ip_clr = 1;
                     next_state = ST_POLY_OUT;
                     i_done = 1;
@@ -1463,7 +1478,7 @@ always @(*) begin
             if (encode_o_valid) begin
                 next_state = ST_ENCODE1;
             end
-            else if (!encode_i_valid) begin
+            else if (!encode_busy) begin
                 next_state = ST_POLY_OUT;
             end
 
