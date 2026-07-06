@@ -49,7 +49,7 @@ reg  dual_q;
 reg [LOGLOGQ -1:0] k_q;
 wire [LOGQ-1:0] modsub0_in_A;
 wire [LOGQ-1:0] modsub0_in_B;
-wire [LOGQ-1:0] modsub0_in_C;
+wire [LOGQ-1:0] modsub0_out_C;
 wire [LOGQ-1:0] modsub1_out_C;
 wire [LOGQ -1:0] mask_k;
 wire [LOGQ -1:0] mask_k_dual;
@@ -61,6 +61,7 @@ wire sub_corr;
 wire sub_corr0;
 wire sub_corr1;
 wire i_valid_d;
+wire i_valid_d1;
 wire o_valid_mx;
 reg o_valid_rejsamp;
 reg [LOGQ-1:0] C_rejsamp;
@@ -73,6 +74,7 @@ wire [LOGQ-1:0] rej_samp_sub_mx;
 reg  [LOGQ0-1:0] rej_samp_mem;
 reg  [LOGQ0-1:0] rej_samp_mem_next;
 wire [LOGQ-1:0] A_q_masked;
+reg  [LOGQ-1:0] A_q_masked_q;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -170,7 +172,7 @@ assign T0 = (T0H << LOGQ0) | T0L;
 assign T1 = (T1H << LOGQ0) | T1L;
 assign C = C_q;
 
-assign busy = i_valid | i_valid_d | o_valid;
+assign busy = i_valid | i_valid_d | i_valid_d1 | o_valid;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -180,7 +182,7 @@ assign busy = i_valid | i_valid_d | o_valid;
 
 ////////////////////////////// Comb. Assignments (RejSamp) //////////////
 
-assign rej_samp_sub_mx = (center_q) ? modsub1_out_C : A_q_masked;
+assign rej_samp_sub_mx = (center_q) ? modsub1_out_C : A_q_masked_q;
 
 
 always @(*) begin
@@ -189,7 +191,7 @@ always @(*) begin
     set_dual_full = 1'b0;
     clr_dual_full = 1'b0;
     rej_samp_mem_next = rej_samp_sub_mx[LOGQ0-1:0];
-    if (i_valid_d) begin
+    if (i_valid_d1) begin
         if (~dual_q) begin
             o_valid_rejsamp = sub_corr;
             C_rejsamp = rej_samp_sub_mx;
@@ -249,8 +251,8 @@ assign A_q_masked = A_q & mask_k_dual;
 assign modsub0_in_A = (rej_samp_q) ? (A_q_masked) : T0;
 assign modsub0_in_B = (rej_samp_q) ? bound_q : T1;
 
-assign o_valid_mx = (rej_samp_q) ? o_valid_rejsamp : i_valid_d;
-assign C_mx = (rej_samp_q) ? C_rejsamp : modsub0_in_C;
+assign o_valid_mx = (rej_samp_q) ? o_valid_rejsamp : i_valid_d1;
+assign C_mx = (rej_samp_q) ? C_rejsamp : modsub0_out_C;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -260,8 +262,10 @@ assign C_mx = (rej_samp_q) ? C_rejsamp : modsub0_in_C;
 /////////////////////////////// Modules /////////////////////////////////
 
 modsub  #(
-    .LOGQ(LOGQ)
+    .LOGQ(LOGQ),
+    .FF_OUT(1)
 ) ms0 (
+    .clk  (clk         ),
     .A    (modsub0_in_A),
     .B    (modsub0_in_B),
     .rd_en(1'b1        ),
@@ -270,7 +274,7 @@ modsub  #(
     .corr (sub_corr    ),
     .corr0(sub_corr0   ),
     .corr1(sub_corr1   ),
-    .C    (modsub0_in_C)
+    .C    (modsub0_out_C)
 );
 
 
@@ -278,7 +282,7 @@ modsub  #(
     .LOGQ(LOGQ)
 ) ms1 (
     .A   (bound_half   ),
-    .B   (A_q_masked   ),
+    .B   (A_q_masked_q ),
     .rd_en(1'b1        ),
     .dual(dual_q       ),
     .Q   (Q_q          ),
@@ -310,6 +314,17 @@ shiftreg #(
 shiftreg #(
     .SHIFT(1),
     .DATA (1)
+) shreg01 (
+    .clk     (clk      ),
+    .rst     (rst      ),
+    .data_in (i_valid_d ),
+    .data_out(i_valid_d1)
+);
+
+
+shiftreg #(
+    .SHIFT(1),
+    .DATA (1)
 ) shreg1 (
     .clk     (clk       ),
     .rst     (rst       ),
@@ -335,6 +350,7 @@ always @(posedge clk) begin
     center_q <= center;
     bound_q <= bound;
     k_q <= k;
+    A_q_masked_q <= A_q_masked;
 end
 
 
