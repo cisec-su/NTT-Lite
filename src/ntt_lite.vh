@@ -11,7 +11,6 @@
 `define CMD_LOAD_ZETA         3'd6
 `define CMD_READ_POLY         3'd7
 
-
 `define OP_NTT                5'd0
 `define OP_INTT               5'd1
 `define OP_PWM                5'd2
@@ -30,6 +29,7 @@
 `define OP_CHKNORM            5'd11
 `define OP_MAKEHINT           5'd12
 `define OP_USEHINT            5'd16
+`define OP_MATMUL             5'd17
 
 `define MODE_SINGLE           2'd0
 `define MODE_DUAL             2'd2

@@ -107,12 +107,12 @@ assign p1_waddr_int = (p1_wen  ) ?              p1_waddr :
                       (p_wen_p1) ? (p_waddr & logn_mask) : 
                       (1 << (LOGN - 2)) | (px_waddr & logn_mask);
 
-assign p0_raddr_int = (p0_ren  ) ?              p0_raddr : 
-                      (p_ren_p0) ? (p_raddr & logn_mask) : 
+assign p0_raddr_int = (p0_ren  ) ?              p0_raddr :
+                      (p_ren_p0) ? (p_raddr & logn_mask) :
                       (1 << (LOGN - 2)) | (px_raddr & logn_mask);
 
-assign p1_raddr_int = (p1_ren  ) ?              p1_raddr : 
-                      (p_ren_p1) ? (p_raddr & logn_mask) : 
+assign p1_raddr_int = (p1_ren  ) ?              p1_raddr :
+                      (p_ren_p1) ? (p_raddr & logn_mask) :
                       (1 << (LOGN - 2)) | (px_raddr & logn_mask);
 
 assign p_dout  = (p_rsel_q ) ? p1_dout : p0_dout;
