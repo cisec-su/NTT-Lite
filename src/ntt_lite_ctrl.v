@@ -23,6 +23,7 @@ module ntt_lite_ctrl
         output reg         o_dis,        // (Write)        
         output reg         rhs_const,    // (Write)        
         output reg         op_switch,    // (Write)        
+        output reg [ 3:0]  sum_stage,    // (Write, 0-based; 4'hF selects final result)
         output reg [31:0]  q,            // (Read/Write)
         output reg [31:0]  inv2,         // (Read/Write)        
         output reg [63:0]  mu,           // (Read/Write)
@@ -71,6 +72,8 @@ localparam CTRL_D_MSB         = 25;
 localparam CTRL_D_LEN         = CTRL_D_MSB - CTRL_D_LSB + 1;
 localparam CTRL_RHS_CONST_BIT = 27;
 localparam CTRL_FLOOR_BIT     = 28;
+localparam ACTRL_SUM_STAGE_LSB = 0;
+localparam ACTRL_SUM_STAGE_MSB = 3;
 
 // Bit-fields for status register
 localparam STATUS_CHKNORM_BIT     = 26;
@@ -140,6 +143,7 @@ always @(posedge clk) begin
         rhs_const <= 1'b0;
         op_switch <= 1'b0;
         o_dis     <= 1'b0;
+        sum_stage <= 4'hF;
     end else if (we) begin
         case (addr - BASE_ADDR)
             CTRL_ADDR: begin
@@ -160,6 +164,7 @@ always @(posedge clk) begin
             MU_ADDR_LOW : mu[31: 0] <= wdata;
             MU_ADDR_HIGH: mu[63:32] <= wdata;
             INV2_ADDR   : inv2      <= wdata;
+            ACTRL_ADDR: sum_stage <= wdata[ACTRL_SUM_STAGE_MSB:ACTRL_SUM_STAGE_LSB];
             default: ;
         endcase
     end

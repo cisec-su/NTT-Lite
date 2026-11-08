@@ -47,6 +47,7 @@ reg  [4  :0] op;
 reg          otf;
 reg          rhs_const;
 reg          op_switch;
+reg  [3:0]   sum_stage;
 reg          dual;
 reg  [1  :0] mode;
 reg  [LOGLOGN-1:0] logn;
@@ -92,6 +93,7 @@ ntt_lite #(
     .o_dis(1'b0),
     .rhs_const(rhs_const),
     .op_switch(op_switch),
+    .sum_stage(sum_stage),
     .mu(mu),
     .chknorm(chknorm),
     .rej_samp_ip(rej_samp_ip),
@@ -131,6 +133,7 @@ initial begin
     o_read = 1'b0;
     rhs_const = 1'b0;
     op_switch = 1'b0;
+    sum_stage = 4'hF;
 
     q_single = meta[0];
     q_dual = (meta[0] << (LOGQ >> 1)) + meta[0];

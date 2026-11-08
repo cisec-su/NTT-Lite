@@ -83,6 +83,7 @@ wire ctrl_o_dis;
 wire ctrl_floor;
 wire ctrl_rhs_const;
 wire ctrl_op_switch;
+wire [3:0] ctrl_sum_stage;
 wire ctrl_chknorm;
 wire ctrl_rej_samp_ip;
 
@@ -117,6 +118,7 @@ ntt_lite #(
     .floor      (ctrl_floor ),
     .rhs_const  (ctrl_rhs_const),
     .op_switch  (ctrl_op_switch),
+    .sum_stage  (ctrl_sum_stage),
     .q          (ctrl_q     ),
     .mu         (ctrl_mu    ),
     .inv2       (ctrl_inv2  ),
@@ -152,6 +154,7 @@ ntt_lite_ctrl #(
     .o_dis      (ctrl_o_dis ),
     .rhs_const  (ctrl_rhs_const),
     .op_switch  (ctrl_op_switch),
+    .sum_stage  (ctrl_sum_stage),
     .floor      (ctrl_floor ),
     .mode       (ctrl_mode  ),
     .op         (ctrl_op    ),

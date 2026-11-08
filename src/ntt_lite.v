@@ -32,6 +32,7 @@ module ntt_lite
         input                       i_valid  ,
         input                       o_dis    ,
         input                       floor    ,
+        input      [           3:0] sum_stage,
         output reg [      LOGQ-1:0] o_data   ,
         input                       o_read   ,
         output reg                  chknorm  ,
@@ -160,6 +161,8 @@ wire [LOGN  :0] num_words;
 wire [LOGN-1:0] num_words_m1;
 wire [LOGN-1:0] num_words_over2;
 wire [LOGN-1:0] num_words_over2_m1;
+wire [LOGN-1:0] sum_num_words_m1;
+wire sum_partial;
 
 wire [LOGN-1:0] decode_num_words_;
 wire [LOGN-1:0] decode_num_words;
@@ -263,6 +266,7 @@ wire [LOGQ-1:0] ntt_psi_i;
 wire op_is_ntt;
 wire [LOGN-1:0] sum_raddr;
 wire [LOGN-1:0] sum_waddr;
+wire [LOGN-1:0] sum_output_raddr;
 
 
 
@@ -328,6 +332,8 @@ assign num_words = (1 << logn);
 assign num_words_m1 = num_words - 1;
 assign num_words_over2 = num_words >> 1;
 assign num_words_over2_m1 = num_words_over2 - 1;
+assign sum_partial = (op == `OP_SUM) && (sum_stage != 4'hF);
+assign sum_num_words_m1 = (num_words >> (sum_stage + 1'b1)) - 1'b1;
 assign ctr0_p1 = ctr0 + 1;
 assign decode_num_words_ = d << (logn - (LOGLOGQ - 1));
 assign decode_num_words  = ( (mode == `MODE_SINGLE) ? decode_num_words_             :
@@ -383,6 +389,7 @@ assign is_ntt = (state == ST_NTT0 || state == ST_NTT1 || state == ST_POLY_FORWAR
 assign sr_sum    = (ctr2_d == logn_m1) ? sr_t : sr_z;
 assign sum_raddr = ctr0 << ctr2;
 assign sum_waddr = ctr1 << ctr2_d;
+assign sum_output_raddr = ctr0 << (sum_stage + 1'b1);
 // NTT address generation
 assign sr_mx = (op == `OP_NTT && ctr2 != 0) ? 1'b1 : ((op == `OP_INTT || is_sum) && ctr2_q != logn_m1) ? 1'b1 : 1'b0;
 assign sr_ntt = (op == `OP_NTT && ctr2_d == 0) ? sr_o : ((op == `OP_INTT) && ctr2_d == logn_m1) ? sr_o : sr_o1;
@@ -415,7 +422,8 @@ assign coeff_ram_p_din   = (matmul_last_rcv_bu) ? coeff_ram_px_din :
                            (zeropoly    ) ?     0           :
                            (wr_twiddle2 ) ?     i_data      :
                     /*wpoly_zetafrwrd | wpoly*/ i_data      ;
-assign coeff_ram_p_raddr = (matmul_idx)                                   ? (ctr2*matrix_dim+ctr3) : ctr0;
+assign coeff_ram_p_raddr = (matmul_idx) ? (ctr2*matrix_dim+ctr3) :
+                           (sum_partial && pwm_idx) ? sum_output_raddr : ctr0;
 
 ////////////////////////////////////////////////////////////////////////////////////
 assign coeff_ram_px_wen   = (upoly_matmul) | upoly_zetamul;
@@ -995,7 +1003,7 @@ always @(*) begin
     poly_in_frwrd_B = 0;
     twiddle_frwrd = 0;
 
-    io_limit = n_m1;
+    io_limit = (sum_partial && (state == ST_POLY_OUT)) ? sum_num_words_m1 : n_m1;
 
     mode_p2d = 0;
     en_z = 0;
@@ -1737,7 +1745,10 @@ always @(*) begin
 
             busy = 1;
             if ((ctr1 == logn_m1_shft_m1_ctr2) && sr_sum) begin
-                if (ctr2_d != logn_m1) begin
+                if (sum_partial && (ctr2_d == sum_stage)) begin
+                    next_state = ST_POLY_OUT;
+                end
+                else if (ctr2_d != logn_m1) begin
                     next_state = ST_SUM0;
                     ctr2_inc = 1; // go to next stage
                 end
@@ -1763,7 +1774,9 @@ always @(*) begin
                     if (clr_twiddle_q) begin
                         zerotwiddle = 1;
                     end
-                    if (ctr0 == num_words_m1 || ((op == `OP_ENCODE) && (ctr0_p1 == ctr1)) || (op == `OP_SUM)) begin
+                    if (((sum_partial) && (ctr0 == sum_num_words_m1)) ||
+                        ((!sum_partial) && ((op == `OP_SUM) || (ctr0 == num_words_m1))) ||
+                        ((op == `OP_ENCODE) && (ctr0_p1 == ctr1))) begin
                         next_state = ST_IDLE;
                         ctr_all_rst = 1;
                         done_set = 1;
